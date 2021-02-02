@@ -1,0 +1,25 @@
+﻿<Window x:Class="NewsBuddy.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:NewsBuddy"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800" Background="Gray">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="0*"/>
+            <ColumnDefinition Width="27*"/>
+            <ColumnDefinition Width="773*"/>
+        </Grid.ColumnDefinitions>
+        <ToolBar HorizontalAlignment="Left" Height="28" VerticalAlignment="Top" Width="800" Grid.ColumnSpan="3"/>
+        <RichTextBox Grid.Column="2" Margin="178,33,88,0">
+            <FlowDocument>
+                <Paragraph>
+                    <Run Text="RichTextBox"/>
+                </Paragraph>
+            </FlowDocument>
+        </RichTextBox>
+
+    </Grid>
+</Window>
