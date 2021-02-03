@@ -5,21 +5,79 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:NewsBuddy"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800" Background="Gray">
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="0*"/>
-            <ColumnDefinition Width="27*"/>
-            <ColumnDefinition Width="773*"/>
-        </Grid.ColumnDefinitions>
-        <ToolBar HorizontalAlignment="Left" Height="28" VerticalAlignment="Top" Width="800" Grid.ColumnSpan="3"/>
-        <RichTextBox Grid.Column="2" Margin="178,33,88,0">
+        Title="NewsJock v0.1" Height="450" Width="800" Background="Gray">
+    <DockPanel>
+        
+        <WrapPanel DockPanel.Dock="Top">
+            <MediaElement x:Name="SoundersPlayer" Source="{Binding}" LoadedBehavior="Manual" UnloadedBehavior="Manual"></MediaElement>
+            <MediaElement x:Name="ClipsPlayer" Source="{Binding}" LoadedBehavior="Manual" UnloadedBehavior="Manual"></MediaElement>
+        </WrapPanel>
+        
+        
+        <StackPanel Name ="stackL" DockPanel.Dock="Left" MinWidth="100" MaxWidth="300">
+            <Label Name="lblSounders" HorizontalAlignment="Center" FontSize="20" FontWeight="Bold">Sounders</Label>
+            <TextBlock HorizontalAlignment="Center" Background="DimGray">Volume</TextBlock>
+            <Slider Background="DimGray" Name="sVolSlider" VerticalAlignment="Center" ValueChanged="sVolSlider_ValueChanged" Minimum="0" Maximum="1" Value="0.5" />
+            <ListBox x:Name="listSounders" MouseMove="listSounders_MouseMove" Focusable="False">
+            </ListBox>
+            <Label Name="lblClips" HorizontalAlignment="Center" FontSize="20" FontWeight="Bold">Clips</Label>
+            <TextBlock HorizontalAlignment="Center" Background="DimGray">Volume</TextBlock>
+            <Slider Background="DimGray" Name="cVolSlider" VerticalAlignment="Center" ValueChanged="cVolSlider_ValueChanged" Minimum="0" Maximum="1" Value="0.5" />
+
+            <ListBox Name="listClips" MouseMove="listClips_MouseMove"></ListBox>
+        </StackPanel>
+        
+        
+        <StackPanel Name="stackR" DockPanel.Dock="Right">
+
+
+        </StackPanel>
+        <TabControl Name="DynamicTabs" ItemsSource="{Binding}" SelectionChanged="DynamicTabs_SelectionChanged">
+            <TabControl.Resources>
+                <DataTemplate x:Key="TabHeader" DataType="TabItem">
+                    <DockPanel>
+                        <Button Name="btnDelTab" DockPanel.Dock="Right" Margin="5,0,0,0"
+                                    Padding="0" Click="btnDelTab_Click"
+                                    CommandParameter="{Binding RelativeSource=
+                                        {RelativeSource AncestorType=
+                                        {x:Type TabItem}}, Path=Name}">
+                            X
+                        </Button>
+                        <TextBlock Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type TabItem}}, Path=Header}" />
+                    </DockPanel>
+                </DataTemplate>
+            </TabControl.Resources>
+        </TabControl>
+
+     <!--  <Frame Source="/Script.xaml" Name="mainFrame" Focusable="False">
+       </Frame> -->
+
+
+        <!-- <RichTextBox Name="Script1" AllowDrop="True">
             <FlowDocument>
                 <Paragraph>
                     <Run Text="RichTextBox"/>
                 </Paragraph>
             </FlowDocument>
-        </RichTextBox>
+        </RichTextBox> -->
+        
+    
+    </DockPanel>
 
-    </Grid>
+
+
+
+
+
+
+    <Window.Resources>
+
+        
+        <DataTemplate DataType="{x:Type local:NBfile}">
+                <TextBlock Text="{Binding NBName}" />
+        </DataTemplate>
+
+    </Window.Resources>
+
+
 </Window>
