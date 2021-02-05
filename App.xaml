@@ -4,6 +4,7 @@
              xmlns:local="clr-namespace:NewsBuddy"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
+        <FontFamily x:Key="OpenSans">pack://application:,,,/resources/fonts/#Open Sans</FontFamily>
         <Style x:Key="btnNB" TargetType="Button">
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="FontSize" Value="20"/>

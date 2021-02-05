@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,11 +10,13 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Diagnostics;
+using Ookii.Dialogs.Wpf;
 
 namespace NewsBuddy
 {
@@ -24,9 +27,11 @@ namespace NewsBuddy
     {
 
         FileSystemWatcher fs;
-        // these need to go into a user preferences thingy
-        public string dirClipsPath = "C:/NBtest/Clips";
-        public string dirSoundersPath = "C:/NBtest/Sounders";
+        
+        public string dirClipsPath = Settings.Default.ClipsDirectory;
+        public string dirSoundersPath = Settings.Default.SoundersDirectory;
+        public string dirScriptsPath = Settings.Default.ScriptsDirectory;
+        public string dirTemplatesPath = Settings.Default.TemplatesDirectory;
         public string[] audioExtensions = new[] { ".mp3", ".wav", ".wma", ".m4a", ".flac"};
 
         
@@ -34,8 +39,8 @@ namespace NewsBuddy
         public MainWindow()
         {
             InitializeComponent();
+            CheckDirectories();
             DisplayDirectories();
-            MonitorDirectory("C:/NBtest");
 
             // init the list of tab items
             _tabItems = new List<TabItem>();
@@ -52,6 +57,21 @@ namespace NewsBuddy
             DynamicTabs.SelectedIndex = 0;
 
             Trace.WriteLine("Started Running");
+        }
+
+        void CheckDirectories()
+        {
+            if (dirClipsPath == "na" || dirScriptsPath == "na" || dirSoundersPath == "na" || dirTemplatesPath == "na")
+            {
+                DirConfig dlg = new DirConfig();
+                dlg.ShowDialog();
+                DisplayDirectories();
+                
+            } else
+            {
+                MonitorDirectory(dirClipsPath);
+                MonitorDirectory(dirSoundersPath);
+            }
         }
 
         #region Drag&Drop Controls
@@ -103,40 +123,56 @@ namespace NewsBuddy
 
         public void DisplayDirectories()
         {
+            Settings.Default.Reload();
+
             listSounders.ItemsSource = null;
             listClips.ItemsSource = null;
             sounders.Clear();
             clips.Clear();
+            
+            dirClipsPath = Settings.Default.ClipsDirectory;
+            dirSoundersPath = Settings.Default.SoundersDirectory;
+            dirScriptsPath = Settings.Default.ScriptsDirectory;
+            dirTemplatesPath = Settings.Default.TemplatesDirectory;
 
-            object[] AllClips = new DirectoryInfo(dirClipsPath).GetFiles()
-                .Where(cf => audioExtensions.Contains(cf.Extension.ToLower()))
-                .ToArray();
-
-            object[] AllSounders = new DirectoryInfo(dirSoundersPath).GetFiles()
-                .Where(sf => audioExtensions.Contains(sf.Extension.ToLower()))
-                .ToArray();
-
-            foreach (object c in AllClips)
-            {
-                NBfile newFile = new NBfile
+            if (Directory.Exists(dirClipsPath) && Directory.Exists(dirSoundersPath) && Directory.Exists(dirScriptsPath) && Directory.Exists(dirTemplatesPath))
                 {
-                    NBPath = c.ToString(),
-                    NBName = System.IO.Path.GetFileName(c.ToString())
-                };
-                clips.Add(newFile);
-            }
-            foreach (object s in AllSounders)
-            {
-                NBfile newFile = new NBfile
+
+                    object[] AllClips = new DirectoryInfo(dirClipsPath).GetFiles()
+                    .Where(cf => audioExtensions.Contains(cf.Extension.ToLower()))
+                    .ToArray();
+
+                    object[] AllSounders = new DirectoryInfo(dirSoundersPath).GetFiles()
+                    .Where(sf => audioExtensions.Contains(sf.Extension.ToLower()))
+                    .ToArray();
+
+                foreach (object c in AllClips)
                 {
+                    NBfile newFile = new NBfile
+                    {
+                        NBPath = c.ToString(),
+                        NBName = System.IO.Path.GetFileNameWithoutExtension(c.ToString())
+                    };
+
+                    clips.Add(newFile);
+                }
+                foreach (object s in AllSounders)
+                {
+                    NBfile newFile = new NBfile
+                    {
                     NBPath = s.ToString(),
-                    NBName = System.IO.Path.GetFileName(s.ToString())
-                };
-                sounders.Add(newFile);
-            }
+                    NBName = System.IO.Path.GetFileNameWithoutExtension(s.ToString())
+                    };
 
-            listSounders.ItemsSource = sounders;
-            listClips.ItemsSource = clips;
+                    sounders.Add(newFile);
+                }
+
+                listSounders.ItemsSource = sounders;
+                listClips.ItemsSource = clips;
+            } else
+            {
+                MessageBox.Show("Whoops. Something ain't right. Go to 'Edit > Settings > NewsJock Settings' and check the paths to your files!","Directories Don't Exist",MessageBoxButton.OK,MessageBoxImage.Error);
+            }
         }
 
 
@@ -162,7 +198,7 @@ namespace NewsBuddy
                 DisplayDirectories();
             
             });
-            Trace.WriteLine("Reload called. CHange detected");           
+            Trace.WriteLine("Reload called. Change detected");           
 
         }
 
@@ -183,8 +219,9 @@ namespace NewsBuddy
             tab.HeaderTemplate = DynamicTabs.FindResource("TabHeader") as DataTemplate;
 
             Frame newContent = new Frame();
+            Page1 newPage = new Page1();
             newContent.Name = "txt";
-            newContent.Source = new Uri("/EmptyScript.xaml", UriKind.Relative);
+            newContent.Source = new Uri("/EmptyScript.xaml",UriKind.Relative);
             tab.Content = newContent;
 
             _tabItems.Insert(count - 1, tab);
@@ -245,6 +282,7 @@ namespace NewsBuddy
 
         #endregion
 
+        #region Menu Controls
         private void sVolSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             SoundersPlayer.Volume = (double)sVolSlider.Value;
@@ -254,6 +292,75 @@ namespace NewsBuddy
         {
             ClipsPlayer.Volume = (double)cVolSlider.Value;
         }
+
+
+
+        private void mnNJSettings_Click(object sender, RoutedEventArgs e)
+        {
+            DirConfig dlf = new DirConfig();
+            dlf.ShowDialog();
+            DisplayDirectories();
+        }
+
+        private void mnResetSettings_Click(object sender, RoutedEventArgs e)
+        {
+            Settings.Default.Reset();
+            DisplayDirectories();
+        }
+
+        private void mnExit_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void mnWebSettings_Click(object sender, RoutedEventArgs e)
+        {
+        }
+
+        private void mnSaveNewScript_Click(object sender, RoutedEventArgs e)
+        {
+           // TabItem tab = DynamicTabs.SelectedItem as TabItem;
+           // Frame tabFrame = tab.Content as Frame;
+           // tabFrame.Content;
+        }
+
+        private void mnOpen_Click(object sender, RoutedEventArgs e)
+        {
+          
+            VistaOpenFileDialog opn = new VistaOpenFileDialog();
+            opn.ShowDialog();
+             // FileStream fs = File.Open(opn.FileName, FileMode.Open, FileAccess.Read);
+      
+
+            //if (Directory.Exists(opn.FileName))
+            //{
+
+            
+            int count = _tabItems.Count;
+            TabItem tab = new TabItem();
+
+            tab.Header = string.Format("Script {0}", count);
+            tab.Name = string.Format("Script{0}", count);
+            tab.HeaderTemplate = DynamicTabs.FindResource("TabHeader") as DataTemplate;
+
+            Frame newContent = new Frame();
+            Page1 newPage = new Page1();
+            newContent.Name = "txt";
+            newContent.Source = new Uri(@opn.FileName, UriKind.Absolute);
+            tab.Content = newContent;
+            DynamicTabs.DataContext = null;
+            _tabItems.Insert(count - 1, tab);
+            DynamicTabs.DataContext = _tabItems;
+            DynamicTabs.SelectedItem = tab;
+
+            //} else
+            //{
+            //    MessageBox.Show("Something is wrong.");
+            //}
+
+        }
+
+        #endregion
     }
 
 }

@@ -6,13 +6,24 @@
       xmlns:local="clr-namespace:NewsBuddy"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
-      Title="Page1">
+      Title="Page1"
+      FontFamily="{StaticResource OpenSans}"
+      >
 
     <DockPanel>
-        <WrapPanel DockPanel.Dock="Top" Background="LightGray">
-            
-        </WrapPanel>
-        <RichTextBox x:Name="rtbScript" AllowDrop="True">
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="File">
+                <MenuItem Header="Save" Name="mnuSave" Click="mnuSave_Click"/>
+                <MenuItem Header="Open" Name="mnuOpen" Click="mnuOpen_Click"/>
+            </MenuItem>
+        </Menu>
+        <ToolBar DockPanel.Dock="Top" Background="LightGray" ToolBarTray.IsLocked="true">
+            <ToggleButton x:Name="btnBold" Command="EditingCommands.ToggleBold">Bold</ToggleButton>
+            <ToggleButton x:Name="btnItal" Command="EditingCommands.ToggleItalic">Italic</ToggleButton>
+            <ToggleButton x:Name="btnUndr" Command="EditingCommands.ToggleUnderline">Underline</ToggleButton>
+            <ComboBox x:Name="selFontSize" Width="50" IsEditable="true" TextBoxBase.TextChanged="selFontSize_TextChanged"/>
+        </ToolBar>
+        <RichTextBox x:Name="rtbScript" AllowDrop="True" SelectionChanged="rtbScript_SelectionChanged" FontSize="18" Block.LineHeight="2">
 
             <FlowDocument>
 
@@ -25,7 +36,6 @@
             </FlowDocument>
 
         </RichTextBox>
-
 
 
     </DockPanel>
