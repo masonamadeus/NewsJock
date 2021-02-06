@@ -28,29 +28,9 @@ namespace NewsBuddy
 
         public int index;
 
+        public TextPointer textPointer;
 
-
-        public NBfile RepName(NBfile nb)
-        {
-            NBfile rep = new NBfile();
-            
-            if (nb.NBisSounder)
-            {
-                rep.replaceName = String.Format("%${0}", index) + nb.NBPath + String.Format("{0}$%", index);
-            }
-            else
-            {
-                rep.replaceName = @"%#" + nb.NBPath + @"#%";
-            }
-
-            rep.insertOffset = nb.insertOffset;
-            rep.index = nb.index;
-            rep.NBisSounder = nb.NBisSounder;
-            rep.NBName = nb.NBName;
-            rep.NBPath = nb.NBPath;
-
-            return rep;
-        }
+        public NBfileLocator locator;
 
 
         public void NBPlay(bool isSounder)
@@ -100,10 +80,10 @@ namespace NewsBuddy
             }
         }
 
-        public Button NBbutton()
+        public NButton NBbutton()
         {
             var bc = new BrushConverter();
-            Button NBbutton = new Button();
+            NButton NBbutton = new NButton();
             NBbutton.Content = NBName;
             if (NBisSounder)
             {
@@ -117,6 +97,7 @@ namespace NewsBuddy
             {
                 NBPlay(NBisSounder);
             };
+            NBbutton.file = this;
 
             return NBbutton;
         }

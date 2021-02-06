@@ -344,7 +344,6 @@ namespace NewsBuddy
             tab.HeaderTemplate = DynamicTabs.FindResource("TabHeader") as DataTemplate;
 
             Frame newContent = new Frame();
-            Page1 newPage = new Page1();
             newContent.Name = "txt";
             newContent.Source = new Uri(@opn.FileName, UriKind.Absolute);
             tab.Content = newContent;
@@ -361,6 +360,19 @@ namespace NewsBuddy
         }
 
         #endregion
+
+        private void mnSilence_Click(object sender, RoutedEventArgs e)
+        {
+            SoundersPlayer.Stop();
+            SoundersPlayer.Source = null;
+            ClipsPlayer.Stop();
+            ClipsPlayer.Source = null;
+        }
+
+        private void mnStopSounders_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 
 }

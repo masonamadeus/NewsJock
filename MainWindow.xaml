@@ -14,6 +14,10 @@
         <Menu DockPanel.Dock="Top"
               Padding="2"
               Margin="0,0,0,3">
+
+            <MenuItem Header="Stop ALL Audio" Name="mnSilence" Click="mnSilence_Click"/>
+            <MenuItem Header="Stop Sounders" Name="mnStopSounders" Click="mnStopSounders_Click"/>
+            
             <MenuItem Header="_File">
                 <MenuItem Header="_Open" Name="mnOpen" Click="mnOpen_Click"/>
                 <MenuItem Header="_New...">
@@ -38,6 +42,8 @@
 
 
             </MenuItem>
+
+
         </Menu>
         
         

@@ -8,6 +8,8 @@
       d:DesignHeight="450" d:DesignWidth="800"
       Title="Page1"
       FontFamily="{StaticResource OpenSans}"
+      Unloaded="Page_Unloaded"
+      Loaded="Page_Loaded"
       >
 
     <DockPanel>

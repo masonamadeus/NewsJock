@@ -14,4 +14,5 @@ namespace NewsBuddy
     public partial class App : Application
     {
     }
+
 }
