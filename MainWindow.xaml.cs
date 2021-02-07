@@ -317,6 +317,7 @@ namespace NewsBuddy
         {
         }
 
+        // OLD SAVE BUTTON MAYBE DELETE
         private void mnSaveNewScript_Click(object sender, RoutedEventArgs e)
         {
            // TabItem tab = DynamicTabs.SelectedItem as TabItem;
@@ -324,6 +325,8 @@ namespace NewsBuddy
            // tabFrame.Content;
         }
 
+
+        // OLD MENU BAR ITEM MAY DELETE
         private void mnOpen_Click(object sender, RoutedEventArgs e)
         {
           

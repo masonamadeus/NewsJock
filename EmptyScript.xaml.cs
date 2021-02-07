@@ -71,6 +71,7 @@ namespace NewsBuddy
             InlineUIContainer nb = new InlineUIContainer(nButton, rtbScript.CaretPosition);
             nb.Name = String.Format("NBblock{0}", NBlocks.Count-1);
             nb.Unloaded += NBbutton_Deleted;
+            
             NBbuttons.Add(nb);
 
             e.Handled = true;
@@ -110,7 +111,7 @@ namespace NewsBuddy
             svD.InitialDirectory = Settings.Default.ScriptsDirectory;
             if ((bool)svD.ShowDialog())
             {
-                int prevOffset = 0;
+                
                 int clipIndex = 0;
                 int sounderIndex = 0;
 
@@ -135,8 +136,8 @@ namespace NewsBuddy
                             // FLOWDOCUMENT AND FIND THEM LIKE THIS, THEN SET THEIR TEXTPOINTER TO THE INSERTION POINT BEFORE
                             // THE PARAGRAPH, BECAUSE THAT HAS TO BE THE END OF THE PREVIOUS ELEMENT MOTHERFUUUUCKEEERRR. RIGHT?
                             // OR MAYBE JUST GO TO THE VERY OUSIDE OF THE INLINES OR SOMETHING.
-                            //NButton child = NBbutt.Child as NButton;
-                            //child.file.textPointer = paragraph.ContentStart.GetNextInsertionPosition(LogicalDirection.Backward)
+                            (NBbutt.Child as NButton).file.locator.textPointer = paragraph.ContentStart.GetNextInsertionPosition(LogicalDirection.Backward);
+                            //child.file.textPointer = paragraph.ContentStart.GetNextInsertionPosition(LogicalDirection.Backward);
                             paragraph.Inlines.Remove(NBbutt);
                         }
                     }
@@ -174,9 +175,13 @@ namespace NewsBuddy
                     } else
                     {
                         string repname = nbL.GetIDc(nbL.file, clipIndex);
+
                         rtbScript.CaretPosition = nbL.textPointer;
+
                         rtbScript.CaretPosition.InsertTextInRun(repname);
+
                         Trace.WriteLine("Inserted Clip " + System.IO.Path.GetFileNameWithoutExtension(repname) + " from index " + i + " with ID Number" + clipIndex);
+
                         clipIndex += 1;
                     }
 
@@ -398,7 +403,7 @@ namespace NewsBuddy
             {
                 foreach (NBfile nb in newNBs)
                 {
-                    // need to add the replaced NBs to the NBlocks.
+                    
                     NBfileLocator nbLoc = new NBfileLocator();
 
                     nbLoc.textPointer = nb.textPointer;
@@ -417,6 +422,7 @@ namespace NewsBuddy
         }
 
 
+        // NEED TO FIGURE OUT HOW TO MAKE THIS NOT EFFECT BUTTONS WHEN THEY ARE MOVED IN THE TEXT.
         void NBbutton_Deleted(object sender, RoutedEventArgs e)
         {
             if (rtbScript.IsLoaded)
@@ -437,6 +443,8 @@ namespace NewsBuddy
 
         }
 
+
+        // SEARCH FUNCTIONALITY
         public TextRange FindTextInRange(TextRange searchRange, string searchText)
         {
             int offset = searchRange.Text.IndexOf(searchText, StringComparison.OrdinalIgnoreCase);
@@ -472,6 +480,8 @@ namespace NewsBuddy
             }
             return position;
         }
+
+
 
         private void Page_Unloaded(object sender, RoutedEventArgs e)
         {
