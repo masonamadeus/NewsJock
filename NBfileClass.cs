@@ -24,10 +24,6 @@ namespace NewsBuddy
 
         MainWindow homeBase = Application.Current.Windows[0] as MainWindow;
 
-        public int insertOffset;
-
-        public int index;
-
         public TextPointer textPointer;
 
         public NBfileLocator locator;
@@ -35,49 +31,59 @@ namespace NewsBuddy
 
         public void NBPlay(bool isSounder)
         {
-            if (isSounder)
+            if (File.Exists(NBPath))
             {
-                if (homeBase.SoundersPlayer.Source != null)
+                if (isSounder)
                 {
-                    homeBase.SoundersPlayer.Stop();
-                    
-                    if (homeBase.SoundersPlayer.Source != new Uri(NBPath))
+                    if (homeBase.SoundersPlayer.Source != null)
                     {
-                        homeBase.SoundersPlayer.Source = new Uri(NBPath);
-                        homeBase.SoundersPlayer.Play();
-                    } else 
-                    {
-                        homeBase.SoundersPlayer.Source = null;
+                        homeBase.SoundersPlayer.Stop();
+
+                        if (homeBase.SoundersPlayer.Source != new Uri(NBPath))
+                        {
+                            homeBase.SoundersPlayer.Source = new Uri(NBPath);
+                            homeBase.SoundersPlayer.Play();
+                        }
+                        else
+                        {
+                            homeBase.SoundersPlayer.Source = null;
+                        }
+
                     }
-                    
-                }
                     else
                     {
                         homeBase.SoundersPlayer.Source = new Uri(NBPath);
                         homeBase.SoundersPlayer.Play();
                     }
-            }
-            else
-            {
-                if (homeBase.ClipsPlayer.Source != null)
+                }
+                else
                 {
-                    homeBase.ClipsPlayer.Stop();
-                    if (homeBase.ClipsPlayer.Source != new Uri(NBPath))
+                    if (homeBase.ClipsPlayer.Source != null)
+                    {
+                        homeBase.ClipsPlayer.Stop();
+                        if (homeBase.ClipsPlayer.Source != new Uri(NBPath))
+                        {
+                            homeBase.ClipsPlayer.Source = new Uri(NBPath);
+                            homeBase.ClipsPlayer.Play();
+                        }
+                        else
+                        {
+                            homeBase.ClipsPlayer.Source = null;
+                        }
+
+                    }
+                    else
                     {
                         homeBase.ClipsPlayer.Source = new Uri(NBPath);
                         homeBase.ClipsPlayer.Play();
-                    } else
-                    {
-                        homeBase.ClipsPlayer.Source = null;
                     }
-                    
-                } 
-                else
-                {
-                    homeBase.ClipsPlayer.Source = new Uri(NBPath);
-                    homeBase.ClipsPlayer.Play();
                 }
             }
+            else
+            {
+                MessageBox.Show("Error. The file is missing. It may have been moved, renamed, or deleted.");
+            }
+            
         }
 
         public NButton NBbutton()
@@ -101,6 +107,27 @@ namespace NewsBuddy
 
             return NBbutton;
         }
+
+        public string GetIDs(NBfile nb, int index)
+        {
+            string repName;
+
+
+            repName = String.Format("%@!${0}", index) + nb.NBPath + String.Format("$@!%{0}", index);
+
+
+            return repName;
+        }
+
+        public string GetIDc(NBfile nb, int index)
+        {
+            string repName;
+
+            repName = String.Format("%@!#{0}", index) + nb.NBPath + String.Format("#@!%{0}", index);
+
+            return repName;
+        }
+
     }
 
 }

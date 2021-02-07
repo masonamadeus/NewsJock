@@ -12,7 +12,7 @@ namespace NewsBuddy
         public int offset;
         public NBfile file;
         //public string repName;
-        public TextPointer textPointer;
+        //public TextPointer textPointer;
 
         public string GetIDs(NBfile nb, int index)
         {

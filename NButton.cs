@@ -4,6 +4,7 @@ using System.Text;
 using System.Windows;
 using System.IO;
 using System.Windows.Controls;
+using System.Windows.Documents;
 
 namespace NewsBuddy
 {
@@ -11,5 +12,6 @@ namespace NewsBuddy
     {
         public NBfileLocator locator;
         public NBfile file;
+        public TextPointer textPointer;
     }
 }
