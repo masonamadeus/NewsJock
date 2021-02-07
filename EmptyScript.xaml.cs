@@ -28,8 +28,23 @@ namespace NewsBuddy
             rtbScript.AddHandler(RichTextBox.DropEvent, new DragEventHandler(Script_Drop), true);
             rtbScript.IsDocumentEnabled = true;
             selFontSize.ItemsSource = new List<Double>() { 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 50, 60, 72 };
+
+            MonitorDirectories(Settings.Default.ClipsDirectory);
+            MonitorDirectories(Settings.Default.SoundersDirectory);
         }
 
+        FileSystemWatcher fsP;
+
+        private void MonitorDirectories(string dirPath)
+        {
+            fsP = new FileSystemWatcher(dirPath, "*.*");
+
+            fsP.EnableRaisingEvents = true;
+            fsP.IncludeSubdirectories = true;
+
+            fsP.Renamed += new RenamedEventHandler(NBrenamed);
+            fsP.Deleted += new FileSystemEventHandler(NBdeleted);
+        }
 
         private void Script_DragOver(object sender, DragEventArgs e)
         {
@@ -41,23 +56,35 @@ namespace NewsBuddy
 
         }
 
+        protected override void OnGiveFeedback(GiveFeedbackEventArgs e)
+        {
+            base.OnGiveFeedback(e);
+            if (e.Effects.HasFlag(DragDropEffects.Copy))
+            {
+                Mouse.SetCursor(Cursors.IBeam);
+            }
+        }
+
         private void Script_Drop(object sender, DragEventArgs e)
         {
-            RichTextBox rtb = sender as RichTextBox;
-            NBfile passNB = new NBfile();
-
-            passNB = e.Data.GetData("NBfile") as NBfile;
-
-            NButton nButton = passNB.NBbutton();
-            nButton.file = passNB;
-
-            InlineUIContainer nb = new InlineUIContainer(nButton, rtbScript.CaretPosition)
+            //RichTextBox rtb = sender as RichTextBox;
+            if (e.Data.GetDataPresent("NBfile"))
             {
-                Tag = passNB
-            };
+                NBfile passNB = new NBfile();
 
+                passNB = e.Data.GetData("NBfile") as NBfile;
 
-            e.Handled = true;
+                NButton nButton = passNB.NBbutton();
+                nButton.file = passNB;
+
+                InlineUIContainer nb = new InlineUIContainer(nButton, rtbScript.CaretPosition)
+                {
+                    Tag = passNB
+                };
+
+                e.Handled = true;
+            }
+
         }
 
         private void selFontSize_TextChanged(object sender, TextChangedEventArgs e)
@@ -66,7 +93,7 @@ namespace NewsBuddy
             {
                 rtbScript.Selection.ApplyPropertyValue(Inline.FontSizeProperty, selFontSize.Text);
             }
-            
+
         }
 
         private void rtbScript_SelectionChanged(object sender, RoutedEventArgs e)
@@ -77,7 +104,7 @@ namespace NewsBuddy
             btnItal.IsChecked = (temp != DependencyProperty.UnsetValue) && (temp.Equals(FontStyles.Italic));
             temp = rtbScript.Selection.GetPropertyValue(Inline.TextDecorationsProperty);
             btnUndr.IsChecked = (temp != DependencyProperty.UnsetValue) && (temp.Equals(TextDecorations.Underline));
-
+           
             temp = rtbScript.Selection.GetPropertyValue(Inline.FontSizeProperty);
 
             double size;
@@ -130,8 +157,7 @@ namespace NewsBuddy
                     }
                 }
 
-                // FOR EVERY NB WE FOUND, WE MUST HAVE FOUND AN INLINE. WE USE THE NUMBER FROM THE NB COUNT 
-                // TO CONTROL THE FOR LOOP BECAUSE WE'RE GOING TO BE DIRECTLY AFFECTING THE LIST OF INLINES. <turns out I was wrong on that.
+
                 for (int i = 0; i < oldInlines.Count; i++)
                 {
                     List<Object> blocks = new List<Object>();
@@ -153,14 +179,14 @@ namespace NewsBuddy
                             paragraph.Inlines.Remove(NBbutt);
                         }
                     }
-                }              
+                }
 
                 // then go through and do the replacement. we're doing it in this order so that text pointers dont get too frigged off.
 
                 for (int ii = 0; ii < NBs.Count; ii++)
                 {
                     NBfile nb = NBs[ii];
-                    
+
                     if (nb.NBisSounder)
                     {
                         string repname = nb.GetIDs(nb, sounderIndex);
@@ -172,7 +198,8 @@ namespace NewsBuddy
                         Trace.WriteLine("Inserted Sounder " + System.IO.Path.GetFileNameWithoutExtension(repname) + " from index " + ii + " with ID Number " + sounderIndex);
 
                         sounderIndex += 1;
-                    } else
+                    }
+                    else
                     {
                         string repname = nb.GetIDc(nb, clipIndex);
 
@@ -198,7 +225,7 @@ namespace NewsBuddy
                 range.Save(fs, DataFormats.XamlPackage);
                 fs.Close();
 
-                // RestoreNBfiles(true);
+                RestoreNBfiles(true);
 
             }
 
@@ -224,7 +251,6 @@ namespace NewsBuddy
 
         }
 
-
         public void RestoreNBfiles(bool recreate)
         {
             List<NBfile> newNBs = new List<NBfile>();
@@ -236,7 +262,7 @@ namespace NewsBuddy
             int clipsIndex = 0;
 
 
-// SOUNDERS DISCOVERY SECTION */ /*
+            // SOUNDERS DISCOVERY SECTION */ /*
 
             while (!foundAllSounders)
             {
@@ -270,17 +296,17 @@ namespace NewsBuddy
                         Trace.WriteLine("NBKey = " + _NBPathS);
                         Trace.WriteLine("NBfile Path = " + replS.NBPath);
                         Trace.WriteLine("NBfile Name = " + replS.NBName);
-                        Trace.WriteLine("Checked Sounders Index: "+soundersIndex.ToString());
+                        Trace.WriteLine("Checked Sounders Index: " + soundersIndex.ToString());
 
                         soundersIndex += 1;
 
                     }
                     else { MessageBox.Show("Key2 was blank in the Sounders discovery secion. wtf? This is a bug. Email Mason about it."); }
                 }
-                else { foundAllSounders = true; Trace.WriteLine("Found All Sounders."); }             
+                else { foundAllSounders = true; Trace.WriteLine("Found All Sounders."); }
             }
 
-// CLIPS DISCOVERY SECTION */ /*
+            // CLIPS DISCOVERY SECTION */ /*
 
 
             while (!foundAllClips)
@@ -313,7 +339,7 @@ namespace NewsBuddy
 
                         newNBs.Add(replC);
 
-                        
+
                         Trace.WriteLine("NBKey = " + _NBPathC);
                         Trace.WriteLine("NBfile Path = " + replC.NBPath);
                         Trace.WriteLine("NBfile Name = " + replC.NBName);
@@ -324,7 +350,7 @@ namespace NewsBuddy
                     }
                     else { MessageBox.Show("Key2 was blank in the Clips discovery secion. wtf? This is a bug. Email Mason about it."); }
                 }
-                
+
                 else { foundAllClips = true; Trace.WriteLine("Found All Clips"); }
             }
 
@@ -332,7 +358,7 @@ namespace NewsBuddy
 
 
             // SOUNDERS DELETION SECTION */ 
-            
+
 
             for (int i = soundersIndex; i >= 0; i--)
             {
@@ -361,9 +387,9 @@ namespace NewsBuddy
                 else { Trace.WriteLine("Sounders Deletion Completed."); }
             }
 
-            
 
- // CLIPS DELETION SECTION */ /*
+
+            // CLIPS DELETION SECTION */ /*
 
 
             for (int y = clipsIndex; y >= 0; y--)
@@ -393,9 +419,9 @@ namespace NewsBuddy
                 else { Trace.WriteLine("Clips Deletion Completed."); }
             }
 
-            
+
             // RECREATION SECTION
-            
+
 
             if (recreate)
             {
@@ -412,22 +438,18 @@ namespace NewsBuddy
                     else
                     {
                         var bc = new BrushConverter();
-                        
+
                         InlineUIContainer newFailure = new InlineUIContainer(new Button() { Content = "ERROR", Background = (Brush)bc.ConvertFrom("#ff0000") }, nb.textPointer);
                     }
 
 
                 }
 
-            }         
+            }
 
         }
 
-
-
-
         //  SEARCH FUNCTIONALITY VERSION 2
-
         public static TextRange FindStringRangeFromPosition(TextPointer position, string matchStr, bool isCaseSensitive = false)
         {
             int curIdx = 0;
@@ -516,6 +538,82 @@ namespace NewsBuddy
                 }
             }
             return null;
+        }
+
+        public void NBrenamed2(object sender, RenamedEventArgs e)
+        {
+            foreach (Paragraph para in rtbScript.Document.Blocks)
+            {
+                foreach (Inline inline in para.Inlines)
+                {
+                    if (inline.Tag is NBfile)
+                    {
+                        NBfile nb = inline.Tag as NBfile;
+                        if (nb.NBPath == e.OldFullPath)
+                        {
+                            nb.NBPath = e.FullPath;
+                            nb.NBName = System.IO.Path.GetFileNameWithoutExtension(e.FullPath);
+                        }
+                    }
+                }
+            }
+        }
+
+        void NBrenamed(object sender, RenamedEventArgs e)
+        {
+            this.Dispatcher.Invoke(() =>
+            {
+                NBrenamed2(sender, e);
+            });
+        }
+        void NBdeleted(object sender, FileSystemEventArgs e)
+        {
+            this.Dispatcher.Invoke(() =>
+            {
+                NBdeleted2(sender, e);
+            });
+        }
+
+        public void NBdeleted2(object sender, FileSystemEventArgs e)
+        {
+            List<Inline> deletedNBs = new List<Inline>();
+
+
+            foreach (Paragraph para in rtbScript.Document.Blocks)
+            {
+
+                foreach (Inline inline in para.Inlines)
+                {
+                    if (inline.Tag is NBfile)
+                    {
+                        NBfile nb = inline.Tag as NBfile;
+                        if (nb.NBPath == e.FullPath)
+                        {
+                            deletedNBs.Add(inline);
+                        }
+                    }
+                }
+            }
+
+            for (int d = 0; d < deletedNBs.Count; d++)
+            {
+                Inline del = deletedNBs[d];
+                List<Paragraph> blocks = new List<Paragraph>();
+                foreach (Paragraph block in rtbScript.Document.Blocks)
+                {
+                    blocks.Add(block);
+                }
+
+                for (int dd = 0; dd < blocks.Count; dd++)
+                {
+                    Paragraph bl = blocks[dd];
+                    if (bl.Inlines.Contains(del))
+                    {
+                        bl.Inlines.Remove(del);
+                    }
+                }
+
+            }
         }
 
     }

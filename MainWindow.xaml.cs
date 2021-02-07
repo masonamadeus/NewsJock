@@ -196,11 +196,13 @@ namespace NewsBuddy
             this.Dispatcher.Invoke(() =>
             {
                 DisplayDirectories();
+                
             
             });
             Trace.WriteLine("Reload called. Change detected");           
 
         }
+
 
         #endregion
 
