@@ -70,8 +70,17 @@ namespace NewsBuddy
             if (dirClipsPath == dflt || dirScriptsPath == dflt || dirSoundersPath == dflt || dirTemplatesPath == dflt)
             {
                 DirConfig dlg = new DirConfig();
-                dlg.ShowDialog();
-                DisplayDirectories();
+                if ((bool)dlg.ShowDialog())
+                {
+                    DisplayDirectories();
+                    MonitorDirectory(dirClipsPath);
+                    MonitorDirectory(dirSoundersPath);
+                    MonitorDirectory(dirScriptsPath);
+                } else
+                {
+                    MessageBox.Show("You can't just leave without configuring your directories, that's wicked rude. (Also, it breaks the program. Try launching again).");
+                }
+
 
             }
             else
@@ -440,7 +449,7 @@ namespace NewsBuddy
 
         private void sndrTick(object sender, EventArgs e)
         {
-            if (SoundersPlayer.NaturalDuration.HasTimeSpan)
+            if (SoundersPlayer.NaturalDuration.HasTimeSpan && SoundersPlayer.Position != SoundersPlayer.NaturalDuration.TimeSpan)
             {
                 int sndDur = (int)Math.Ceiling(SoundersPlayer.NaturalDuration.TimeSpan.TotalSeconds);
                 int sndPos = (int)Math.Ceiling(SoundersPlayer.Position.TotalSeconds);
@@ -456,6 +465,7 @@ namespace NewsBuddy
                 SoundersControl.Visibility = Visibility.Collapsed;
                 lblSounders.Content = "Sounders";
                 sndrTimeLeft.Text = "0:00";
+                SoundersPlayer.Source = null;
             }
 
         }
@@ -470,7 +480,7 @@ namespace NewsBuddy
 
         private void clipTick(object sender, EventArgs e)
         {
-            if (ClipsPlayer.NaturalDuration.HasTimeSpan)
+            if (ClipsPlayer.NaturalDuration.HasTimeSpan && ClipsPlayer.Position != ClipsPlayer.NaturalDuration.TimeSpan)
             {
                 int clpDur = (int)Math.Ceiling(ClipsPlayer.NaturalDuration.TimeSpan.TotalSeconds);
                 int clpPos = (int)Math.Ceiling(ClipsPlayer.Position.TotalSeconds);
@@ -487,6 +497,7 @@ namespace NewsBuddy
                 ClipsControl.Visibility = Visibility.Collapsed;
                 lblClips.Content = "Clips";
                 clipTimeLeft.Text = "0:00";
+                ClipsPlayer.Source = null;
             }
         }
 
