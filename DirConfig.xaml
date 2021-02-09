@@ -9,9 +9,10 @@
         ResizeMode="CanResizeWithGrip"
         WindowStartupLocation="CenterOwner"
         Background="DimGray"
-        MinHeight="320"
+        MinHeight="360"
         MinWidth="450"     
-        Title="NewsJock Settings" Height="300" Width="400">
+        Title="NewsJock Settings" Height="460" Width="400"
+        FontFamily="{StaticResource OpenSans}">
     <Grid>
     <DockPanel>
             <StackPanel DockPanel.Dock="Top">
@@ -35,9 +36,21 @@
                     <TextBox x:Name="selDirScript" Margin="10,0,10,0"  TextWrapping="NoWrap" AcceptsReturn="False" Width="300" />
                     <Button x:Name="srchScript" Click="srchScript_Click">Select Folder</Button>
                 </WrapPanel>
+                <CheckBox Name="btnSpell" HorizontalAlignment="Left" Margin="10,12,0,0" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=SpellCheck, Mode=TwoWay}">Script Spell Check</CheckBox>
+                
+                <CheckBox Name="btnClean" HorizontalAlignment="Left" Margin="10,12,0,0" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=CleanUpToggle, Mode=TwoWay}">Keep Scripts Directory Clean</CheckBox>
+                <WrapPanel Background="DarkGray" Margin="20,10,20,10" Visibility="{Binding ElementName=btnClean, Converter={StaticResource BooleanToVisibilityConverter}, Path=IsChecked}">
+                    <Label Margin="10,0,0,0" Content="Move scripts to the 'Old Scripts' folder if I haven't opened them for: " />
+                    <WrapPanel VerticalAlignment="Center">                  
+                        <ComboBox Name="bxCleanDays" HorizontalAlignment="Left" Margin="30,1,0,10"  SelectedItem="{Binding Source={x:Static local:Settings.Default}, Path=CleanUpDays, Mode=TwoWay}"/>
+                    <Label Content="days" Padding="7,8,0,0"/>
+                    </WrapPanel>
+
+                </WrapPanel>
+
             </StackPanel>
         <WrapPanel DockPanel.Dock="Bottom" HorizontalAlignment="Right" Margin="0,20,10,0">
-            
+                
             <Button Padding="5" Name="okButton" Click="okButton_Click" IsDefault="True" Margin="5">OK</Button>
            
             <Button Padding="5" Name="cancelButton" Margin="5" Click="cancelButton_Click">Cancel</Button>

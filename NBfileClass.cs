@@ -42,6 +42,7 @@ namespace NewsBuddy
                         if (homeBase.SoundersPlayer.Source != new Uri(NBPath))
                         {
                             homeBase.SoundersPlayer.Source = new Uri(NBPath);
+
                             homeBase.SoundersPlayer.Play();
                         }
                         else

@@ -11,19 +11,68 @@
       >
 
     <DockPanel>
-        <Menu DockPanel.Dock="Top">
-            <MenuItem Header="File">
-                <MenuItem Header="Save" Name="mnuSave" Click="mnuSave_Click"/>
-                <MenuItem Header="Open" Name="mnuOpen" Click="mnuOpen_Click"/>
-            </MenuItem>
+        <Menu DockPanel.Dock="Top" HorizontalAlignment="Stretch">
+
+            <Menu.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <DockPanel HorizontalAlignment="Stretch"/>
+                </ItemsPanelTemplate>
+            </Menu.ItemsPanel>
+
+            <MenuItem Header="Open" Name="mnuOpen" Margin="0,0,0,0" Click="mnuOpen_Click"/>
+                <MenuItem Header="Save" Name="mnuSave" Margin="0,0,0,0" Click="mnuSave_Click"/>
+                
+            <MenuItem Header="Save as Template" Name="mnuSaveTemplate" HorizontalAlignment="Right" Margin="0,0,8,0" Click="mnuSaveTemplate_Click"/>
         </Menu>
-        <ToolBar DockPanel.Dock="Top" Background="LightGray" ToolBarTray.IsLocked="true">
-            <ToggleButton x:Name="btnBold" Command="EditingCommands.ToggleBold">Bold</ToggleButton>
-            <ToggleButton x:Name="btnItal" Command="EditingCommands.ToggleItalic">Italic</ToggleButton>
-            <ToggleButton x:Name="btnUndr" Command="EditingCommands.ToggleUnderline">Underline</ToggleButton>
-            <ComboBox x:Name="selFontSize" Width="50" IsEditable="true" TextBoxBase.TextChanged="selFontSize_TextChanged"/>
+        <ToolBar DockPanel.Dock="Top"
+                 Background="LightGray" 
+                 ToolBarTray.IsLocked="true" 
+                 FontFamily="{StaticResource FA}"
+                 FontSize="18"
+                 Padding="0,3,0,3">
+
+            <ToggleButton x:Name="btnBold" 
+                          Command="EditingCommands.ToggleBold" 
+                          Margin="15,0,2,0" Padding="7,2,7,2" 
+                          BorderThickness="2" BorderBrush="DimGray"></ToggleButton>
+            <Separator Margin="8,0,8,0"/>
+            <ToggleButton x:Name="btnItal" Command="EditingCommands.ToggleItalic"
+                           Padding="8,2,8,2" 
+                          BorderThickness="2" BorderBrush="DimGray"></ToggleButton>
+            <Separator Margin="8,0,8,0"/>
+            <ToggleButton x:Name="btnUndr" Command="EditingCommands.ToggleUnderline" Margin="0,0,0,0"
+                           Padding="6,2,6,2" 
+                          BorderThickness="2" BorderBrush="DimGray"></ToggleButton>
+            <Separator Margin="8,0,15,0"/>
+            <Label></Label><ComboBox x:Name="selFontSize" Margin="7,0,0,0" Width="50" IsEditable="true" TextBoxBase.TextChanged="selFontSize_TextChanged"/>
+            <Separator Margin="18,0,18,0"/>
+            <ToggleButton x:Name="btnBullet" Command="EditingCommands.ToggleBullets"  Padding="5,2,5,2" 
+                          BorderThickness="2" BorderBrush="DimGray"></ToggleButton>
+            <Separator Margin="8,0,8,0"/>
+            <ToggleButton x:Name="btnNumber" Command="EditingCommands.ToggleNumbering" Padding="5,2,5,2" 
+                          BorderThickness="2" BorderBrush="DimGray"></ToggleButton>
+            <Separator Margin="18,0,18,0"/>
+            <ToggleButton x:Name="btnAleft" Command="EditingCommands.AlignLeft" Margin="0,0,0,0"
+                          Padding="5,2,5,2" 
+                          BorderThickness="2" BorderBrush="DimGray"></ToggleButton>
+            <Separator Margin="8,0,8,0"/>
+            <ToggleButton x:Name="btnAcenter" Command="EditingCommands.AlignCenter"
+                           Padding="5,2,5,2" 
+                          BorderThickness="2" BorderBrush="DimGray"></ToggleButton>
+            <Separator Margin="8,0,8,0"/>
+            <ToggleButton x:Name="btnAright" Command="EditingCommands.AlignRight"
+                           Padding="5,2,5,2" 
+                          BorderThickness="2" BorderBrush="DimGray"></ToggleButton>
+
         </ToolBar>
-        <RichTextBox x:Name="rtbScript" AllowDrop="True" SelectionChanged="rtbScript_SelectionChanged" FontSize="18" Block.LineHeight="2">
+        <RichTextBox x:Name="rtbScript"
+                     AllowDrop="True"
+                     SelectionChanged="rtbScript_SelectionChanged"
+                     FontSize="18"
+                     Block.LineHeight="2"
+                     SpellCheck.IsEnabled="{Binding Source={x:Static local:Settings.Default},Path=SpellCheck}"
+                     FontFamily="{StaticResource OpenSans}"
+                     VerticalScrollBarVisibility="Auto">
 
             <FlowDocument>
 

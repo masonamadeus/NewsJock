@@ -1,12 +1,37 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWPF>true</UseWPF>
+    <StartupObject>NewsBuddy.App</StartupObject>
+    <NoWin32Manifest>true</NoWin32Manifest>
+    <AssemblyName>NewsJock v0.1</AssemblyName>
+    <Version>0.1.0</Version>
+    <Authors>Mason Amadeus</Authors>
+    <Company>Saga Communications</Company>
+    <Description>A standalone text editor, with the capability of adding and playing back inline audio files. Designed to aid in the presentation of audio news.</Description>
+    <Copyright>2021</Copyright>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>Mason Amadeus Key.pfx</AssemblyOriginatorKeyFile>
+    <ApplicationIcon>NewsJockIcon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <OutputPath>C:\Users\Mason\Desktop\NewsJock\Build1\</OutputPath>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="resources\fonts\fontawesome-free-5.15.2-desktop\**" />
+    <EmbeddedResource Remove="resources\fonts\fontawesome-free-5.15.2-desktop\**" />
+    <None Remove="resources\fonts\fontawesome-free-5.15.2-desktop\**" />
+    <Page Remove="resources\fonts\fontawesome-free-5.15.2-desktop\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="resources\fonts\fontawesome\FontAwesome Regular.otf" />
+    <None Remove="resources\fonts\fontawesome\FontAwesome Solid.otf" />
     <None Remove="resources\fonts\OpenSans-Bold.ttf" />
     <None Remove="resources\fonts\OpenSans-BoldItalic.ttf" />
     <None Remove="resources\fonts\OpenSans-ExtraBold.ttf" />
@@ -24,6 +49,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="resources\fonts\fontawesome\FontAwesome Regular.otf">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="resources\fonts\fontawesome\FontAwesome Solid.otf">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="resources\fonts\OpenSans-Bold.ttf">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>

@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.IO;
 using System.Windows.Data;
+using System.Diagnostics;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -25,6 +26,7 @@ namespace NewsBuddy
             selDirClip.Text = Settings.Default.ClipsDirectory;
             selDirSounder.Text = Settings.Default.SoundersDirectory;
             selDirScript.Text = Settings.Default.ScriptsDirectory;
+            bxCleanDays.ItemsSource = new List<double> { 1, 2, 3, 4, 5, 6, 7, 10, 14, 30 };
 
         }
 
@@ -35,8 +37,15 @@ namespace NewsBuddy
             Settings.Default.ClipsDirectory = selDirClip.Text;
             Settings.Default.SoundersDirectory = selDirSounder.Text;
             Settings.Default.ScriptsDirectory = selDirScript.Text;
-            string templateDir = Settings.Default.ScriptsDirectory + "/Templates";
+            string templateDir = selDirScript.Text + @"\Templates";
+
             Settings.Default.TemplatesDirectory = templateDir;
+
+            Trace.WriteLine(Settings.Default.TemplatesDirectory);
+            Trace.WriteLine(Settings.Default.ScriptsDirectory);
+            Trace.WriteLine(Settings.Default.SoundersDirectory);
+            Trace.WriteLine(Settings.Default.ClipsDirectory);
+
             Settings.Default.Save();
 
             Directory.CreateDirectory(Settings.Default.ClipsDirectory);

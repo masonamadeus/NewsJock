@@ -21,13 +21,18 @@ namespace NewsBuddy
     {
         //List<InlineUIContainer> NBbuttons = new List<InlineUIContainer>();
 
-        public Page1()
+        public Page1(bool fromTemplate, string uri = "")
         {
             InitializeComponent();
             rtbScript.AddHandler(RichTextBox.DragOverEvent, new DragEventHandler(Script_DragOver), true);
             rtbScript.AddHandler(RichTextBox.DropEvent, new DragEventHandler(Script_Drop), true);
             rtbScript.IsDocumentEnabled = true;
             selFontSize.ItemsSource = new List<Double>() { 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 50, 60, 72 };
+
+            if (fromTemplate)
+            {
+                OpenFromTemplate(uri);
+            }
 
             MonitorDirectories(Settings.Default.ClipsDirectory);
             MonitorDirectories(Settings.Default.SoundersDirectory);
@@ -98,19 +103,53 @@ namespace NewsBuddy
 
         private void rtbScript_SelectionChanged(object sender, RoutedEventArgs e)
         {
-            object temp = rtbScript.Selection.GetPropertyValue(Inline.FontWeightProperty);
-            btnBold.IsChecked = (temp != DependencyProperty.UnsetValue) && (temp.Equals(FontWeights.Bold));
-            temp = rtbScript.Selection.GetPropertyValue(Inline.FontStyleProperty);
-            btnItal.IsChecked = (temp != DependencyProperty.UnsetValue) && (temp.Equals(FontStyles.Italic));
-            temp = rtbScript.Selection.GetPropertyValue(Inline.TextDecorationsProperty);
-            btnUndr.IsChecked = (temp != DependencyProperty.UnsetValue) && (temp.Equals(TextDecorations.Underline));
-           
-            temp = rtbScript.Selection.GetPropertyValue(Inline.FontSizeProperty);
+            try
+            {
+                object temp = rtbScript.Selection.GetPropertyValue(Inline.FontWeightProperty);
+                btnBold.IsChecked = (temp != DependencyProperty.UnsetValue) && (temp.Equals(FontWeights.Bold));
+                temp = rtbScript.Selection.GetPropertyValue(Inline.FontStyleProperty);
+                btnItal.IsChecked = (temp != DependencyProperty.UnsetValue) && (temp.Equals(FontStyles.Italic));
+                temp = rtbScript.Selection.GetPropertyValue(Inline.TextDecorationsProperty);
+                btnUndr.IsChecked = (temp != DependencyProperty.UnsetValue) && (temp.Equals(TextDecorations.Underline));
 
-            double size;
+                temp = rtbScript.Selection.GetPropertyValue(Paragraph.TextAlignmentProperty);
+                btnAleft.IsChecked = (temp != DependencyProperty.UnsetValue) && (temp.Equals(TextAlignment.Left));
+                btnAcenter.IsChecked = (temp != DependencyProperty.UnsetValue) && (temp.Equals(TextAlignment.Center));
+                btnAright.IsChecked = (temp != DependencyProperty.UnsetValue) && (temp.Equals(TextAlignment.Right));
 
-            if (Double.TryParse(temp.ToString(), out size))
-            { selFontSize.Text = temp.ToString(); }
+                temp = rtbScript.Selection.GetPropertyValue(Inline.FontSizeProperty);
+                Paragraph startPara = rtbScript.Selection.Start.Paragraph;
+                Paragraph endPara = rtbScript.Selection.End.Paragraph;
+                if (startPara != null && (startPara.Parent is ListItem) && (endPara.Parent is ListItem) && object.ReferenceEquals(((ListItem)startPara.Parent).List, ((ListItem)endPara.Parent).List))
+                {
+                    TextMarkerStyle markerStyle = ((ListItem)startPara.Parent).List.MarkerStyle;
+                    if (markerStyle == TextMarkerStyle.Disc)
+                    {
+                        btnBullet.IsChecked = true;
+                        btnNumber.IsChecked = false;
+                    }
+                    else if (markerStyle == TextMarkerStyle.Decimal)
+                    {
+                        btnNumber.IsChecked = true;
+                        btnBullet.IsChecked = false;
+                    }
+                }
+                else
+                {
+                    btnNumber.IsChecked = false;
+                    btnBullet.IsChecked = false;
+                }
+
+                double size;
+
+                if (Double.TryParse(temp.ToString(), out size))
+                { selFontSize.Text = temp.ToString(); }
+
+            } catch
+            {
+                return;
+            }
+
         }
 
         private void mnuSave_Click(object sender, RoutedEventArgs e)
@@ -119,7 +158,9 @@ namespace NewsBuddy
             {
                 Filter = "xaml files (*.xaml)|*.xaml",
                 DefaultExt = "xaml",
-                InitialDirectory = Settings.Default.ScriptsDirectory
+                InitialDirectory = Settings.Default.ScriptsDirectory,
+                RestoreDirectory = true,
+                Title = "Save Script"
             };
 
             if ((bool)svD.ShowDialog())
@@ -237,6 +278,9 @@ namespace NewsBuddy
             TextRange range;
             FileStream fs;
             VistaOpenFileDialog opn = new VistaOpenFileDialog();
+            opn.InitialDirectory = Settings.Default.ScriptsDirectory;
+            opn.RestoreDirectory = true;
+            opn.Title = "Open a Script";
             if ((bool)opn.ShowDialog())
             {
                 if (opn.CheckFileExists)
@@ -249,6 +293,19 @@ namespace NewsBuddy
                 }
             }
 
+        }
+
+        public void OpenFromTemplate(string uri)
+        {
+            TextRange range = new TextRange(rtbScript.Document.ContentStart, rtbScript.Document.ContentEnd);
+            FileStream fs;
+            if (File.Exists(uri))
+            {
+                fs = new FileStream(uri, FileMode.OpenOrCreate);
+                range.Load(fs, DataFormats.XamlPackage);
+                fs.Close();
+                RestoreNBfiles(true);
+            } else { MessageBox.Show("This file is busted. Sorry!"); }
         }
 
         public void RestoreNBfiles(bool recreate)
@@ -616,5 +673,127 @@ namespace NewsBuddy
             }
         }
 
+        private void mnuSaveTemplate_Click(object sender, RoutedEventArgs e)
+        {
+            Trace.WriteLine(Settings.Default.TemplatesDirectory);
+            VistaSaveFileDialog svD = new VistaSaveFileDialog
+            {
+                Filter = "xaml files (*.xaml)|*.xaml",
+                DefaultExt = "xaml",
+                InitialDirectory = Settings.Default.TemplatesDirectory,
+                RestoreDirectory = true,
+                Title = "Save Template"
+            };
+
+            if ((bool)svD.ShowDialog())
+            {
+                List<NBfile> NBs = new List<NBfile>();
+                List<Inline> oldInlines = new List<Inline>();
+
+
+                int clipIndex = 0;
+                int sounderIndex = 0;
+
+
+                // FIRST WE GO THROUGH, FIND ALL THE LOCATIONS OF THE EXISTING NB BUTTONS AND ADD THEIR FILES TO THE LIST NBs.
+                // WE ALSO ADD THE INLINES TO THEIR OWN LIST SO WE CAN DELETE THEM NEXT.
+                foreach (Paragraph para in rtbScript.Document.Blocks)
+                {
+                    foreach (Inline inline in para.Inlines)
+                    {
+                        if (inline.Tag is NBfile)
+                        {
+                            NBfile inlNB = inline.Tag as NBfile;
+                            NBfile newNB = new NBfile
+                            {
+                                NBName = inlNB.NBName,
+                                NBPath = inlNB.NBPath,
+                                NBisSounder = inlNB.NBisSounder,
+
+                                //THIS WILL GET THE INSERTION POSITION FOR THE REPLACEMENT NAME.
+                                textPointer = inline.ElementStart.GetNextInsertionPosition(LogicalDirection.Forward)
+                            };
+
+                            NBs.Add(newNB);
+                            oldInlines.Add(inline);
+                        }
+                    }
+                }
+
+
+                for (int i = 0; i < oldInlines.Count; i++)
+                {
+                    List<Object> blocks = new List<Object>();
+
+                    Inline NBbutt = oldInlines[i];
+
+                    foreach (var block in rtbScript.Document.Blocks)
+                    {
+                        blocks.Add(block);
+                    }
+
+                    for (int x = 0; x < blocks.Count; x++)
+                    {
+                        Object block = blocks[x];
+                        var paragraph = block as Paragraph;
+
+                        if (paragraph.Inlines.Contains(NBbutt))
+                        {
+                            paragraph.Inlines.Remove(NBbutt);
+                        }
+                    }
+                }
+
+                // then go through and do the replacement. we're doing it in this order so that text pointers dont get too frigged off.
+
+                for (int ii = 0; ii < NBs.Count; ii++)
+                {
+                    NBfile nb = NBs[ii];
+
+                    if (nb.NBisSounder)
+                    {
+                        string repname = nb.GetIDs(nb, sounderIndex);
+
+                        rtbScript.CaretPosition = nb.textPointer;
+
+                        rtbScript.CaretPosition.InsertTextInRun(repname);
+
+                        Trace.WriteLine("Inserted Sounder " + System.IO.Path.GetFileNameWithoutExtension(repname) + " from index " + ii + " with ID Number " + sounderIndex);
+
+                        sounderIndex += 1;
+                    }
+                    else
+                    {
+                        string repname = nb.GetIDc(nb, clipIndex);
+
+                        rtbScript.CaretPosition = nb.textPointer;
+
+                        rtbScript.CaretPosition.InsertTextInRun(repname);
+
+                        Trace.WriteLine("Inserted Clip " + System.IO.Path.GetFileNameWithoutExtension(repname) + " from index " + ii + " with ID Number" + clipIndex);
+
+                        clipIndex += 1;
+                    }
+
+                }
+
+                // now its time to actually save the stupid thing out. savey savey save save.
+
+                string fileName = svD.FileName;
+                TextRange range;
+                FileStream fs;
+
+                range = new TextRange(rtbScript.Document.ContentStart, rtbScript.Document.ContentEnd);
+                fs = new FileStream(fileName, FileMode.Create);
+                range.Save(fs, DataFormats.XamlPackage);
+                fs.Close();
+
+                RestoreNBfiles(true);
+
+            }
+
+
+        }
     }
+    
 }

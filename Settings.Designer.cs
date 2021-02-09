@@ -25,7 +25,7 @@ namespace NewsBuddy {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("na")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Choose a Folder...")]
         public string SoundersDirectory {
             get {
                 return ((string)(this["SoundersDirectory"]));
@@ -37,7 +37,7 @@ namespace NewsBuddy {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("na")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Choose a Folder...")]
         public string ClipsDirectory {
             get {
                 return ((string)(this["ClipsDirectory"]));
@@ -49,7 +49,7 @@ namespace NewsBuddy {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("na")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Choose a Folder...")]
         public string TemplatesDirectory {
             get {
                 return ((string)(this["TemplatesDirectory"]));
@@ -61,13 +61,49 @@ namespace NewsBuddy {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("na")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Choose a Folder...")]
         public string ScriptsDirectory {
             get {
                 return ((string)(this["ScriptsDirectory"]));
             }
             set {
                 this["ScriptsDirectory"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool SpellCheck {
+            get {
+                return ((bool)(this["SpellCheck"]));
+            }
+            set {
+                this["SpellCheck"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool CleanUpToggle {
+            get {
+                return ((bool)(this["CleanUpToggle"]));
+            }
+            set {
+                this["CleanUpToggle"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("3")]
+        public double CleanUpDays {
+            get {
+                return ((double)(this["CleanUpDays"]));
+            }
+            set {
+                this["CleanUpDays"] = value;
             }
         }
     }

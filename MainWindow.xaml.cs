@@ -15,6 +15,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using System.Diagnostics;
 using Ookii.Dialogs.Wpf;
 
@@ -27,19 +28,21 @@ namespace NewsBuddy
     {
 
         FileSystemWatcher fs;
-        
+
         public string dirClipsPath = Settings.Default.ClipsDirectory;
         public string dirSoundersPath = Settings.Default.SoundersDirectory;
         public string dirScriptsPath = Settings.Default.ScriptsDirectory;
         public string dirTemplatesPath = Settings.Default.TemplatesDirectory;
-        public string[] audioExtensions = new[] { ".mp3", ".wav", ".wma", ".m4a", ".flac"};
+        public string[] audioExtensions = new[] { ".mp3", ".wav", ".wma", ".m4a", ".flac" };
+        public string scriptExtension = ".xaml";
+        readonly string dflt = "Choose a Folder...";
 
-        
 
         public MainWindow()
         {
             InitializeComponent();
             CheckDirectories();
+            CleanUpScripts();
             DisplayDirectories();
 
             // init the list of tab items
@@ -49,9 +52,12 @@ namespace NewsBuddy
 
             _tabAdd = new TabItem();
             _tabAdd.Header = "+";
-            _tabItems.Add(_tabAdd);
 
-            this.AddTabItem();
+            Frame addTab = new Frame();
+            addTab.Source = new Uri("/TabAdder.xaml", UriKind.Relative);
+            _tabAdd.Content = addTab;
+            _tabItems.Add(_tabAdd);
+            this.AddTabItem(true);
 
             DynamicTabs.DataContext = _tabItems;
             DynamicTabs.SelectedIndex = 0;
@@ -61,18 +67,22 @@ namespace NewsBuddy
 
         void CheckDirectories()
         {
-            if (dirClipsPath == "na" || dirScriptsPath == "na" || dirSoundersPath == "na" || dirTemplatesPath == "na")
+            if (dirClipsPath == dflt || dirScriptsPath == dflt || dirSoundersPath == dflt || dirTemplatesPath == dflt)
             {
                 DirConfig dlg = new DirConfig();
                 dlg.ShowDialog();
                 DisplayDirectories();
-                
-            } else
+
+            }
+            else
             {
                 MonitorDirectory(dirClipsPath);
                 MonitorDirectory(dirSoundersPath);
+                MonitorDirectory(dirScriptsPath);
             }
         }
+
+
 
         #region Drag&Drop Controls
 
@@ -89,8 +99,10 @@ namespace NewsBuddy
                     nbS.NBisSounder = true;
                     passer.SetData("NBfile", nbS);
                     DragDrop.DoDragDrop(sdrBx, passer, DragDropEffects.Copy);
-                } else {
-                    MessageBox.Show("File Not Ready, Try Again in a Sec..."); 
+                }
+                else
+                {
+                    MessageBox.Show("File Not Ready, Try Again in a Sec...");
                 }
             }
         }
@@ -107,7 +119,8 @@ namespace NewsBuddy
                 {
                     passer.SetData("NBfile", nbC);
                     DragDrop.DoDragDrop(lstbx, passer, DragDropEffects.Copy);
-                } else
+                }
+                else
                 {
                     MessageBox.Show("File Not Ready, Try Again in a Sec...");
                 }
@@ -120,6 +133,7 @@ namespace NewsBuddy
 
         List<NBfile> sounders = new List<NBfile>();
         List<NBfile> clips = new List<NBfile>();
+        List<ScriptFile> scripts = new List<ScriptFile>();
 
         public void DisplayDirectories()
         {
@@ -127,24 +141,30 @@ namespace NewsBuddy
 
             listSounders.ItemsSource = null;
             listClips.ItemsSource = null;
+            listScripts.ItemsSource = null;
             sounders.Clear();
             clips.Clear();
-            
+            scripts.Clear();
+
             dirClipsPath = Settings.Default.ClipsDirectory;
             dirSoundersPath = Settings.Default.SoundersDirectory;
             dirScriptsPath = Settings.Default.ScriptsDirectory;
             dirTemplatesPath = Settings.Default.TemplatesDirectory;
 
             if (Directory.Exists(dirClipsPath) && Directory.Exists(dirSoundersPath) && Directory.Exists(dirScriptsPath) && Directory.Exists(dirTemplatesPath))
-                {
+            {
 
-                    object[] AllClips = new DirectoryInfo(dirClipsPath).GetFiles()
-                    .Where(cf => audioExtensions.Contains(cf.Extension.ToLower()))
-                    .ToArray();
+                object[] AllClips = new DirectoryInfo(dirClipsPath).GetFiles()
+                .Where(cf => audioExtensions.Contains(cf.Extension.ToLower()))
+                .ToArray();
 
-                    object[] AllSounders = new DirectoryInfo(dirSoundersPath).GetFiles()
-                    .Where(sf => audioExtensions.Contains(sf.Extension.ToLower()))
-                    .ToArray();
+                object[] AllSounders = new DirectoryInfo(dirSoundersPath).GetFiles()
+                .Where(sf => audioExtensions.Contains(sf.Extension.ToLower()))
+                .ToArray();
+
+                object[] AllScripts = new DirectoryInfo(dirScriptsPath).GetFiles()
+                .Where(sf => scriptExtension.Contains(sf.Extension.ToLower()))
+                .ToArray();
 
                 foreach (object c in AllClips)
                 {
@@ -160,18 +180,31 @@ namespace NewsBuddy
                 {
                     NBfile newFile = new NBfile
                     {
-                    NBPath = s.ToString(),
-                    NBName = System.IO.Path.GetFileNameWithoutExtension(s.ToString())
+                        NBPath = s.ToString(),
+                        NBName = System.IO.Path.GetFileNameWithoutExtension(s.ToString())
                     };
 
                     sounders.Add(newFile);
                 }
+                foreach (object sc in AllScripts)
+                {
+                    ScriptFile newScript = new ScriptFile
+                    {
+                        SCpath = sc.ToString(),
+                        SCname = System.IO.Path.GetFileNameWithoutExtension(sc.ToString()),
+
+                    };
+                    Trace.WriteLine("Added Script: " + sc.ToString());
+                    scripts.Add(newScript);
+                }
 
                 listSounders.ItemsSource = sounders;
                 listClips.ItemsSource = clips;
-            } else
+                listScripts.ItemsSource = scripts;
+            }
+            else
             {
-                MessageBox.Show("Whoops. Something ain't right. Go to 'Edit > Settings > NewsJock Settings' and check the paths to your files!","Directories Don't Exist",MessageBoxButton.OK,MessageBoxImage.Error);
+                MessageBox.Show("Whoops. Something ain't right. Go to 'Edit > Settings > NewsJock Settings' and check the paths to your files!", "Directories Don't Exist", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -191,16 +224,62 @@ namespace NewsBuddy
         }
 
 
-        void ReloadDir(Object sender, FileSystemEventArgs e) 
+        void ReloadDir(Object sender, FileSystemEventArgs e)
         {
             this.Dispatcher.Invoke(() =>
             {
                 DisplayDirectories();
-                
-            
-            });
-            Trace.WriteLine("Reload called. Change detected");           
 
+
+            });
+            Trace.WriteLine("Reload called. Change detected");
+
+        }
+
+        void CleanUpScripts()
+        {
+            if (Settings.Default.CleanUpToggle)
+            {
+                Trace.WriteLine("cleaning up scripts");
+                FileInfo[] allScripts = new DirectoryInfo(dirScriptsPath).GetFiles(
+                    "*.xaml",SearchOption.TopDirectoryOnly);
+                List<FileInfo> oldScripts = new List<FileInfo>();
+
+                foreach(var f in allScripts)
+                {
+                    if ((DateTime.Today - f.LastAccessTime).TotalDays > Settings.Default.CleanUpDays)
+                    {
+                        Trace.WriteLine("Gonna get rid of file: " + f.Name);
+                        oldScripts.Add(f);
+                    }
+                }
+
+                if (oldScripts.Count > 0)
+                {
+
+                    string destPath = System.IO.Path.Combine(dirScriptsPath, "Old Scripts - " + DateTime.Now.ToString("MMM"));
+                    Directory.CreateDirectory(destPath);
+
+
+                    for (int i = 0; i < oldScripts.Count; i++)
+                    {
+
+                        FileInfo sc = oldScripts[i];
+                        string newPath = System.IO.Path.Combine(destPath, sc.Name);
+                        Trace.WriteLine("got rid of " + sc.Name);
+                        try
+                        {
+                            File.Move(sc.FullName, newPath);
+                        } catch
+                        {
+                            Trace.WriteLine("failed to remove old script " + sc.Name);
+                        }
+
+
+                    }
+
+                }
+            }
         }
 
 
@@ -211,39 +290,50 @@ namespace NewsBuddy
         private List<TabItem> _tabItems;
         TabItem _tabAdd;
 
-        private TabItem AddTabItem()
+
+
+        private TabItem AddTabItem(bool isDefault, string uri = "/EmptyScript.xaml")
         {
             int count = _tabItems.Count;
+            string tabName = String.Format("Script {0}", _tabItems.Count);
+
+            if (File.Exists(uri) && !isDefault)
+            {
+                tabName = System.IO.Path.GetFileNameWithoutExtension(uri);
+            }
+
             TabItem tab = new TabItem();
 
-            tab.Header = string.Format("Script {0}", count);
+            tab.Header = tabName;
             tab.Name = string.Format("Script{0}", count);
             tab.HeaderTemplate = DynamicTabs.FindResource("TabHeader") as DataTemplate;
 
             Frame newContent = new Frame();
-            Page1 newPage = new Page1();
-            newContent.Name = "txt";
-            newContent.Source = new Uri("/EmptyScript.xaml",UriKind.Relative);
+
+            if (File.Exists(uri) && !isDefault)
+            {
+                newContent.NavigationService.Navigate(new Page1(true, uri));
+            }
+            else
+            {
+                newContent.NavigationService.Navigate(new Page1(false));
+            }
+
             tab.Content = newContent;
+
 
             _tabItems.Insert(count - 1, tab);
 
             return tab;
         }
 
-        private void DynamicTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
+
+        public void AddNewTabFromFrame(string uri)
         {
-            TabItem tab = DynamicTabs.SelectedItem as TabItem;
-            if (tab != null && tab.Header != null)
-            {
-                if (tab.Header.Equals(_tabAdd.Header)) 
-                {
-                    DynamicTabs.DataContext = null;
-                    TabItem newTab = this.AddTabItem();
-                    DynamicTabs.DataContext = _tabItems;
-                    DynamicTabs.SelectedItem = newTab;
-                }
-            }
+            DynamicTabs.DataContext = null;
+            TabItem newTab = this.AddTabItem(false, uri);
+            DynamicTabs.SelectedItem = newTab;
+            DynamicTabs.DataContext = _tabItems;
         }
 
         private void btnDelTab_Click(object sender, RoutedEventArgs e)
@@ -258,25 +348,26 @@ namespace NewsBuddy
             {
                 if (_tabItems.Count < 3)
                 {
-                    MessageBox.Show("Cannot remove this tab, sorry.","Cannot Remove");
-                } else if (MessageBox.Show(string.Format("Are you sure you want to remove '{0}'?",tab.Header.ToString()),
-                    "Remove Tab", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                    MessageBox.Show("Cannot remove this tab, sorry.", "Cannot Remove");
+                }
+                else if (MessageBox.Show(string.Format("Are you sure you want to remove '{0}'?", tab.Header.ToString()),
+                  "Remove Tab", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                 {
                     TabItem selectedTab = DynamicTabs.SelectedItem as TabItem;
                     DynamicTabs.DataContext = null;
                     _tabItems.Remove(tab);
-                    DynamicTabs.DataContext = _tabItems;
+
 
                     if (selectedTab == null || selectedTab.Equals(tab))
                     {
-                        selectedTab = _tabItems[1];
+                        DynamicTabs.SelectedItem = _tabItems[0];
                     }
 
-                }
-          
-            }
+                    DynamicTabs.DataContext = _tabItems;
 
-           
+                }
+
+            }
 
 
         }
@@ -310,59 +401,11 @@ namespace NewsBuddy
             DisplayDirectories();
         }
 
-        private void mnExit_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
         private void mnWebSettings_Click(object sender, RoutedEventArgs e)
         {
         }
 
-        // OLD SAVE BUTTON MAYBE DELETE
-        private void mnSaveNewScript_Click(object sender, RoutedEventArgs e)
-        {
-           // TabItem tab = DynamicTabs.SelectedItem as TabItem;
-           // Frame tabFrame = tab.Content as Frame;
-           // tabFrame.Content;
-        }
 
-
-        // OLD MENU BAR ITEM MAY DELETE
-        private void mnOpen_Click(object sender, RoutedEventArgs e)
-        {
-          
-            VistaOpenFileDialog opn = new VistaOpenFileDialog();
-            opn.ShowDialog();
-             // FileStream fs = File.Open(opn.FileName, FileMode.Open, FileAccess.Read);
-      
-
-            //if (Directory.Exists(opn.FileName))
-            //{
-
-            
-            int count = _tabItems.Count;
-            TabItem tab = new TabItem();
-
-            tab.Header = string.Format("Script {0}", count);
-            tab.Name = string.Format("Script{0}", count);
-            tab.HeaderTemplate = DynamicTabs.FindResource("TabHeader") as DataTemplate;
-
-            Frame newContent = new Frame();
-            newContent.Name = "txt";
-            newContent.Source = new Uri(@opn.FileName, UriKind.Absolute);
-            tab.Content = newContent;
-            DynamicTabs.DataContext = null;
-            _tabItems.Insert(count - 1, tab);
-            DynamicTabs.DataContext = _tabItems;
-            DynamicTabs.SelectedItem = tab;
-
-            //} else
-            //{
-            //    MessageBox.Show("Something is wrong.");
-            //}
-
-        }
 
         #endregion
 
@@ -374,10 +417,125 @@ namespace NewsBuddy
             ClipsPlayer.Source = null;
         }
 
-        private void mnStopSounders_Click(object sender, RoutedEventArgs e)
+
+        private void lblSounders_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
+            Process.Start("explorer.exe", Settings.Default.SoundersDirectory);
+        }
+
+        private void lblClips_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            Process.Start("explorer.exe", Settings.Default.ClipsDirectory);
+        }
+
+        DispatcherTimer sounderTimer;
+        DispatcherTimer clipTimer;
+        private void TimerSounders(object sender, EventArgs e)
+        {
+            sounderTimer = new DispatcherTimer();
+            sounderTimer.Tick += new EventHandler(sndrTick);
+            sounderTimer.Interval = TimeSpan.FromMilliseconds(250);
+            sounderTimer.Start();
+        }
+
+        private void sndrTick(object sender, EventArgs e)
+        {
+            if (SoundersPlayer.NaturalDuration.HasTimeSpan)
+            {
+                int sndDur = (int)Math.Ceiling(SoundersPlayer.NaturalDuration.TimeSpan.TotalSeconds);
+                int sndPos = (int)Math.Ceiling(SoundersPlayer.Position.TotalSeconds);
+                string sndRem = ((sndDur - sndPos) / 60).ToString() + ":" + ((sndDur - sndPos) % 60).ToString("00");
+
+                sndrTimeLeft.Text = sndRem;
+                lblSounders.Content = System.IO.Path.GetFileNameWithoutExtension(SoundersPlayer.Source.LocalPath);
+                SoundersControl.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                sounderTimer.Stop();
+                SoundersControl.Visibility = Visibility.Collapsed;
+                lblSounders.Content = "Sounders";
+                sndrTimeLeft.Text = "0:00";
+            }
 
         }
+
+        private void TimerClips(object sender, EventArgs e)
+        {
+            clipTimer = new DispatcherTimer();
+            clipTimer.Tick += new EventHandler(clipTick);
+            clipTimer.Interval = TimeSpan.FromMilliseconds(250);
+            clipTimer.Start();
+        }
+
+        private void clipTick(object sender, EventArgs e)
+        {
+            if (ClipsPlayer.NaturalDuration.HasTimeSpan)
+            {
+                int clpDur = (int)Math.Ceiling(ClipsPlayer.NaturalDuration.TimeSpan.TotalSeconds);
+                int clpPos = (int)Math.Ceiling(ClipsPlayer.Position.TotalSeconds);
+                string clpRem = ((clpDur - clpPos) / 60).ToString() + ":" + ((clpDur - clpPos) % 60).ToString("00");
+
+                lblClips.Content = System.IO.Path.GetFileNameWithoutExtension(ClipsPlayer.Source.LocalPath);
+                ClipsControl.Visibility = Visibility.Visible;
+
+                clipTimeLeft.Text = clpRem;
+            }
+            else
+            {
+                clipTimer.Stop();
+                ClipsControl.Visibility = Visibility.Collapsed;
+                lblClips.Content = "Clips";
+                clipTimeLeft.Text = "0:00";
+            }
+        }
+
+        private void listScripts_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            ScriptFile chosen = listScripts.SelectedItem as ScriptFile;
+            if (chosen != null)
+            {
+
+                this.Dispatcher.Invoke(() =>
+                {
+                    AddNewTabFromFrame(chosen.SCpath);
+                });
+
+                listScripts.SelectedItem = null;
+            }
+        }
+
+        private void btnStopClips_Click(object sender, RoutedEventArgs e)
+        {
+            ClipsPlayer.Stop();
+            ClipsPlayer.Source = null;
+        }
+
+        private void btnStopSounders_Click(object sender, RoutedEventArgs e)
+        {
+            SoundersPlayer.Stop();
+            SoundersPlayer.Source = null;
+        }
+
+
+
+        private void HandlePreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (!e.Handled)
+            {
+                e.Handled = true;
+                var eventArg = new MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta);
+                eventArg.RoutedEvent = UIElement.MouseWheelEvent;
+                eventArg.Source = sender;
+                var parent = ((Control)sender).Parent as UIElement;
+                parent.RaiseEvent(eventArg);
+            }
+        }
+
+
+
     }
+
+
 
 }

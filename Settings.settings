@@ -3,16 +3,25 @@
   <Profiles />
   <Settings>
     <Setting Name="SoundersDirectory" Type="System.String" Scope="User">
-      <Value Profile="(Default)">na</Value>
+      <Value Profile="(Default)">Choose a Folder...</Value>
     </Setting>
     <Setting Name="ClipsDirectory" Type="System.String" Scope="User">
-      <Value Profile="(Default)">na</Value>
+      <Value Profile="(Default)">Choose a Folder...</Value>
     </Setting>
     <Setting Name="TemplatesDirectory" Type="System.String" Scope="User">
-      <Value Profile="(Default)">na</Value>
+      <Value Profile="(Default)">Choose a Folder...</Value>
     </Setting>
     <Setting Name="ScriptsDirectory" Type="System.String" Scope="User">
-      <Value Profile="(Default)">na</Value>
+      <Value Profile="(Default)">Choose a Folder...</Value>
+    </Setting>
+    <Setting Name="SpellCheck" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="CleanUpToggle" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="CleanUpDays" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">3</Value>
     </Setting>
   </Settings>
 </SettingsFile>
