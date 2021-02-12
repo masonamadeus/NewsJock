@@ -10,7 +10,6 @@ namespace NewsBuddy
 {
     public class NButton : Button
     {
-        public NBfileLocator locator;
         public NBfile file;
         public TextPointer textPointer;
     }

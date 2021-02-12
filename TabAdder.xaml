@@ -6,11 +6,12 @@
       xmlns:local="clr-namespace:NewsBuddy"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
-      Title="TabAdder">
+      Title="TabAdder"
+      Loaded="Page_Loaded">
 
     <StackPanel>
         <Label>Select a Template:</Label>
-        <ListBox Name="TemplatesList" SelectionChanged="TemplatesList_SelectionChanged">
+        <ListBox Name="TemplatesList" SelectionChanged="TemplatesList_SelectionChanged" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
 
         </ListBox>
     </StackPanel>

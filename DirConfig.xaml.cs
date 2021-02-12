@@ -26,6 +26,7 @@ namespace NewsBuddy
             selDirClip.Text = Settings.Default.ClipsDirectory;
             selDirSounder.Text = Settings.Default.SoundersDirectory;
             selDirScript.Text = Settings.Default.ScriptsDirectory;
+            selDirShare.Text = Settings.Default.SharedDirectory;
             bxCleanDays.ItemsSource = new List<double> { 1, 2, 3, 4, 5, 6, 7, 10, 14, 30 };
 
         }
@@ -36,6 +37,7 @@ namespace NewsBuddy
         {
             Settings.Default.ClipsDirectory = selDirClip.Text;
             Settings.Default.SoundersDirectory = selDirSounder.Text;
+            Settings.Default.SharedDirectory = selDirShare.Text;
             Settings.Default.ScriptsDirectory = selDirScript.Text;
             string templateDir = selDirScript.Text + @"\Templates";
 
@@ -45,6 +47,7 @@ namespace NewsBuddy
             Trace.WriteLine(Settings.Default.ScriptsDirectory);
             Trace.WriteLine(Settings.Default.SoundersDirectory);
             Trace.WriteLine(Settings.Default.ClipsDirectory);
+            Trace.WriteLine(Settings.Default.SharedDirectory);
 
             Settings.Default.Save();
 
@@ -52,8 +55,9 @@ namespace NewsBuddy
             Directory.CreateDirectory(Settings.Default.SoundersDirectory);
             Directory.CreateDirectory(Settings.Default.ScriptsDirectory);
             Directory.CreateDirectory(Settings.Default.TemplatesDirectory);
-            
-     
+            Directory.CreateDirectory(Settings.Default.SharedDirectory);
+
+            this.DialogResult = true;
             this.Close();
 
         }
@@ -88,7 +92,17 @@ namespace NewsBuddy
 
         private void cancelButton_Click(object sender, RoutedEventArgs e)
         {
+            this.DialogResult = false;
             this.Close();
+        }
+
+        private void srchShare_Click(object sender, RoutedEventArgs e)
+        {
+            VistaFolderBrowserDialog srch = new VistaFolderBrowserDialog();
+            srch.Description = "Please select your 'Shared Sounders' folder.";
+            srch.UseDescriptionForTitle = true;
+            if ((bool)srch.ShowDialog(this))
+                selDirShare.Text = srch.SelectedPath;
         }
     }
 }

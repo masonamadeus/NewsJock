@@ -7,9 +7,55 @@
         <FontFamily x:Key="OpenSans">pack://application:,,,/resources/fonts/#Open Sans</FontFamily>
         <FontFamily x:Key="FA">pack://application:,,,/resources/fonts/fontawesome/#Font Awesome 5 Free Regular</FontFamily>
         <FontFamily x:Key="FAS">pack://application:,,,/resources/fonts/fontawesome/#Font Awesome 5 Free Solid</FontFamily>
-        <Style x:Key="btnNB" TargetType="Button">
+        <Style x:Key="btnNBs" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Name="Border1" CornerRadius="5" Padding="3" Background="#FF92bdf2" BorderBrush="DimGray" BorderThickness="2">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border1" Property="Background" Value="#FFb5d0f2"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border1" Property="Background" Value="#FF6d9bd4"/>
+                            </Trigger>
+                            
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="btnNBc" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Name="Border2" CornerRadius="5" Padding="3" Background="#FFaddd8d" BorderBrush="DimGray" BorderThickness="2">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border2" Property="Background" Value="#FFc9eab3"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border2" Property="Background" Value="#FF99c37c"/>
+                            </Trigger>
+
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style x:Key="LeftScrollViewer" TargetType="{x:Type ScrollViewer}">
@@ -49,5 +95,13 @@
             </Setter>
         </Style>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+
+        <ResourceDictionary x:Key="cursors">
+            <Cursor x:Key="NBDropCur">/resources/buttondrop.cur</Cursor>
+        </ResourceDictionary>
+
+        
+        
+
     </Application.Resources>
 </Application>

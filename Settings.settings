@@ -23,5 +23,17 @@
     <Setting Name="CleanUpDays" Type="System.Double" Scope="User">
       <Value Profile="(Default)">3</Value>
     </Setting>
+    <Setting Name="WindowHeight" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">600</Value>
+    </Setting>
+    <Setting Name="WindowWidth" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">900</Value>
+    </Setting>
+    <Setting Name="SharedDirectory" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Choose a Folder...</Value>
+    </Setting>
+    <Setting Name="Homepage" Type="System.String" Scope="User">
+      <Value Profile="(Default)">https://newsroom.ap.org/</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

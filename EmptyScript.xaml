@@ -11,7 +11,8 @@
       >
 
     <DockPanel>
-        <Menu DockPanel.Dock="Top" HorizontalAlignment="Stretch">
+        
+        <Menu x:Name="topMenu" DockPanel.Dock="Top" HorizontalAlignment="Stretch">
 
             <Menu.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -19,11 +20,14 @@
                 </ItemsPanelTemplate>
             </Menu.ItemsPanel>
 
-            <MenuItem Header="Open" Name="mnuOpen" Margin="0,0,0,0" Click="mnuOpen_Click"/>
-                <MenuItem Header="Save" Name="mnuSave" Margin="0,0,0,0" Click="mnuSave_Click"/>
-                
-            <MenuItem Header="Save as Template" Name="mnuSaveTemplate" HorizontalAlignment="Right" Margin="0,0,8,0" Click="mnuSaveTemplate_Click"/>
+            <MenuItem Header="Open" Name="mnuOpen" Margin="0,0,0,0" Click="OpenXaml"/>
+            <MenuItem Header="Save" Name="mnuSave" Margin="0,0,0,0" Click="SaveXaml"/>
+            <MenuItem Header="Save As..." Name="mnuSaveAs" Margin="0,0,0,0" Click="SaveAsXaml"/>
+
+            <MenuItem Header="Save as Template" Name="mnuSaveTemplate" HorizontalAlignment="Right" Margin="0,0,8,0" Click="SaveTemplateXaml"/>
         </Menu>
+        <ProgressBar x:Name="progBar" DockPanel.Dock="Top" IsIndeterminate="True" Height="20" Visibility="Collapsed"/>
+
         <ToolBar DockPanel.Dock="Top"
                  Background="LightGray" 
                  ToolBarTray.IsLocked="true" 
@@ -72,7 +76,9 @@
                      Block.LineHeight="2"
                      SpellCheck.IsEnabled="{Binding Source={x:Static local:Settings.Default},Path=SpellCheck}"
                      FontFamily="{StaticResource OpenSans}"
-                     VerticalScrollBarVisibility="Auto">
+                     VerticalScrollBarVisibility="Auto"
+                     DataObject.Pasting="rtbScript_Pasting"
+                     >
 
             <FlowDocument>
 
@@ -85,7 +91,6 @@
             </FlowDocument>
 
         </RichTextBox>
-
 
     </DockPanel>
 </Page>

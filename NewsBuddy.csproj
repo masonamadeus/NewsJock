@@ -15,10 +15,11 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>Mason Amadeus Key.pfx</AssemblyOriginatorKeyFile>
     <ApplicationIcon>NewsJockIcon.ico</ApplicationIcon>
+    <DelaySign>false</DelaySign>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <OutputPath>C:\Users\Mason\Desktop\NewsJock\Build1\</OutputPath>
+    <OutputPath>C:\Users\Mason\VS Builds\NewsJock\</OutputPath>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
@@ -27,6 +28,10 @@
     <EmbeddedResource Remove="resources\fonts\fontawesome-free-5.15.2-desktop\**" />
     <None Remove="resources\fonts\fontawesome-free-5.15.2-desktop\**" />
     <Page Remove="resources\fonts\fontawesome-free-5.15.2-desktop\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="NBfileLocator.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -42,9 +47,17 @@
     <None Remove="resources\fonts\OpenSans-Regular.ttf" />
     <None Remove="resources\fonts\OpenSans-SemiBold.ttf" />
     <None Remove="resources\fonts\OpenSans-SemiBoldItalic.ttf" />
+    <None Remove="resources\newsjock splash.png" />
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="resources\buttondrop.cur">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Toolkit.Wpf.UI.Controls.WebView" Version="6.1.2" />
     <PackageReference Include="Ookii.Dialogs.Wpf" Version="3.1.0" />
   </ItemGroup>
 
@@ -88,6 +101,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <SplashScreen Include="resources\newsjock splash.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </SplashScreen>
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="Settings.Designer.cs">
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <AutoGen>True</AutoGen>
@@ -96,6 +115,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="resources\Loading.mp3">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
     <None Update="Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

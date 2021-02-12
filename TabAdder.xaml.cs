@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
+using System.Diagnostics;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -109,6 +110,15 @@ namespace NewsBuddy
             } else { return; }
 
 
+        }
+
+        private void Page_Loaded(object sender, RoutedEventArgs e)
+        {
+            Trace.WriteLine("reloaded with page_loaded");
+            this.Dispatcher.Invoke(() =>
+            {
+                PopulateList();
+            });
         }
     }
 

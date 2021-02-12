@@ -5,8 +5,17 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:NewsBuddy"
         mc:Ignorable="d"
-        Title="NewsJock v0.1" Height="500" Width="900" Background="Gray"
+        Title="NewsJock v0.1"
+        
+        Height="{Binding}" 
+        Width="{Binding}" 
+        MinHeight="400"
+        MinWidth="600"
+        Background="Gray"
+        Closing="Window_Closing"
         FontFamily="{StaticResource OpenSans}">
+    
+    
     <DockPanel HorizontalAlignment="Stretch">
         <MediaElement x:Name="SoundersPlayer" Source="{Binding}" LoadedBehavior="Manual" UnloadedBehavior="Manual"
                       MediaOpened="TimerSounders"/>
@@ -16,7 +25,6 @@
         <Menu DockPanel.Dock="Top"
               Padding="2"
               Margin="0,3,0,3"
-              HorizontalAlignment="Stretch"
               FontFamily="{StaticResource OpenSans}"
               FontSize="16"
               >
@@ -25,28 +33,35 @@
                     <DockPanel HorizontalAlignment="Stretch"/>
                 </ItemsPanelTemplate>
             </Menu.ItemsPanel>
-
-
-
-
-            <MenuItem HorizontalAlignment="Right" Click="mnNJSettings_Click">
+            <MenuItem Header="Refresh Audio List" HorizontalAlignment="Left" Name="mnRefresh" Click="mnRefresh_Click">
                 <MenuItem.Icon>
-                    <TextBlock FontFamily="{StaticResource FA}"></TextBlock>
+                    <TextBlock FontFamily="{StaticResource FA}" FontSize="15"></TextBlock>
                 </MenuItem.Icon>
-                <!--<MenuItem x:Name="mnNJSettings" Header="NewsJock Settings" Click="mnNJSettings_Click"/>
-                <MenuItem Name="mnWebSettings" Header="Web Browser Settings" Click="mnWebSettings_Click"/>
-                 <MenuItem x:Name="mnResetSettings" Header="Reset Settings (Debug)" Click="mnResetSettings_Click"/> -->
-
-
-
             </MenuItem>
+
+         <!--   <MenuItem HorizontalAlignment="Center" Margin="100,0,0,0" Name="Browser" Header="Browser" Click="Browser_Click">
+                <MenuItem.Icon>
+                    <TextBlock FontFamily="{StaticResource FA}"></TextBlock>
+                </MenuItem.Icon>
+            </MenuItem> -->
+            <MenuItem HorizontalAlignment="Right" Header="Settings">
+                    <MenuItem.Icon>
+                        <TextBlock FontFamily="{StaticResource FA}"></TextBlock>
+                    </MenuItem.Icon>
+                    <MenuItem x:Name="mnNJSettings" Header="NewsJock Settings" Click="mnNJSettings_Click"/>
+                    <MenuItem Name="mnWebSettings" Header="Web Browser Settings" Click="mnWebSettings_Click"/>
+
+                </MenuItem>
+
+            
+
 
 
         </Menu>
 
-        <ScrollViewer DockPanel.Dock="Left" VerticalScrollBarVisibility="Visible" Width="215" HorizontalAlignment="Left" Style="{StaticResource LeftScrollViewer}">
-        <StackPanel Name ="stackL" Width="200">
-            <StackPanel Background="LightSlateGray">
+        <ScrollViewer DockPanel.Dock="Left" VerticalScrollBarVisibility="Visible" Width="250" HorizontalAlignment="Left" Style="{StaticResource LeftScrollViewer}">
+        <StackPanel Name ="stackL" Width="230">
+                <StackPanel Background="#FF89a6c9">
                 <Label Name="lblSounders" HorizontalAlignment="Center" FontSize="20" FontStyle="Italic" FontWeight="Bold" ToolTip="Double-click this to open your Sounders folder." MouseDoubleClick="lblSounders_MouseDoubleClick">Sounders</Label>
                     <WrapPanel Name="SoundersControl" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <Button Name="btnStopSounders" FontFamily="{StaticResource FA}" Click="btnStopSounders_Click" Foreground="DarkRed" Padding="4" Margin="0,0,10,0" Content=""/>
@@ -57,11 +72,12 @@
                 
                 <Label FontFamily="{StaticResource FA}" HorizontalAlignment="Center"></Label>
                 <Slider Background="DimGray" Name="sVolSlider" VerticalAlignment="Center" ValueChanged="sVolSlider_ValueChanged" Minimum="0" Maximum="1" Value="0.5" IsMoveToPointEnabled="True" />
-                <ListBox x:Name="listSounders" Background="LightGray" MouseMove="listSounders_MouseMove" Focusable="False" Margin="0,0,0,5" PreviewMouseWheel="HandlePreviewMouseWheel">
-                </ListBox>
-            </StackPanel>
+                    <ListBox x:Name="listSounders" Background="LightGray" MouseMove="listSounders_MouseMove" Focusable="False" Margin="0,0,0,5" PreviewMouseWheel="HandlePreviewMouseWheel" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Visibility="{Binding ElementName=soundersVisible, Converter={StaticResource BooleanToVisibilityConverter}, Path=IsChecked}"/>
+                    <ToggleButton x:Name="soundersVisible" HorizontalAlignment="Stretch" FontFamily="{StaticResource FA}" IsChecked="True" Content=" Hide" Click="expandVisible_Click" Margin="0,5,0,5"/>
+
+                </StackPanel>
             <Separator Height="10" Margin="0,5,0,5"></Separator>
-            <StackPanel Background="DarkSeaGreen">
+                <StackPanel Background="#FF86ae6a">
                 <Label Name="lblClips" HorizontalAlignment="Center" FontSize="20" FontStyle="Italic" FontWeight="Bold" ToolTip="Double-click this to open your Clips folder." MouseDoubleClick="lblClips_MouseDoubleClick">Clips</Label>
                     <WrapPanel Name="ClipsControl" HorizontalAlignment="Center" Visibility="Collapsed" VerticalAlignment="Center">
                 <Button Name="btnStopClips" FontFamily="{StaticResource FA}" Click="btnStopClips_Click" Foreground="DarkRed" Padding="4" Margin="0,0,10,0" Content=""/>
@@ -71,19 +87,21 @@
                 <Label FontFamily="{StaticResource FA}" HorizontalAlignment="Center"></Label>
                 <Slider Background="DimGray" Name="cVolSlider" VerticalAlignment="Center" ValueChanged="cVolSlider_ValueChanged" Minimum="0" Maximum="1" Value="0.5" IsMoveToPointEnabled="True"/>
 
-                    <ListBox Name="listClips" Background="LightGray" MouseMove="listClips_MouseMove" Margin="0,0,0,5" PreviewMouseWheel="HandlePreviewMouseWheel"></ListBox>
-            </StackPanel>
+                    <ListBox Name="listClips" Background="LightGray" MouseMove="listClips_MouseMove" Margin="0,0,0,5" PreviewMouseWheel="HandlePreviewMouseWheel"  ScrollViewer.HorizontalScrollBarVisibility="Disabled" Visibility="{Binding ElementName=clipsVisible, Converter={StaticResource BooleanToVisibilityConverter}, Path=IsChecked}"></ListBox>
+                    <ToggleButton x:Name="clipsVisible" HorizontalAlignment="Stretch" FontFamily="{StaticResource FA}" IsChecked="True" Content=" Hide" Click="expandVisible_Click" Margin="0,5,0,5"/>
+
+                </StackPanel>
             <Separator Height ="10" Margin="0,5,0,5"/>
             
             
             <StackPanel Background="DarkGray">
-                
-                <Label Name="lblScripts" HorizontalAlignment="Center" FontSize="20" FontStyle="Italic" FontWeight="Bold" MouseDoubleClick="lblClips_MouseDoubleClick" ToolTip="Double-click this to open your Scripts folder">Scripts</Label>
 
-                    <ToggleButton x:Name="scriptsVisible" FontFamily="{StaticResource FA}" Content=""/>
+                    <Label Name="lblScripts" HorizontalAlignment="Center" FontSize="20" FontStyle="Italic" FontWeight="Bold" MouseDoubleClick="lblClips_MouseDoubleClick" ToolTip="Double-click this to open your Scripts folder">Scripts</Label>
                     <Label FontStyle="Italic" HorizontalAlignment="center" Content="Double-click to Open" Visibility="{Binding ElementName=scriptsVisible, Converter={StaticResource BooleanToVisibilityConverter}, Path=IsChecked}"></Label>
-                    <ListBox Name="listScripts" Visibility="{Binding ElementName=scriptsVisible, Converter={StaticResource BooleanToVisibilityConverter}, Path=IsChecked}" Background="LightGray" Margin="0,0,0,5" MouseDoubleClick="listScripts_MouseDoubleClick" PreviewMouseWheel="HandlePreviewMouseWheel"></ListBox>
-            </StackPanel>
+                    <ListBox Name="listScripts" Visibility="{Binding ElementName=scriptsVisible, Converter={StaticResource BooleanToVisibilityConverter}, Path=IsChecked}" Background="LightGray" Margin="0,0,0,5" MouseDoubleClick="listScripts_MouseDoubleClick" PreviewMouseWheel="HandlePreviewMouseWheel"  ScrollViewer.HorizontalScrollBarVisibility="Disabled"></ListBox>
+                    <ToggleButton x:Name="scriptsVisible" HorizontalAlignment="Stretch" FontFamily="{StaticResource FA}" IsChecked="False" Content=" Show" Click="expandVisible_Click" Margin="0,0,0,5"/>
+
+                </StackPanel>
         </StackPanel>
         </ScrollViewer>
 
@@ -124,7 +142,7 @@
 
 
         <DataTemplate DataType="{x:Type local:NBfile}">
-            <TextBlock Text="{Binding NBName}" />
+            <TextBlock Text="{Binding NBName}" ToolTip="{Binding NBPath}"/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type local:ScriptFile}">
             <TextBlock Text="{Binding SCname}"/>

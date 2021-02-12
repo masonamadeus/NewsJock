@@ -8,34 +8,40 @@
         ShowInTaskbar="False"
         ResizeMode="CanResizeWithGrip"
         WindowStartupLocation="CenterOwner"
-        Background="DimGray"
+        Background="Gray"
         MinHeight="360"
         MinWidth="450"     
-        Title="NewsJock Settings" Height="460" Width="400"
+        Title="NewsJock Settings" Height="500" Width="400"
         FontFamily="{StaticResource OpenSans}">
     <Grid>
     <DockPanel>
             <StackPanel DockPanel.Dock="Top">
-                <TextBlock HorizontalAlignment="Center" Margin="0,5,0,0" Padding="3">Select the locations where you will store your Sounders, Clips, and Scripts.</TextBlock>
-                <TextBlock Padding="3" Background="Gray" FontSize="10" FontStyle="Italic" Margin="5,5,5,0" TextWrapping="Wrap" HorizontalAlignment="Center">TIP: Use a shared/network drive for your Clips and Scripts, but a local drive for your Sounders.</TextBlock>
-                <TextBlock Padding="3" Background="Gray" FontSize="10" FontStyle="Italic" Margin="5,0,5,10" TextWrapping="Wrap" HorizontalAlignment="Center">If you specify a location that does not exist, NewsJock will create a folder for you.</TextBlock>
-                <Separator Margin="30,0,30,5"></Separator>
-                <Label>Sounders folder:</Label>
+                <TextBlock HorizontalAlignment="Center" Margin="0,10,0,5" Padding="3" Background="LightGray">Select the locations where you will store your Sounders, Clips, and Scripts.</TextBlock>
+                <Separator Margin="30,8,30,8"></Separator>
+                <Label>Personal Sounders folder:</Label>
                 <WrapPanel>
                     <TextBox x:Name="selDirSounder" Margin="10,0,10,0"  TextWrapping="NoWrap" AcceptsReturn="False" Width="300"/>
                     <Button x:Name="srchSounder" Click="srchSounder_Click">Select Folder</Button>
                 </WrapPanel>
-                
+
+                <Label>Shared Sounders folder:</Label>
+                <WrapPanel>
+                    <TextBox x:Name="selDirShare" Margin="10,0,10,0"  TextWrapping="NoWrap" AcceptsReturn="False" Width="300" />
+                    <Button x:Name="srchShare" Click="srchShare_Click">Select Folder</Button>
+                </WrapPanel>
+
                 <Label>Clips folder:</Label>
                 <WrapPanel>
                     <TextBox x:Name="selDirClip" Margin="10,0,10,0"  TextWrapping="NoWrap" AcceptsReturn="False" Width="300"/>
                     <Button x:Name="srchClip" Click="srchClip_Click">Select Folder</Button>
                 </WrapPanel>
+                
                 <Label>Scripts folder:</Label>
                 <WrapPanel>
                     <TextBox x:Name="selDirScript" Margin="10,0,10,0"  TextWrapping="NoWrap" AcceptsReturn="False" Width="300" />
                     <Button x:Name="srchScript" Click="srchScript_Click">Select Folder</Button>
                 </WrapPanel>
+
                 <CheckBox Name="btnSpell" HorizontalAlignment="Left" Margin="10,12,0,0" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=SpellCheck, Mode=TwoWay}">Script Spell Check</CheckBox>
                 
                 <CheckBox Name="btnClean" HorizontalAlignment="Left" Margin="10,12,0,0" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=CleanUpToggle, Mode=TwoWay}">Keep Scripts Directory Clean</CheckBox>

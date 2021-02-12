@@ -16,6 +16,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using System.Windows.Resources;
 using System.Diagnostics;
 using Ookii.Dialogs.Wpf;
 
@@ -26,24 +27,46 @@ namespace NewsBuddy
     /// </summary>
     public partial class MainWindow : Window
     {
-
+        
         FileSystemWatcher fs;
 
         public string dirClipsPath = Settings.Default.ClipsDirectory;
         public string dirSoundersPath = Settings.Default.SoundersDirectory;
+        public string dirSharePath = Settings.Default.SharedDirectory;
         public string dirScriptsPath = Settings.Default.ScriptsDirectory;
         public string dirTemplatesPath = Settings.Default.TemplatesDirectory;
         public string[] audioExtensions = new[] { ".mp3", ".wav", ".wma", ".m4a", ".flac" };
         public string scriptExtension = ".xaml";
-        readonly string dflt = "Choose a Folder...";
+        NJWebBrowser browser;
 
 
         public MainWindow()
         {
             InitializeComponent();
+
+            // Debugger messages
+            
+
+            if (!Debugger.IsAttached)
+            {
+                AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
+                    ExceptionCatcher(args.ExceptionObject as Exception, "AppDomain.CurrentDomain.UnhandledException", false);
+                TaskScheduler.UnobservedTaskException += (sender, args) =>
+                    ExceptionCatcher(args.Exception, "TaskScheduler.UnobservedTaskException", false);
+                Dispatcher.UnhandledException += (sender, args) =>
+                    ExceptionCatcher(args.Exception, "Dispatcher.UnhandledException", true);
+            }
+            
+
+
+
+            this.Height = Settings.Default.WindowHeight;
+            this.Width = Settings.Default.WindowWidth;
+
+
+
             CheckDirectories();
             CleanUpScripts();
-            DisplayDirectories();
 
             // init the list of tab items
             _tabItems = new List<TabItem>();
@@ -62,12 +85,63 @@ namespace NewsBuddy
             DynamicTabs.DataContext = _tabItems;
             DynamicTabs.SelectedIndex = 0;
 
+            SoundersPlayer.BeginInit();
+            ClipsPlayer.BeginInit();
+
             Trace.WriteLine("Started Running");
+        }
+
+        void ExceptionCatcher(Exception e, string exceptionType, bool promptForShutdown)
+        {
+            var boxTitle = $"Unexpected Error: {exceptionType}";
+            var boxMessage = $"The following exception occurred:\n\n{e}\n\nIf you're encountering this a lot, copy this error message and email it to: 'NewsJock@ThatNerdMason.com'";
+            var boxButtons = MessageBoxButton.OK;
+
+            if (promptForShutdown)
+            {
+                boxMessage += "\n\nNormally this would make NewsJock die. You can try and continue but I can't guarantee it won't get weird. Do you want to let it shut down?";
+                boxButtons = MessageBoxButton.YesNo;
+            }
+
+            if (MessageBox.Show(boxMessage, boxTitle, boxButtons, MessageBoxImage.Error) == MessageBoxResult.Yes)
+            {
+                Application.Current.Shutdown();
+            }
+        }
+
+        private Cursor nbDropCur = null;
+        protected override void OnGiveFeedback(GiveFeedbackEventArgs e)
+        {
+            try
+            {
+                if (e.Effects == DragDropEffects.Copy)
+                {
+                    if (nbDropCur == null)
+                    {
+                        Stream cursor = Application.GetResourceStream(new Uri("pack://application:,,,/resources/buttondrop.cur")).Stream;
+                        nbDropCur = new Cursor(cursor);
+
+                    }
+                    Mouse.SetCursor(nbDropCur);
+                    e.UseDefaultCursors = false;
+                    e.Handled = true;
+                }
+                else
+                {
+                    base.OnGiveFeedback(e);
+                }
+            }
+            catch
+            {
+                base.OnGiveFeedback(e);
+            }
+         
+            
         }
 
         void CheckDirectories()
         {
-            if (dirClipsPath == dflt || dirScriptsPath == dflt || dirSoundersPath == dflt || dirTemplatesPath == dflt)
+            if (!Directory.Exists(dirClipsPath) || !Directory.Exists(dirScriptsPath) || !Directory.Exists(dirSoundersPath) || !Directory.Exists(dirTemplatesPath) || !Directory.Exists(dirSharePath))
             {
                 DirConfig dlg = new DirConfig();
                 if ((bool)dlg.ShowDialog())
@@ -76,18 +150,22 @@ namespace NewsBuddy
                     MonitorDirectory(dirClipsPath);
                     MonitorDirectory(dirSoundersPath);
                     MonitorDirectory(dirScriptsPath);
-                } else
+                    MonitorDirectory(dirSharePath);
+                }
+                else
                 {
-                    MessageBox.Show("You can't just leave without configuring your directories, that's wicked rude. (Also, it breaks the program. Try launching again).");
+                    MessageBox.Show("Error configuring directories. Try launching NewsJock again.");
                 }
 
 
             }
             else
             {
+                DisplayDirectories();
                 MonitorDirectory(dirClipsPath);
                 MonitorDirectory(dirSoundersPath);
                 MonitorDirectory(dirScriptsPath);
+                MonitorDirectory(dirSharePath);
             }
         }
 
@@ -111,7 +189,7 @@ namespace NewsBuddy
                 }
                 else
                 {
-                    MessageBox.Show("File Not Ready, Try Again in a Sec...");
+                    MessageBox.Show("Audio file still loading.\nTry again in a moment","File Not Ready",MessageBoxButton.OK,MessageBoxImage.Exclamation);
                 }
             }
         }
@@ -126,12 +204,13 @@ namespace NewsBuddy
                 nbC = listClips.SelectedItem as NBfile;
                 if (nbC != null)
                 {
+                    nbC.NBisSounder = false;
                     passer.SetData("NBfile", nbC);
                     DragDrop.DoDragDrop(lstbx, passer, DragDropEffects.Copy);
                 }
                 else
                 {
-                    MessageBox.Show("File Not Ready, Try Again in a Sec...");
+                    MessageBox.Show("Audio file not ready.\nTry again in a moment.","File Not Ready", MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 }
             }
         }
@@ -158,6 +237,7 @@ namespace NewsBuddy
             dirClipsPath = Settings.Default.ClipsDirectory;
             dirSoundersPath = Settings.Default.SoundersDirectory;
             dirScriptsPath = Settings.Default.ScriptsDirectory;
+            dirSharePath = Settings.Default.SharedDirectory;
             dirTemplatesPath = Settings.Default.TemplatesDirectory;
 
             if (Directory.Exists(dirClipsPath) && Directory.Exists(dirSoundersPath) && Directory.Exists(dirScriptsPath) && Directory.Exists(dirTemplatesPath))
@@ -169,6 +249,10 @@ namespace NewsBuddy
 
                 object[] AllSounders = new DirectoryInfo(dirSoundersPath).GetFiles()
                 .Where(sf => audioExtensions.Contains(sf.Extension.ToLower()))
+                .ToArray();
+
+                object[] ShareSounders = new DirectoryInfo(dirSharePath).GetFiles()
+                .Where(ssf => audioExtensions.Contains(ssf.Extension.ToLower()))
                 .ToArray();
 
                 object[] AllScripts = new DirectoryInfo(dirScriptsPath).GetFiles()
@@ -190,7 +274,19 @@ namespace NewsBuddy
                     NBfile newFile = new NBfile
                     {
                         NBPath = s.ToString(),
-                        NBName = System.IO.Path.GetFileNameWithoutExtension(s.ToString())
+                        NBName = System.IO.Path.GetFileNameWithoutExtension(s.ToString()),
+                        NBisSounder = true
+                    };
+
+                    sounders.Add(newFile);
+                }
+                foreach(object Ss in ShareSounders)
+                {
+                    NBfile newFile = new NBfile
+                    {
+                        NBPath = Ss.ToString(),
+                        NBName = System.IO.Path.GetFileNameWithoutExtension(Ss.ToString()),
+                        NBisSounder = true
                     };
 
                     sounders.Add(newFile);
@@ -213,23 +309,23 @@ namespace NewsBuddy
             }
             else
             {
-                MessageBox.Show("Whoops. Something ain't right. Go to 'Edit > Settings > NewsJock Settings' and check the paths to your files!", "Directories Don't Exist", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Whoops. Something ain't right. Click the gear on the top right of the main window, and check the paths to your files!", "Directories Don't Exist", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
 
         void MonitorDirectory(string dirPath)
         {
-            Trace.WriteLine("Monitoring Started");
+            Trace.WriteLine("Monitoring Started for " + dirPath);
             fs = new FileSystemWatcher(dirPath, "*.*");
 
             fs.EnableRaisingEvents = true;
             fs.IncludeSubdirectories = true;
 
-            fs.Created += new FileSystemEventHandler(ReloadDir);
+            //fs.Created += new FileSystemEventHandler(ReloadDir);
             fs.Changed += new FileSystemEventHandler(ReloadDir);
             fs.Renamed += new RenamedEventHandler(ReloadDir);
-            fs.Deleted += new FileSystemEventHandler(ReloadDir);
+            //fs.Deleted += new FileSystemEventHandler(ReloadDir);
         }
 
 
@@ -247,20 +343,64 @@ namespace NewsBuddy
 
         void CleanUpScripts()
         {
+            FileInfo[] allScripts = new DirectoryInfo(dirScriptsPath).GetFiles(
+            "*.xaml", SearchOption.AllDirectories);
+            List<FileInfo> veryOldScripts = new List<FileInfo>();
+
+            foreach (var af in allScripts)
+            {
+                if ((DateTime.Today - af.LastAccessTime).TotalDays > 730)
+                {
+                    veryOldScripts.Add(af);
+                }
+            }
+
+            if (veryOldScripts.Count > 0)
+            {
+                MessageBoxResult result = MessageBox.Show("You have scripts in your drive that are over two years old. To avoid taking up too much space, would you like me to delete them?", "Wicked Old Scripts Detected", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                switch (result)
+                {
+                    case MessageBoxResult.Yes:
+                        for (int it = 0; it < veryOldScripts.Count; it++)
+                        {
+
+                            FileInfo vosc = veryOldScripts[it];
+                            Trace.WriteLine("got rid of " + vosc.Name);
+                            try
+                            {
+                                File.Delete(vosc.FullName);
+                            }
+                            catch
+                            {
+                                Trace.WriteLine("failed to remove old script " + vosc.Name);
+                            }
+                        }
+
+                        break;
+                    case MessageBoxResult.No:
+                        break;
+                    case MessageBoxResult.None:
+                        break;
+                }
+
+            }
+
+
             if (Settings.Default.CleanUpToggle)
             {
                 Trace.WriteLine("cleaning up scripts");
-                FileInfo[] allScripts = new DirectoryInfo(dirScriptsPath).GetFiles(
-                    "*.xaml",SearchOption.TopDirectoryOnly);
+                FileInfo[] allTLScripts = new DirectoryInfo(dirScriptsPath).GetFiles(
+                    "*.xaml", SearchOption.TopDirectoryOnly);
                 List<FileInfo> oldScripts = new List<FileInfo>();
 
-                foreach(var f in allScripts)
+
+                foreach (var f in allTLScripts)
                 {
                     if ((DateTime.Today - f.LastAccessTime).TotalDays > Settings.Default.CleanUpDays)
                     {
                         Trace.WriteLine("Gonna get rid of file: " + f.Name);
                         oldScripts.Add(f);
-                    }
+                    } else { return; }
                 }
 
                 if (oldScripts.Count > 0)
@@ -279,7 +419,8 @@ namespace NewsBuddy
                         try
                         {
                             File.Move(sc.FullName, newPath);
-                        } catch
+                        }
+                        catch
                         {
                             Trace.WriteLine("failed to remove old script " + sc.Name);
                         }
@@ -359,8 +500,8 @@ namespace NewsBuddy
                 {
                     MessageBox.Show("Cannot remove this tab, sorry.", "Cannot Remove");
                 }
-                else if (MessageBox.Show(string.Format("Are you sure you want to remove '{0}'?", tab.Header.ToString()),
-                  "Remove Tab", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                else if (MessageBox.Show(string.Format("Are you sure you want to close '{0}'?", tab.Header.ToString()),
+                  "Close Tab", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                 {
                     TabItem selectedTab = DynamicTabs.SelectedItem as TabItem;
                     DynamicTabs.DataContext = null;
@@ -378,6 +519,27 @@ namespace NewsBuddy
 
             }
 
+
+        }
+
+        public void ChangeTabName(string uri)
+        {
+            TabItem current = DynamicTabs.SelectedItem as TabItem;
+            
+            if (current != null)
+            {
+                DynamicTabs.DataContext = null;
+                current.Header = System.IO.Path.GetFileNameWithoutExtension(uri);
+                DynamicTabs.DataContext = _tabItems;
+                try
+                {
+                    DynamicTabs.SelectedItem = current;
+                }
+                catch
+                {
+                    DynamicTabs.SelectedItem = _tabItems[0];
+                }
+            }
 
         }
 
@@ -543,10 +705,54 @@ namespace NewsBuddy
             }
         }
 
+        private void expandVisible_Click(object sender, RoutedEventArgs e)
+        {
+            var bt = sender as System.Windows.Controls.Primitives.ToggleButton;
+            if (bt != null)
+            {
+                if (bt.IsChecked == true)
+                {
+                    bt.Content = " Hide";
+                }
+                else
+                {
+                    bt.Content = " Show";
+                }
+            }
 
+        }
 
+        private void mnRefresh_Click(object sender, RoutedEventArgs e)
+        {
+            CheckDirectories();
+        }
+
+        private void Window_Closing(object sender, CancelEventArgs e)
+        {
+            Settings.Default.WindowHeight = this.Height;
+            Settings.Default.WindowWidth = this.Width;
+            Settings.Default.Save();
+        }
+
+        private void Browser_Click(object sender, RoutedEventArgs e)
+        {
+            if (browser != null)
+            {
+                try
+                {
+                    browser.Focus();
+                } 
+                catch
+                {
+                    MessageBox.Show("Browser Unresponsive");
+                }
+            } else
+            {
+                browser = new NJWebBrowser();
+                browser.Show();
+            }
+
+        }
     }
-
-
 
 }

@@ -9,6 +9,12 @@ using System.Windows.Documents;
 using System.Diagnostics;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Markup;
+using System.ComponentModel;
+using Microsoft.Win32;
+using System.Threading.Tasks;
+using System.Threading;
+using System.Windows.Threading;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
@@ -19,11 +25,12 @@ namespace NewsBuddy
 
     public partial class Page1 : Page
     {
-        //List<InlineUIContainer> NBbuttons = new List<InlineUIContainer>();
+        public string scriptUri { get; set; }
 
         public Page1(bool fromTemplate, string uri = "")
         {
             InitializeComponent();
+
             rtbScript.AddHandler(RichTextBox.DragOverEvent, new DragEventHandler(Script_DragOver), true);
             rtbScript.AddHandler(RichTextBox.DropEvent, new DragEventHandler(Script_Drop), true);
             rtbScript.IsDocumentEnabled = true;
@@ -31,7 +38,8 @@ namespace NewsBuddy
 
             if (fromTemplate)
             {
-                OpenFromTemplate(uri);
+                scriptUri = uri;
+                OpenXamlFromTemplate(uri);
             }
 
             MonitorDirectories(Settings.Default.ClipsDirectory);
@@ -61,15 +69,6 @@ namespace NewsBuddy
 
         }
 
-        protected override void OnGiveFeedback(GiveFeedbackEventArgs e)
-        {
-            base.OnGiveFeedback(e);
-            if (e.Effects.HasFlag(DragDropEffects.Copy))
-            {
-                Mouse.SetCursor(Cursors.IBeam);
-            }
-        }
-
         private void Script_Drop(object sender, DragEventArgs e)
         {
             //RichTextBox rtb = sender as RichTextBox;
@@ -84,9 +83,9 @@ namespace NewsBuddy
 
                 InlineUIContainer nb = new InlineUIContainer(nButton, rtbScript.CaretPosition)
                 {
-                    Tag = passNB
+                    Tag = passNB   
                 };
-
+                
                 e.Handled = true;
             }
 
@@ -140,21 +139,58 @@ namespace NewsBuddy
                     btnBullet.IsChecked = false;
                 }
 
+
                 double size;
 
                 if (Double.TryParse(temp.ToString(), out size))
                 { selFontSize.Text = temp.ToString(); }
 
-            } catch
+            }
+            catch (NullReferenceException dump)
+            {
+                return;
+            }
+            catch
             {
                 return;
             }
 
         }
 
-        private void mnuSave_Click(object sender, RoutedEventArgs e)
+        public void SaveTemplateXaml(object sender, RoutedEventArgs e)
         {
-            VistaSaveFileDialog svD = new VistaSaveFileDialog
+            SaveFileDialog svD = new SaveFileDialog
+            {
+                Filter = "xaml files (*.xaml)|*.xaml",
+                DefaultExt = "xaml",
+                InitialDirectory = Settings.Default.TemplatesDirectory,
+                RestoreDirectory = true,
+                Title = "Save Template"
+            };
+
+            if ((bool)svD.ShowDialog())
+            {
+                ToggleLoading(true);
+                if (scriptUri == null)
+                {
+                    scriptUri = svD.FileName;
+                }
+                string fileName = svD.FileName;
+                //StartNewWorker(new NJSaveFile(rtbScript.Document, svD.FileName), true);
+
+
+                FileStream fs = new FileStream(fileName, FileMode.Create);
+                XamlWriter.Save(rtbScript.Document, fs);
+                fs.Close();
+                ((MainWindow)Application.Current.MainWindow).ChangeTabName(scriptUri);
+
+            }
+            ToggleLoading(false);
+        }
+
+        public void SaveAsXaml(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog svD = new SaveFileDialog
             {
                 Filter = "xaml files (*.xaml)|*.xaml",
                 DefaultExt = "xaml",
@@ -165,454 +201,279 @@ namespace NewsBuddy
 
             if ((bool)svD.ShowDialog())
             {
-                List<NBfile> NBs = new List<NBfile>();
-                List<Inline> oldInlines = new List<Inline>();
+                ToggleLoading(true);
 
-
-                int clipIndex = 0;
-                int sounderIndex = 0;
-
-
-                // FIRST WE GO THROUGH, FIND ALL THE LOCATIONS OF THE EXISTING NB BUTTONS AND ADD THEIR FILES TO THE LIST NBs.
-                // WE ALSO ADD THE INLINES TO THEIR OWN LIST SO WE CAN DELETE THEM NEXT.
-                foreach (Paragraph para in rtbScript.Document.Blocks)
-                {
-                    foreach (Inline inline in para.Inlines)
-                    {
-                        if (inline.Tag is NBfile)
-                        {
-                            NBfile inlNB = inline.Tag as NBfile;
-                            NBfile newNB = new NBfile
-                            {
-                                NBName = inlNB.NBName,
-                                NBPath = inlNB.NBPath,
-                                NBisSounder = inlNB.NBisSounder,
-
-                                //THIS WILL GET THE INSERTION POSITION FOR THE REPLACEMENT NAME.
-                                textPointer = inline.ElementStart.GetNextInsertionPosition(LogicalDirection.Forward)
-                            };
-
-                            NBs.Add(newNB);
-                            oldInlines.Add(inline);
-                        }
-                    }
-                }
-
-
-                for (int i = 0; i < oldInlines.Count; i++)
-                {
-                    List<Object> blocks = new List<Object>();
-
-                    Inline NBbutt = oldInlines[i];
-
-                    foreach (var block in rtbScript.Document.Blocks)
-                    {
-                        blocks.Add(block);
-                    }
-
-                    for (int x = 0; x < blocks.Count; x++)
-                    {
-                        Object block = blocks[x];
-                        var paragraph = block as Paragraph;
-
-                        if (paragraph.Inlines.Contains(NBbutt))
-                        {
-                            paragraph.Inlines.Remove(NBbutt);
-                        }
-                    }
-                }
-
-                // then go through and do the replacement. we're doing it in this order so that text pointers dont get too frigged off.
-
-                for (int ii = 0; ii < NBs.Count; ii++)
-                {
-                    NBfile nb = NBs[ii];
-
-                    if (nb.NBisSounder)
-                    {
-                        string repname = nb.GetIDs(nb, sounderIndex);
-
-                        rtbScript.CaretPosition = nb.textPointer;
-
-                        rtbScript.CaretPosition.InsertTextInRun(repname);
-
-                        Trace.WriteLine("Inserted Sounder " + System.IO.Path.GetFileNameWithoutExtension(repname) + " from index " + ii + " with ID Number " + sounderIndex);
-
-                        sounderIndex += 1;
-                    }
-                    else
-                    {
-                        string repname = nb.GetIDc(nb, clipIndex);
-
-                        rtbScript.CaretPosition = nb.textPointer;
-
-                        rtbScript.CaretPosition.InsertTextInRun(repname);
-
-                        Trace.WriteLine("Inserted Clip " + System.IO.Path.GetFileNameWithoutExtension(repname) + " from index " + ii + " with ID Number" + clipIndex);
-
-                        clipIndex += 1;
-                    }
-
-                }
+                scriptUri = svD.FileName;
+                //StartNewWorker(new NJSaveFile(rtbScript.Document, svD.FileName), true);
 
                 // now its time to actually save the stupid thing out. savey savey save save.
-
                 string fileName = svD.FileName;
-                TextRange range;
                 FileStream fs;
-
-                range = new TextRange(rtbScript.Document.ContentStart, rtbScript.Document.ContentEnd);
                 fs = new FileStream(fileName, FileMode.Create);
-                range.Save(fs, DataFormats.XamlPackage);
+                XamlWriter.Save(rtbScript.Document, fs);
                 fs.Close();
-
-                RestoreNBfiles(true);
+                ((MainWindow)Application.Current.MainWindow).ChangeTabName(scriptUri);
 
             }
 
-
+            ToggleLoading(false);
         }
 
-        private void mnuOpen_Click(object sender, RoutedEventArgs e)
+        public void SaveXaml(object sender, RoutedEventArgs e)
         {
-            TextRange range;
-            FileStream fs;
-            VistaOpenFileDialog opn = new VistaOpenFileDialog();
+            string dir = "no";
+
+            if (scriptUri != null && File.Exists(scriptUri))
+            {
+                dir = System.IO.Path.GetDirectoryName(scriptUri);
+            }
+
+            if (dir != "no" && dir != Settings.Default.TemplatesDirectory && File.Exists(scriptUri))
+            {
+                //StartNewWorker(new NJSaveFile(rtbScript.Document, scriptUri), true);
+
+                ToggleLoading(true);
+                string fileName = scriptUri;
+                FileStream fs;
+                fs = new FileStream(fileName, FileMode.Create);
+                XamlWriter.Save(rtbScript.Document, fs);
+                fs.Close();
+
+            }
+            else
+            {
+                SaveFileDialog svD = new SaveFileDialog
+                {
+                    Filter = "xaml files (*.xaml)|*.xaml",
+                    DefaultExt = "xaml",
+                    InitialDirectory = Settings.Default.ScriptsDirectory,
+                    RestoreDirectory = true,
+                    Title = "Save Script"
+                };
+
+                if ((bool)svD.ShowDialog())
+                {
+                    ToggleLoading(true);
+
+                    scriptUri = svD.FileName;
+                    //StartNewWorker(new NJSaveFile(rtbScript.Document, svD.FileName), true);
+
+
+                    // now its time to actually save the stupid thing out. savey savey save save.
+                    string fileName = svD.FileName;
+                    FileStream fs;
+                    fs = new FileStream(fileName, FileMode.Create);
+                    XamlWriter.Save(rtbScript.Document, fs);
+                    fs.Close();
+                    ((MainWindow)Application.Current.MainWindow).ChangeTabName(scriptUri);
+
+                }
+            }
+            ToggleLoading(false);
+        }
+
+        public void OpenXaml(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog opn = new OpenFileDialog();
             opn.InitialDirectory = Settings.Default.ScriptsDirectory;
             opn.RestoreDirectory = true;
             opn.Title = "Open a Script";
             if ((bool)opn.ShowDialog())
             {
+
+                ToggleLoading(true);
                 if (opn.CheckFileExists)
                 {
-                    range = new TextRange(rtbScript.Document.ContentStart, rtbScript.Document.ContentEnd);
-                    fs = new FileStream(opn.FileName, FileMode.OpenOrCreate);
-                    range.Load(fs, DataFormats.XamlPackage);
+                    //StartNewWorker(new NJSaveFile(rtbScript.Document, opn.FileName), false);
+
+                    FileStream fs;
+                    fs = new FileStream(opn.FileName, FileMode.Open);
+                    FlowDocument loaded = XamlReader.Load(fs) as FlowDocument;
                     fs.Close();
-                    RestoreNBfiles(true);
+                    scriptUri = opn.FileName;
+                    rtbScript.Document = loaded;
+                    RestoreNBXaml();
                 }
             }
 
+            ToggleLoading(false);
         }
 
-        public void OpenFromTemplate(string uri)
+        public void OpenXamlFromTemplate(string uri)
         {
-            TextRange range = new TextRange(rtbScript.Document.ContentStart, rtbScript.Document.ContentEnd);
-            FileStream fs;
+
             if (File.Exists(uri))
             {
-                fs = new FileStream(uri, FileMode.OpenOrCreate);
-                range.Load(fs, DataFormats.XamlPackage);
+                //StartNewWorker(new NJSaveFile(rtbScript.Document, uri), false);
+                ToggleLoading(true);
+                FileStream fs = new FileStream(uri, FileMode.Open);
+                FlowDocument loaded = XamlReader.Load(fs) as FlowDocument;
                 fs.Close();
-                RestoreNBfiles(true);
-            } else { MessageBox.Show("This file is busted. Sorry!"); }
+                rtbScript.Document = loaded;
+                scriptUri = uri;
+                RestoreNBXaml();
+            }
+            else { MessageBox.Show("This file is busted. Sorry!"); }
+
+            ToggleLoading(false);
         }
 
-        public void RestoreNBfiles(bool recreate)
+        void RestoreNBXaml()
         {
-            List<NBfile> newNBs = new List<NBfile>();
-            newNBs.Clear();
+            List<Inline> nbInlines = new List<Inline>();
 
-            bool foundAllSounders = false;
-            bool foundAllClips = false;
-            int soundersIndex = 0;
-            int clipsIndex = 0;
-
-
-            // SOUNDERS DISCOVERY SECTION */ /*
-
-            while (!foundAllSounders)
+            foreach (var block in rtbScript.Document.Blocks)
             {
-                TextRange foundKeyS1 = FindStringRangeFromPosition(rtbScript.Document.ContentStart, String.Format("%@!${0}", soundersIndex));
-                if (foundKeyS1 != null)
+                if (block is Paragraph)
                 {
-                    TextRange foundKeyS2 = FindStringRangeFromPosition(rtbScript.Document.ContentStart, String.Format("$@!%{0}", soundersIndex));
-
-                    if (foundKeyS2 != null)
+                    Paragraph para = block as Paragraph;
+                    foreach (Inline inline in para.Inlines)
                     {
-
-                        TextPointer pathStartS = foundKeyS1.End;
-                        TextPointer pathEndS = foundKeyS2.Start;
-                        TextPointer nextInsS = foundKeyS2.End;
-
-                        TextRange NBKeyS = new TextRange(pathStartS, pathEndS);
-                        string _NBPathS = NBKeyS.Text;
-
-                        Trace.WriteLine("foundKeyS1 = " + foundKeyS1.Text);
-                        Trace.WriteLine("foundKeyS2 = " + foundKeyS2.Text);
-
-                        NBfile replS = new NBfile();
-                        replS.NBPath = _NBPathS;
-                        replS.NBName = System.IO.Path.GetFileNameWithoutExtension(_NBPathS);
-                        replS.NBisSounder = true;
-                        replS.textPointer = nextInsS.GetNextInsertionPosition(LogicalDirection.Backward);
-
-
-                        newNBs.Add(replS);
-
-                        Trace.WriteLine("NBKey = " + _NBPathS);
-                        Trace.WriteLine("NBfile Path = " + replS.NBPath);
-                        Trace.WriteLine("NBfile Name = " + replS.NBName);
-                        Trace.WriteLine("Checked Sounders Index: " + soundersIndex.ToString());
-
-                        soundersIndex += 1;
-
-                    }
-                    else { MessageBox.Show("Key2 was blank in the Sounders discovery secion. wtf? This is a bug. Email Mason about it."); }
-                }
-                else { foundAllSounders = true; Trace.WriteLine("Found All Sounders."); }
-            }
-
-            // CLIPS DISCOVERY SECTION */ /*
-
-
-            while (!foundAllClips)
-            {
-                TextRange foundKeyC1 = FindStringRangeFromPosition(rtbScript.Document.ContentStart, String.Format("%@!#{0}", clipsIndex));
-                if (foundKeyC1 != null)
-                {
-                    TextRange foundKeyC2 = FindStringRangeFromPosition(rtbScript.Document.ContentStart, String.Format("#@!%{0}", clipsIndex));
-
-                    if (foundKeyC2 != null)
-                    {
-                        Trace.WriteLine("foundKeyC1 = " + foundKeyC1.Text);
-                        Trace.WriteLine("foundKeyC2 = " + foundKeyC2.Text);
-
-                        TextPointer pathStartC = foundKeyC1.End;
-                        TextPointer pathEndC = foundKeyC2.Start;
-                        TextPointer nextInsC = foundKeyC2.End;
-
-                        TextRange NBKeyC = new TextRange(pathStartC, pathEndC);
-                        string _NBPathC = NBKeyC.Text;
-
-                        NBfile replC = new NBfile();
-                        replC.NBPath = _NBPathC;
-                        replC.NBName = System.IO.Path.GetFileNameWithoutExtension(_NBPathC);
-                        replC.NBisSounder = false;
-                        replC.textPointer = nextInsC.GetNextInsertionPosition(LogicalDirection.Backward);
-
-                        //InlineUIContainer newNBC = new InlineUIContainer(replC.NBbutton(), nextInsC.GetNextInsertionPosition(LogicalDirection.Forward));
-                        //newNBC.Tag = replC;
-
-                        newNBs.Add(replC);
-
-
-                        Trace.WriteLine("NBKey = " + _NBPathC);
-                        Trace.WriteLine("NBfile Path = " + replC.NBPath);
-                        Trace.WriteLine("NBfile Name = " + replC.NBName);
-                        Trace.WriteLine("Checked Clips Index: " + clipsIndex.ToString());
-
-                        clipsIndex += 1;
-
-                    }
-                    else { MessageBox.Show("Key2 was blank in the Clips discovery secion. wtf? This is a bug. Email Mason about it."); }
-                }
-
-                else { foundAllClips = true; Trace.WriteLine("Found All Clips"); }
-            }
-
-
-
-
-            // SOUNDERS DELETION SECTION */ 
-
-
-            for (int i = soundersIndex; i >= 0; i--)
-            {
-
-                TextRange foundKeySx1 = FindStringRangeFromPosition(rtbScript.Document.ContentStart, String.Format("%@!${0}", i));
-                if (foundKeySx1 != null)
-                {
-                    TextRange foundKeySx2 = FindStringRangeFromPosition(rtbScript.Document.ContentStart, String.Format("$@!%{0}", i));
-                    if (foundKeySx2 != null)
-                    {
-                        Trace.WriteLine("foundKeySx1 = " + foundKeySx1.Text);
-                        Trace.WriteLine("foundKeySx2 = " + foundKeySx2.Text);
-
-                        TextPointer pathStartSx = foundKeySx1.Start;
-                        TextPointer pathEndSx = foundKeySx2.End;
-
-                        TextRange wipeOutSounders = new TextRange(pathStartSx, pathEndSx);
-
-                        wipeOutSounders.Text = "";
-
-                        Trace.WriteLine("Deleted sounders index: " + i.ToString());
-
-                    }
-                    else { MessageBox.Show("Key2 was blank in the Sounders deletion section. wtf? This is a bug. Email Mason about it."); }
-                }
-                else { Trace.WriteLine("Sounders Deletion Completed."); }
-            }
-
-
-
-            // CLIPS DELETION SECTION */ /*
-
-
-            for (int y = clipsIndex; y >= 0; y--)
-            {
-
-                TextRange foundKeyCx1 = FindStringRangeFromPosition(rtbScript.Document.ContentStart, String.Format("%@!#{0}", y));
-                if (foundKeyCx1 != null)
-                {
-                    TextRange foundKeyCx2 = FindStringRangeFromPosition(rtbScript.Document.ContentStart, String.Format("#@!%{0}", y));
-                    if (foundKeyCx2 != null)
-                    {
-                        Trace.WriteLine("foundKeyCx1 = " + foundKeyCx1.Text);
-                        Trace.WriteLine("foundKeyCx2 = " + foundKeyCx2.Text);
-
-                        TextPointer pathStartCx = foundKeyCx1.Start;
-                        TextPointer pathEndCx = foundKeyCx2.End;
-
-                        TextRange wipeOutClips = new TextRange(pathStartCx, pathEndCx);
-
-                        wipeOutClips.Text = "";
-
-                        Trace.WriteLine("Deleted clips index: " + y.ToString());
-
-                    }
-                    else { MessageBox.Show("Key2 was blank in the Clips deletion section. wtf? This is a bug. Email Mason about it."); }
-                }
-                else { Trace.WriteLine("Clips Deletion Completed."); }
-            }
-
-
-            // RECREATION SECTION
-
-
-            if (recreate)
-            {
-                foreach (NBfile nb in newNBs)
-                {
-                    if (File.Exists(nb.NBPath))
-                    {
-                        NButton nButton = nb.NBbutton();
-                        nButton.file = nb;
-
-                        InlineUIContainer newNBbutton = new InlineUIContainer(nButton, nb.textPointer);
-                        newNBbutton.Tag = nb;
-                    }
-                    else
-                    {
-                        var bc = new BrushConverter();
-
-                        InlineUIContainer newFailure = new InlineUIContainer(new Button() { Content = "ERROR", Background = (Brush)bc.ConvertFrom("#ff0000") }, nb.textPointer);
-                    }
-
-
-                }
-
-            }
-
-        }
-
-        //  SEARCH FUNCTIONALITY VERSION 2
-        public static TextRange FindStringRangeFromPosition(TextPointer position, string matchStr, bool isCaseSensitive = false)
-        {
-            int curIdx = 0;
-            TextPointer startPointer = null;
-            StringComparison stringComparison = isCaseSensitive ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase;
-            while (position != null)
-            {
-                if (position.GetPointerContext(LogicalDirection.Forward) != TextPointerContext.Text)
-                {
-                    if (position.GetPointerContext(LogicalDirection.Forward) == TextPointerContext.EmbeddedElement)
-                    {
-                        var inlineUIelement = position.Parent;
-                        //handle inlineUIelement.Child contents here...
-                    }
-                    position = position.GetNextContextPosition(LogicalDirection.Forward);
-                    continue;
-                }
-                var runStr = position.GetTextInRun(LogicalDirection.Forward);
-                if (string.IsNullOrEmpty(runStr))
-                {
-                    position = position.GetNextContextPosition(LogicalDirection.Forward);
-                    continue;
-                }
-                //only concerned with current character of match string
-                int runIdx = runStr.IndexOf(matchStr[curIdx].ToString(), stringComparison);
-                if (runIdx == -1)
-                {
-                    //if no match found reset search
-                    curIdx = 0;
-                    if (startPointer == null)
-                    {
-                        position = position.GetNextContextPosition(LogicalDirection.Forward);
-                    }
-                    else
-                    {
-                        //when no match somewhere after first character reset search to the position AFTER beginning of last partial match
-                        position = startPointer.GetPositionAtOffset(1, LogicalDirection.Forward);
-                        startPointer = null;
-                    }
-                    continue;
-                }
-                if (curIdx == 0)
-                {
-                    //beginning of range found at runIdx
-                    startPointer = position.GetPositionAtOffset(runIdx, LogicalDirection.Forward);
-                }
-                if (curIdx == matchStr.Length - 1)
-                {
-                    //each character has been matched
-                    var endPointer = position.GetPositionAtOffset(runIdx, LogicalDirection.Forward);
-                    //for edge cases of repeating characters these loops ensure start is not early and last character isn't lost 
-                    if (isCaseSensitive)
-                    {
-                        while (endPointer != null && !new TextRange(startPointer, endPointer).Text.Contains(matchStr))
+                        if (inline.Tag is NBfile)
                         {
-                            endPointer = endPointer.GetPositionAtOffset(1, LogicalDirection.Forward);
+                            nbInlines.Add(inline);
                         }
                     }
-                    else
+                }
+
+                if (block is List)
+                {
+                    List lol = block as List;
+                    foreach (ListItem tip in lol.ListItems)
                     {
-                        while (endPointer != null && !new TextRange(startPointer, endPointer).Text.ToLower().Contains(matchStr.ToLower()))
+                        foreach (Paragraph pl in tip.Blocks)
                         {
-                            endPointer = endPointer.GetPositionAtOffset(1, LogicalDirection.Forward);
+                            foreach (Inline inl in pl.Inlines)
+                            {
+                                if (inl.Tag is NBfile)
+                                {
+                                    nbInlines.Add(inl);
+                                }
+                            }
                         }
                     }
-                    if (endPointer == null)
-                    {
-                        return null;
-                    }
-                    while (startPointer != null && new TextRange(startPointer, endPointer).Text.Length > matchStr.Length)
-                    {
-                        startPointer = startPointer.GetPositionAtOffset(1, LogicalDirection.Forward);
-                    }
-                    if (startPointer == null)
-                    {
-                        return null;
-                    }
-                    return new TextRange(startPointer, endPointer);
-                }
-                else
-                {
-                    //prepare loop for next match character
-                    curIdx++;
-                    //iterate position one offset AFTER match offset
-                    position = position.GetPositionAtOffset(runIdx + 1, LogicalDirection.Forward);
                 }
             }
-            return null;
+
+            for (int i = 0; i < nbInlines.Count; i++)
+            {
+                Inline inl = nbInlines[i];
+                InlineUIContainer nbi = inl as InlineUIContainer;
+                NBfile nb = inl.Tag as NBfile;
+                nbi.Child = nb.NBbutton();
+            }
+            ((MainWindow)Application.Current.MainWindow).ChangeTabName(scriptUri);
         }
 
         public void NBrenamed2(object sender, RenamedEventArgs e)
         {
-            foreach (Paragraph para in rtbScript.Document.Blocks)
+            foreach (var block in rtbScript.Document.Blocks)
             {
-                foreach (Inline inline in para.Inlines)
+                if (block is Paragraph)
                 {
-                    if (inline.Tag is NBfile)
+                    Paragraph para = block as Paragraph;
+                    foreach (Inline inline in para.Inlines)
                     {
-                        NBfile nb = inline.Tag as NBfile;
-                        if (nb.NBPath == e.OldFullPath)
+                        if (inline.Tag is NBfile)
                         {
-                            nb.NBPath = e.FullPath;
-                            nb.NBName = System.IO.Path.GetFileNameWithoutExtension(e.FullPath);
+                            NBfile nb = inline.Tag as NBfile;
+                            if (nb.NBPath == e.OldFullPath)
+                            {
+                                nb.NBPath = e.FullPath;
+                                nb.NBName = System.IO.Path.GetFileNameWithoutExtension(e.FullPath);
+                            }
                         }
                     }
                 }
+
+                if (block is List)
+                {
+                    List lol = block as List;
+                    foreach (ListItem tip in lol.ListItems)
+                    {
+                        foreach (Paragraph par in tip.Blocks)
+                        {
+                            foreach (Inline il in par.Inlines)
+                            {
+                                if (il.Tag is NBfile)
+                                {
+                                    NBfile nbb = il.Tag as NBfile;
+                                    if (nbb.NBPath == e.OldFullPath)
+                                    {
+                                        nbb.NBPath = e.FullPath;
+                                        nbb.NBName = System.IO.Path.GetFileNameWithoutExtension(e.FullPath);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+
+        public void NBdeleted2(object sender, FileSystemEventArgs e)
+        {
+            List<Inline> deletedNBs = new List<Inline>();
+
+
+            foreach (var block in rtbScript.Document.Blocks)
+            {
+                if (block is Paragraph)
+                {
+                    Paragraph para = block as Paragraph;
+                    foreach (Inline inline in para.Inlines)
+                    {
+                        if (inline.Tag is NBfile)
+                        {
+                            NBfile nb = inline.Tag as NBfile;
+                            if (nb.NBPath == e.FullPath)
+                            {
+                                deletedNBs.Add(inline);
+                            }
+                        }
+                    }
+                }
+
+            }
+
+            for (int d = 0; d < deletedNBs.Count; d++)
+            {
+                Inline del = deletedNBs[d];
+
+                List<Paragraph> blocks = new List<Paragraph>();
+                foreach (var block in rtbScript.Document.Blocks)
+                {
+                    if (block is Paragraph)
+                    {
+                        Paragraph par = block as Paragraph;
+                        blocks.Add(par);
+                    }
+                    if (block is List)
+                    {
+                        List lool = block as List;
+                        foreach (ListItem lit in lool.ListItems)
+                        {
+                            foreach (Paragraph pp in lit.Blocks)
+                            {
+                                blocks.Add(pp);
+                            }
+                        }
+                    }
+
+                }
+
+                for (int dd = 0; dd < blocks.Count; dd++)
+                {
+
+                    Paragraph bl = blocks[dd];
+                    if (bl.Inlines.Contains(del))
+                    {
+                        bl.Inlines.Remove(del);
+                    }
+
+                }
+
             }
         }
 
@@ -631,169 +492,142 @@ namespace NewsBuddy
             });
         }
 
-        public void NBdeleted2(object sender, FileSystemEventArgs e)
+
+        public void ToggleLoading(bool show)
         {
-            List<Inline> deletedNBs = new List<Inline>();
-
-
-            foreach (Paragraph para in rtbScript.Document.Blocks)
+            if (show)
             {
+                Mouse.OverrideCursor = Cursors.Wait;
+                rtbScript.IsEnabled = false;
+                progBar.Visibility = Visibility.Visible;
+                topMenu.Visibility = Visibility.Hidden;
+            }
+            else
+            {
+                rtbScript.IsEnabled = true;
+                Mouse.OverrideCursor = null;
+                progBar.Visibility = Visibility.Collapsed;
+                topMenu.Visibility = Visibility.Visible;
+            }
+        }
 
+        #region Background Worker (in progress)
+        private void StartNewWorker(NJSaveFile saveFile, bool isSave)
+        {
+
+            Mouse.OverrideCursor = Cursors.Wait;
+            progBar.Visibility = Visibility.Visible;
+            topMenu.Visibility = Visibility.Collapsed;
+            BackgroundWorker worker = new BackgroundWorker();
+            if (isSave)
+            {
+                worker.DoWork += Worker_DoSave;
+            }
+            else
+            {
+                worker.DoWork += Worker_DoLoad;
+            }
+            worker.ProgressChanged += Worker_Progress;
+            worker.WorkerReportsProgress = true;
+            worker.WorkerSupportsCancellation = false;
+            worker.RunWorkerAsync(saveFile);
+
+        }
+        private void Worker_DoSave(object sender, DoWorkEventArgs w)
+        {
+            BackgroundWorker bw = sender as BackgroundWorker;
+
+            NJSaveFile file = (NJSaveFile)w.Argument;
+            FileStream fs = new FileStream(file.uri, FileMode.Create);
+            XamlWriter.Save(file.document, fs);
+            fs.Close();
+
+
+            List<Inline> nbInlines = new List<Inline>();
+
+            foreach (Paragraph para in file.document.Blocks)
+            {
                 foreach (Inline inline in para.Inlines)
                 {
                     if (inline.Tag is NBfile)
                     {
-                        NBfile nb = inline.Tag as NBfile;
-                        if (nb.NBPath == e.FullPath)
-                        {
-                            deletedNBs.Add(inline);
-                        }
+                        nbInlines.Add(inline);
                     }
                 }
             }
 
-            for (int d = 0; d < deletedNBs.Count; d++)
+            for (int i = 0; i < nbInlines.Count; i++)
             {
-                Inline del = deletedNBs[d];
-                List<Paragraph> blocks = new List<Paragraph>();
-                foreach (Paragraph block in rtbScript.Document.Blocks)
-                {
-                    blocks.Add(block);
-                }
-
-                for (int dd = 0; dd < blocks.Count; dd++)
-                {
-                    Paragraph bl = blocks[dd];
-                    if (bl.Inlines.Contains(del))
-                    {
-                        bl.Inlines.Remove(del);
-                    }
-                }
-
+                Inline inl = nbInlines[i];
+                InlineUIContainer nbi = inl as InlineUIContainer;
+                NBfile nb = inl.Tag as NBfile;
+                nbi.Child = nb.NBbutton();
             }
+
+            w.Result = file;
+
         }
 
-        private void mnuSaveTemplate_Click(object sender, RoutedEventArgs e)
+        private void Worker_DoLoad(object sender, DoWorkEventArgs w)
         {
-            Trace.WriteLine(Settings.Default.TemplatesDirectory);
-            VistaSaveFileDialog svD = new VistaSaveFileDialog
+            BackgroundWorker bw = sender as BackgroundWorker;
+            NJSaveFile file = (NJSaveFile)w.Argument;
+            FileStream fs = new FileStream(file.uri, FileMode.Open);
+            FlowDocument loaded = XamlReader.Load(fs) as FlowDocument;
+            fs.Close();
+            file.document = loaded;
+
+            List<Inline> nbInlines = new List<Inline>();
+
+            foreach (Paragraph para in file.document.Blocks)
             {
-                Filter = "xaml files (*.xaml)|*.xaml",
-                DefaultExt = "xaml",
-                InitialDirectory = Settings.Default.TemplatesDirectory,
-                RestoreDirectory = true,
-                Title = "Save Template"
-            };
-
-            if ((bool)svD.ShowDialog())
-            {
-                List<NBfile> NBs = new List<NBfile>();
-                List<Inline> oldInlines = new List<Inline>();
-
-
-                int clipIndex = 0;
-                int sounderIndex = 0;
-
-
-                // FIRST WE GO THROUGH, FIND ALL THE LOCATIONS OF THE EXISTING NB BUTTONS AND ADD THEIR FILES TO THE LIST NBs.
-                // WE ALSO ADD THE INLINES TO THEIR OWN LIST SO WE CAN DELETE THEM NEXT.
-                foreach (Paragraph para in rtbScript.Document.Blocks)
+                foreach (Inline inline in para.Inlines)
                 {
-                    foreach (Inline inline in para.Inlines)
+                    if (inline.Tag is NBfile)
                     {
-                        if (inline.Tag is NBfile)
-                        {
-                            NBfile inlNB = inline.Tag as NBfile;
-                            NBfile newNB = new NBfile
-                            {
-                                NBName = inlNB.NBName,
-                                NBPath = inlNB.NBPath,
-                                NBisSounder = inlNB.NBisSounder,
-
-                                //THIS WILL GET THE INSERTION POSITION FOR THE REPLACEMENT NAME.
-                                textPointer = inline.ElementStart.GetNextInsertionPosition(LogicalDirection.Forward)
-                            };
-
-                            NBs.Add(newNB);
-                            oldInlines.Add(inline);
-                        }
+                        nbInlines.Add(inline);
                     }
                 }
-
-
-                for (int i = 0; i < oldInlines.Count; i++)
-                {
-                    List<Object> blocks = new List<Object>();
-
-                    Inline NBbutt = oldInlines[i];
-
-                    foreach (var block in rtbScript.Document.Blocks)
-                    {
-                        blocks.Add(block);
-                    }
-
-                    for (int x = 0; x < blocks.Count; x++)
-                    {
-                        Object block = blocks[x];
-                        var paragraph = block as Paragraph;
-
-                        if (paragraph.Inlines.Contains(NBbutt))
-                        {
-                            paragraph.Inlines.Remove(NBbutt);
-                        }
-                    }
-                }
-
-                // then go through and do the replacement. we're doing it in this order so that text pointers dont get too frigged off.
-
-                for (int ii = 0; ii < NBs.Count; ii++)
-                {
-                    NBfile nb = NBs[ii];
-
-                    if (nb.NBisSounder)
-                    {
-                        string repname = nb.GetIDs(nb, sounderIndex);
-
-                        rtbScript.CaretPosition = nb.textPointer;
-
-                        rtbScript.CaretPosition.InsertTextInRun(repname);
-
-                        Trace.WriteLine("Inserted Sounder " + System.IO.Path.GetFileNameWithoutExtension(repname) + " from index " + ii + " with ID Number " + sounderIndex);
-
-                        sounderIndex += 1;
-                    }
-                    else
-                    {
-                        string repname = nb.GetIDc(nb, clipIndex);
-
-                        rtbScript.CaretPosition = nb.textPointer;
-
-                        rtbScript.CaretPosition.InsertTextInRun(repname);
-
-                        Trace.WriteLine("Inserted Clip " + System.IO.Path.GetFileNameWithoutExtension(repname) + " from index " + ii + " with ID Number" + clipIndex);
-
-                        clipIndex += 1;
-                    }
-
-                }
-
-                // now its time to actually save the stupid thing out. savey savey save save.
-
-                string fileName = svD.FileName;
-                TextRange range;
-                FileStream fs;
-
-                range = new TextRange(rtbScript.Document.ContentStart, rtbScript.Document.ContentEnd);
-                fs = new FileStream(fileName, FileMode.Create);
-                range.Save(fs, DataFormats.XamlPackage);
-                fs.Close();
-
-                RestoreNBfiles(true);
-
             }
 
+            for (int i = 0; i < nbInlines.Count; i++)
+            {
+                Inline inl = nbInlines[i];
+                InlineUIContainer nbi = inl as InlineUIContainer;
+                NBfile nb = inl.Tag as NBfile;
+                nbi.Child = nb.NBbutton();
+            }
+            w.Result = file;
 
+        }
+
+        private void Worker_Progress(object sender, ProgressChangedEventArgs p)
+        {
+            double per = (p.ProgressPercentage * 100) / 50;
+            progBar.IsIndeterminate = false;
+            progBar.Value = Math.Round(per, 0);
+
+        }
+
+        private void Worker_Done(object sender, DoWorkEventArgs w)
+        {
+            NJSaveFile result = (NJSaveFile)w.Result;
+            rtbScript.Document = result.document;
+            scriptUri = result.uri;
+            progBar.Visibility = Visibility.Collapsed;
+            topMenu.Visibility = Visibility.Visible;
+            Mouse.OverrideCursor = null;
+        }
+
+        #endregion
+
+        private void rtbScript_Pasting(object sender, DataObjectPastingEventArgs e)
+        {
+            if (e.FormatToApply == "Bitmap")
+            {
+                e.FormatToApply = "FileName";
+            }
         }
     }
-    
+
 }

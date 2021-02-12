@@ -20,13 +20,13 @@ namespace NewsBuddy
 
         public string NBPath { get; set; }
 
-        public bool NBisSounder = false;
+        public bool NBisSounder { get; set; }
 
         MainWindow homeBase = Application.Current.Windows[0] as MainWindow;
 
         public TextPointer textPointer;
 
-        public NBfileLocator locator;
+
 
 
         public void NBPlay(bool isSounder)
@@ -92,14 +92,15 @@ namespace NewsBuddy
             var bc = new BrushConverter();
             NButton NBbutton = new NButton();
             NBbutton.Content = NBName;
+
             if (NBisSounder)
             {
-                NBbutton.Background = (Brush)bc.ConvertFrom("#05B8CC");
+                NBbutton.Style = (Style)Application.Current.FindResource("btnNBs");
             } else
             {
-                NBbutton.Background = (Brush)bc.ConvertFrom("#6DFF9A");
+                NBbutton.Style = (Style)Application.Current.FindResource("btnNBc");
             }
-            //NBbutton.Style = (Style)Application.Current.FindResource("btnNB");
+
             NBbutton.Click += (sender, args) =>
             {
                 NBPlay(NBisSounder);
