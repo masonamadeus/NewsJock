@@ -93,19 +93,11 @@ namespace NewsBuddy
 
         void ExceptionCatcher(Exception e, string exceptionType, bool promptForShutdown)
         {
-            var boxTitle = $"Unexpected Error: {exceptionType}";
-            var boxMessage = $"The following exception occurred:\n\n{e}\n\nIf you're encountering this a lot, copy this error message and email it to: 'NewsJock@ThatNerdMason.com'";
-            var boxButtons = MessageBoxButton.OK;
-
-            if (promptForShutdown)
+            ProblemWindow pw = new ProblemWindow(e, promptForShutdown);
+            pw.Owner = this;
+            if (!(bool)pw.ShowDialog())
             {
-                boxMessage += "\n\nNormally this would make NewsJock die. You can try and continue but I can't guarantee it won't get weird. Do you want to let it shut down?";
-                boxButtons = MessageBoxButton.YesNo;
-            }
-
-            if (MessageBox.Show(boxMessage, boxTitle, boxButtons, MessageBoxImage.Error) == MessageBoxResult.Yes)
-            {
-                Application.Current.Shutdown();
+                MessageBox.Show("Good Luck.");
             }
         }
 
@@ -144,6 +136,7 @@ namespace NewsBuddy
             if (!Directory.Exists(dirClipsPath) || !Directory.Exists(dirScriptsPath) || !Directory.Exists(dirSoundersPath) || !Directory.Exists(dirTemplatesPath) || !Directory.Exists(dirSharePath))
             {
                 DirConfig dlg = new DirConfig();
+                //dlg.Owner = this;
                 if ((bool)dlg.ShowDialog())
                 {
                     DisplayDirectories();

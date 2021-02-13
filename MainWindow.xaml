@@ -10,10 +10,12 @@
         Height="{Binding}" 
         Width="{Binding}" 
         MinHeight="400"
-        MinWidth="600"
+        MinWidth="700"
         Background="Gray"
         Closing="Window_Closing"
-        FontFamily="{StaticResource OpenSans}">
+        FontFamily="{StaticResource OpenSans}"
+        FontSize="14"
+        ShowInTaskbar="True">
     
     
     <DockPanel HorizontalAlignment="Stretch">
@@ -49,7 +51,7 @@
                         <TextBlock FontFamily="{StaticResource FA}"></TextBlock>
                     </MenuItem.Icon>
                     <MenuItem x:Name="mnNJSettings" Header="NewsJock Settings" Click="mnNJSettings_Click"/>
-                    <MenuItem Name="mnWebSettings" Header="Web Browser Settings" Click="mnWebSettings_Click"/>
+                  <!--  <MenuItem Name="mnWebSettings" Header="Web Browser Settings" Click="mnWebSettings_Click"/> -->
 
                 </MenuItem>
 
@@ -59,8 +61,8 @@
 
         </Menu>
 
-        <ScrollViewer DockPanel.Dock="Left" VerticalScrollBarVisibility="Visible" Width="250" HorizontalAlignment="Left" Style="{StaticResource LeftScrollViewer}">
-        <StackPanel Name ="stackL" Width="230">
+        <ScrollViewer DockPanel.Dock="Left" VerticalScrollBarVisibility="Visible" Width="300" HorizontalAlignment="Left" Style="{StaticResource LeftScrollViewer}">
+        <StackPanel Name ="stackL" Width="275">
                 <StackPanel Background="#FF89a6c9">
                 <Label Name="lblSounders" HorizontalAlignment="Center" FontSize="20" FontStyle="Italic" FontWeight="Bold" ToolTip="Double-click this to open your Sounders folder." MouseDoubleClick="lblSounders_MouseDoubleClick">Sounders</Label>
                     <WrapPanel Name="SoundersControl" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -109,7 +111,7 @@
 
 
         </StackPanel>
-        <TabControl Name="DynamicTabs" ItemsSource="{Binding}">
+        <TabControl Name="DynamicTabs" ItemsSource="{Binding}" Margin="1,0,5,5">
             <TabControl.Resources>
                 <DataTemplate x:Key="TabHeader" DataType="TabItem">
                     <DockPanel>

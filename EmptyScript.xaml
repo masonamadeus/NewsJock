@@ -12,7 +12,7 @@
 
     <DockPanel>
         
-        <Menu x:Name="topMenu" DockPanel.Dock="Top" HorizontalAlignment="Stretch">
+        <Menu x:Name="topMenu" DockPanel.Dock="Top" FontSize="14" HorizontalAlignment="Stretch">
 
             <Menu.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -32,7 +32,7 @@
                  Background="LightGray" 
                  ToolBarTray.IsLocked="true" 
                  FontFamily="{StaticResource FA}"
-                 FontSize="18"
+                 FontSize="16"
                  Padding="0,3,0,3">
 
             <ToggleButton x:Name="btnBold" 
@@ -67,6 +67,12 @@
             <ToggleButton x:Name="btnAright" Command="EditingCommands.AlignRight"
                            Padding="5,2,5,2" 
                           BorderThickness="2" BorderBrush="DimGray"></ToggleButton>
+            <Separator Margin="8,0,18,0" />
+            <ToggleButton x:Name="btnDark" Click="DarkMode_Toggle" 
+                          BorderBrush="DimGray"
+                          BorderThickness="2"
+                          HorizontalAlignment="Right"
+                          Padding="5,2,5,2"></ToggleButton>
 
         </ToolBar>
         <RichTextBox x:Name="rtbScript"
@@ -78,6 +84,8 @@
                      FontFamily="{StaticResource OpenSans}"
                      VerticalScrollBarVisibility="Auto"
                      DataObject.Pasting="rtbScript_Pasting"
+                     DataObject.Copying="rtbScript_Copying"
+                     
                      >
 
             <FlowDocument>

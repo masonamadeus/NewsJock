@@ -1,0 +1,26 @@
+﻿<Window x:Class="NewsBuddy.ProblemWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:NewsBuddy"
+        mc:Ignorable="d"
+        Title="ProblemWindow" Height="400" Width="400"
+        Background="DarkGray"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        BorderBrush="DarkRed"
+        BorderThickness="4">
+    <StackPanel VerticalAlignment="Center">
+        <Label FontSize="30" HorizontalAlignment="Center" Content="Pretty Big Error"/>
+        <TextBlock x:Name="Description" HorizontalAlignment="Center" TextWrapping="Wrap" Padding="8" Margin="0,0,0,10">Something important went very wrong.</TextBlock>
+        
+        <TextBox x:Name="Code" Height="110" Width="300" MouseDoubleClick="Code_MouseDoubleClick"  TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"></TextBox>
+        <TextBlock TextWrapping="Wrap" Padding="20" TextAlignment="Center">If you're encountering this a lot: double-click the error message above and then email it to: 'NewsJock@ThatNerdMason.com'"</TextBlock>
+        <Button x:Name="btnOK" Content="Close NewsJock" Margin="70,0,70,5" IsDefault="True" Click="btnOK_Click"></Button>
+        <Button x:Name="btnTry" Content="Try To Keep Going (Might Work?)" Margin="70,0,70,30" IsCancel="True" Click="btnTry_Click"></Button>
+
+    </StackPanel>
+</Window>

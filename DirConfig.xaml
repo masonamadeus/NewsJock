@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         ShowInTaskbar="False"
         ResizeMode="CanResizeWithGrip"
-        WindowStartupLocation="CenterOwner"
+        WindowStartupLocation="CenterScreen"
         Background="Gray"
         MinHeight="360"
         MinWidth="450"     

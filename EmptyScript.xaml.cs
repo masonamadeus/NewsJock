@@ -146,7 +146,7 @@ namespace NewsBuddy
                 { selFontSize.Text = temp.ToString(); }
 
             }
-            catch (NullReferenceException dump)
+            catch (NullReferenceException _)
             {
                 return;
             }
@@ -625,7 +625,82 @@ namespace NewsBuddy
         {
             if (e.FormatToApply == "Bitmap")
             {
-                e.FormatToApply = "FileName";
+                try
+                {
+                    e.FormatToApply = "FileName";
+                }
+                catch
+                {
+                    e.CancelCommand();
+                }
+            }
+           /* if (e.DataObject.GetDataPresent("NBfile"))
+            {
+                NBfile pastedNB = e.DataObject.GetData("NBfile") as NBfile;
+                
+                
+            }*/
+
+        }
+
+        private void rtbScript_Copying(object sender, DataObjectCopyingEventArgs e)
+        {
+            /*
+            foreach (var block in rtbScript.Document.Blocks)
+            {
+                if (block is Paragraph)
+                {
+                    Paragraph para = block as Paragraph;
+                    foreach(Inline inl in para.Inlines)
+                    {
+                        if (inl is InlineUIContainer && inl.Tag is NBfile)
+                        {
+                            InlineUIContainer butto = inl as InlineUIContainer;
+                            if (rtbScript.Selection.Contains(butto.ContentStart))
+                            {
+                                Trace.WriteLine("Found a beeean");
+                                e.DataObject.SetData("NBfile", inl.Tag);
+                            }
+                        }
+                    }
+                }
+                if (block is List)
+                {
+                    List list = block as List;
+                    foreach (ListItem li in list.ListItems)
+                    {
+                        foreach (Paragraph p in li.Blocks)
+                        {
+                            foreach (Inline line in p.Inlines)
+                            {
+                                if (line is InlineUIContainer && line.Tag is NBfile)
+                                {
+                                    InlineUIContainer butt = line as InlineUIContainer;
+                                    if (rtbScript.Selection.Contains(butt.ContentStart))
+                                    {
+                                        Trace.WriteLine("Foudn a bean");
+                                        e.DataObject.SetData("NBfile", line.Tag);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            */
+     
+        }
+
+        void DarkMode_Toggle(object sender, RoutedEventArgs e)
+        {
+            if (btnDark.IsChecked == true)
+            {
+                rtbScript.Background = Brushes.Black;
+                rtbScript.Foreground = Brushes.White;
+            } else if (btnDark.IsChecked == false)
+            {
+                rtbScript.Background = Brushes.White;
+                rtbScript.Foreground = Brushes.Black;
             }
         }
     }
