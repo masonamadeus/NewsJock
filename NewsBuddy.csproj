@@ -9,7 +9,7 @@
     <AssemblyName>NewsJock v0.1</AssemblyName>
     <Version>0.1.0</Version>
     <Authors>Mason Amadeus</Authors>
-    <Company>Saga Communications</Company>
+    <Company>NewsJock</Company>
     <Description>A standalone text editor, with the capability of adding and playing back inline audio files. Designed to aid in the presentation of audio news.</Description>
     <Copyright>2021</Copyright>
     <SignAssembly>true</SignAssembly>

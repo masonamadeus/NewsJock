@@ -592,6 +592,11 @@ namespace NewsBuddy
             Process.Start("explorer.exe", Settings.Default.ClipsDirectory);
         }
 
+        private void lblScripts_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            Process.Start("explorer.exe", Settings.Default.ScriptsDirectory);
+        }
+
         DispatcherTimer sounderTimer;
         DispatcherTimer clipTimer;
         private void TimerSounders(object sender, EventArgs e)

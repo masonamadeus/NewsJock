@@ -98,7 +98,7 @@
             
             <StackPanel Background="DarkGray">
 
-                    <Label Name="lblScripts" HorizontalAlignment="Center" FontSize="20" FontStyle="Italic" FontWeight="Bold" MouseDoubleClick="lblClips_MouseDoubleClick" ToolTip="Double-click this to open your Scripts folder">Scripts</Label>
+                    <Label Name="lblScripts" HorizontalAlignment="Center" FontSize="20" FontStyle="Italic" FontWeight="Bold" MouseDoubleClick="lblScripts_MouseDoubleClick" ToolTip="Double-click this to open your Scripts folder">Scripts</Label>
                     <Label FontStyle="Italic" HorizontalAlignment="center" Content="Double-click to Open" Visibility="{Binding ElementName=scriptsVisible, Converter={StaticResource BooleanToVisibilityConverter}, Path=IsChecked}"></Label>
                     <ListBox Name="listScripts" Visibility="{Binding ElementName=scriptsVisible, Converter={StaticResource BooleanToVisibilityConverter}, Path=IsChecked}" Background="LightGray" Margin="0,0,0,5" MouseDoubleClick="listScripts_MouseDoubleClick" PreviewMouseWheel="HandlePreviewMouseWheel"  ScrollViewer.HorizontalScrollBarVisibility="Disabled"></ListBox>
                     <ToggleButton x:Name="scriptsVisible" HorizontalAlignment="Stretch" FontFamily="{StaticResource FA}" IsChecked="False" Content=" Show" Click="expandVisible_Click" Margin="0,0,0,5"/>

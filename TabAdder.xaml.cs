@@ -11,6 +11,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Microsoft.Win32;
 using System.IO;
 using Ookii.Dialogs.Wpf;
 
@@ -79,8 +80,9 @@ namespace NewsBuddy
             {
                 if (chosen.Name == "Opener")
                 {
-                    VistaOpenFileDialog opn = new VistaOpenFileDialog();
+                    OpenFileDialog opn = new OpenFileDialog();
                     opn.InitialDirectory = Settings.Default.ScriptsDirectory;
+                    opn.RestoreDirectory = true;
                     if ((bool)opn.ShowDialog())
                     {
                         if (opn.CheckFileExists)
