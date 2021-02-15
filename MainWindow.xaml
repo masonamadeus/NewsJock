@@ -73,7 +73,7 @@
                     </StackPanel.Background>
                     <Label Name="lblSounders" HorizontalAlignment="Center" FontSize="20" FontStyle="Italic" FontWeight="Bold" ToolTip="Double-click this to open your Sounders folder." MouseDoubleClick="lblSounders_MouseDoubleClick">Sounders</Label>
                     <WrapPanel Name="SoundersControl" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <Button Name="btnStopSounders" FontFamily="{StaticResource FA}" Click="btnStopSounders_Click" Foreground="DarkRed" Padding="4" Margin="0,0,10,0" Content=""/>
+                        <Button Name="btnStopSounders" FontFamily="{StaticResource FA}" Click="btnStopSounders_Click" Style="{StaticResource ResourceKey=btnStopper}" Margin="0,0,8,0" Content=""/>
                         <TextBlock x:Name="sndrTimeLeft" HorizontalAlignment="Center" FontWeight="Bold" FontSize="16">0:00</TextBlock>
                     </WrapPanel>
 
@@ -102,7 +102,7 @@
                     </StackPanel.Background>
                     <Label Name="lblClips" HorizontalAlignment="Center" FontSize="20" FontStyle="Italic" FontWeight="Bold" ToolTip="Double-click this to open your Clips folder." MouseDoubleClick="lblClips_MouseDoubleClick">Clips</Label>
                     <WrapPanel Name="ClipsControl" HorizontalAlignment="Center" Visibility="Collapsed" VerticalAlignment="Center">
-                        <Button Name="btnStopClips" FontFamily="{StaticResource FA}" Click="btnStopClips_Click" Foreground="DarkRed" Padding="4" Margin="0,0,10,0" Content=""/>
+                        <Button Name="btnStopClips" FontFamily="{StaticResource FA}" Click="btnStopClips_Click" Style="{StaticResource ResourceKey=btnStopper}"  Margin="0,0,8,0" Content=""/>
                         <TextBlock x:Name="clipTimeLeft" HorizontalAlignment="Center" FontWeight="Bold" FontSize="16">0:00</TextBlock>
                     </WrapPanel>
 
@@ -147,15 +147,13 @@
             <TabControl.Resources>
                 <DataTemplate x:Key="TabHeader" DataType="TabItem">
                     <DockPanel>
-                        <Button Name="btnDelTab" DockPanel.Dock="Right" Margin="5,0,0,0"
+                        <Button Name="btnDelTab" DockPanel.Dock="Right" Margin="8,0,0,0"
                                     Padding="0" Click="btnDelTab_Click"
                                     CommandParameter="{Binding RelativeSource=
                                         {RelativeSource AncestorType=
                                         {x:Type TabItem}}, Path=Name}"
                                 FontFamily="{StaticResource FA}"
-                                Foreground="DarkRed"
-                                Background="Transparent"
-                                BorderBrush="Transparent">
+                                Style="{StaticResource btnStopper}">
                             
                         </Button>
                         <TextBlock Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type TabItem}}, Path=Header}" />

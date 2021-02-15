@@ -58,6 +58,30 @@
             </Setter>
         </Style>
 
+        <Style x:Key="btnStopper" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Foreground" Value="DarkRed"/>
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Name="Border3" CornerRadius="0" Padding="0" Background="Transparent" BorderBrush="Transparent" BorderThickness="0">
+                            <ContentPresenter Name="buttonStop" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="#FFEE3109"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Foreground" Value="#FF5b3026"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <Style x:Key="LeftScrollViewer" TargetType="{x:Type ScrollViewer}">
             <Setter Property="OverridesDefaultStyle" Value="True"/>
             <Setter Property="Template">
