@@ -39,10 +39,6 @@ namespace NewsBuddy
         public string scriptExtension = ".xaml";
         NJWebBrowser browser;
 
-        bool clipsTooBig;
-        bool soundersTooBig;
-
-
         public MainWindow()
         {
             InitializeComponent();
@@ -356,9 +352,8 @@ namespace NewsBuddy
 
         void CleanUpScripts()
         {
-            // CleanUpWindow cln = new CleanUpWindow(dirScriptsPath, dirClipsPath, dirSoundersPath, dirSharePath);
-            // cln.Show();
-            MessageBox.Show("Cleaning up Directories...","Tidying Up");
+
+            MessageBox.Show("Loading...","Tidying Up");
             
             FileInfo[] allScripts = new DirectoryInfo(dirScriptsPath).GetFiles(
             "*.xaml", SearchOption.AllDirectories);
