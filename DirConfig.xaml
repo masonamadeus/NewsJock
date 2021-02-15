@@ -52,7 +52,7 @@
                         <Label Content="days" Padding="7,8,0,0"/>
                     </WrapPanel>
                 </WrapPanel>
-                <CheckBox Name="btnWarn" HorizontalAlignment="Left" Margin="10,12,0,0" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=WarnDirSize, Mode=TwoWay}">Notify Me if a Folder takes over 1Gb of Space (Recommended)</CheckBox>
+                <CheckBox Name="btnWarn" HorizontalAlignment="Left" Margin="10,12,0,0" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=WarnDirSize, Mode=TwoWay}">Notify Me If A Folder Becomes Larger Than 1Gb (Recommended)</CheckBox>
 
 
             </StackPanel>
