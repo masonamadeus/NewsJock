@@ -27,7 +27,7 @@ namespace NewsBuddy
     /// </summary>
     public partial class MainWindow : Window
     {
-        
+
         FileSystemWatcher fs;
 
         public string dirClipsPath = Settings.Default.ClipsDirectory;
@@ -39,13 +39,16 @@ namespace NewsBuddy
         public string scriptExtension = ".xaml";
         NJWebBrowser browser;
 
+        bool clipsTooBig;
+        bool soundersTooBig;
+
 
         public MainWindow()
         {
             InitializeComponent();
 
             // Debugger messages
-            
+
 
             if (!Debugger.IsAttached)
             {
@@ -56,7 +59,7 @@ namespace NewsBuddy
                 Dispatcher.UnhandledException += (sender, args) =>
                     ExceptionCatcher(args.Exception, "Dispatcher.UnhandledException", true);
             }
-            
+
 
 
 
@@ -74,7 +77,8 @@ namespace NewsBuddy
             // make the first tab item
 
             _tabAdd = new TabItem();
-            _tabAdd.Header = "+";
+            _tabAdd.FontFamily = Application.Current.FindResource("FA") as FontFamily;
+            _tabAdd.Header = "";
 
             Frame addTab = new Frame();
             addTab.Source = new Uri("/TabAdder.xaml", UriKind.Relative);
@@ -87,6 +91,7 @@ namespace NewsBuddy
 
             SoundersPlayer.BeginInit();
             ClipsPlayer.BeginInit();
+
 
             Trace.WriteLine("Started Running");
         }
@@ -127,13 +132,15 @@ namespace NewsBuddy
             {
                 base.OnGiveFeedback(e);
             }
-         
-            
+
+
         }
 
         void CheckDirectories()
         {
-            if (!Directory.Exists(dirClipsPath) || !Directory.Exists(dirScriptsPath) || !Directory.Exists(dirSoundersPath) || !Directory.Exists(dirTemplatesPath) || !Directory.Exists(dirSharePath))
+            if (!Directory.Exists(dirClipsPath) || !Directory.Exists(dirScriptsPath) ||
+                !Directory.Exists(dirSoundersPath) || !Directory.Exists(dirTemplatesPath)
+                || !Directory.Exists(dirSharePath))
             {
                 DirConfig dlg = new DirConfig();
                 //dlg.Owner = this;
@@ -182,7 +189,7 @@ namespace NewsBuddy
                 }
                 else
                 {
-                    MessageBox.Show("Audio file still loading.\nTry again in a moment","File Not Ready",MessageBoxButton.OK,MessageBoxImage.Exclamation);
+                    MessageBox.Show("Audio file still loading.\nTry again in a moment", "File Not Ready", MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 }
             }
         }
@@ -203,7 +210,7 @@ namespace NewsBuddy
                 }
                 else
                 {
-                    MessageBox.Show("Audio file not ready.\nTry again in a moment.","File Not Ready", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                    MessageBox.Show("Audio file not ready.\nTry again in a moment.", "File Not Ready", MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 }
             }
         }
@@ -273,7 +280,7 @@ namespace NewsBuddy
 
                     sounders.Add(newFile);
                 }
-                foreach(object Ss in ShareSounders)
+                foreach (object Ss in ShareSounders)
                 {
                     NBfile newFile = new NBfile
                     {
@@ -334,8 +341,25 @@ namespace NewsBuddy
 
         }
 
+        private long GetDirectorySize(string folderPath)
+        {
+            try
+            {
+                DirectoryInfo d = new DirectoryInfo(folderPath);
+                return d.EnumerateFiles("*.*", SearchOption.TopDirectoryOnly).Sum(fi => fi.Length);
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
         void CleanUpScripts()
         {
+            // CleanUpWindow cln = new CleanUpWindow(dirScriptsPath, dirClipsPath, dirSoundersPath, dirSharePath);
+            // cln.Show();
+            MessageBox.Show("Cleaning up Directories...","Tidying Up",MessageBoxButton.OK,MessageBoxImage.Information);
+            
             FileInfo[] allScripts = new DirectoryInfo(dirScriptsPath).GetFiles(
             "*.xaml", SearchOption.AllDirectories);
             List<FileInfo> veryOldScripts = new List<FileInfo>();
@@ -347,6 +371,37 @@ namespace NewsBuddy
                     veryOldScripts.Add(af);
                 }
             }
+            if (Settings.Default.WarnDirSize)
+            {
+                if (GetDirectorySize(dirClipsPath) > 1000000000)
+                {
+                    MessageBox.Show(this, "You have more than a gigabyte of clips in your Clips directory.\n" +
+                       "To avoid taking up too much space, it may be wise to go delete old clips now.",
+                       "Over 1Gb Clips", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+
+                if (GetDirectorySize(dirSoundersPath) > 1000000000)
+                {
+                    MessageBox.Show(this, "You have more than a gigabyte of files in your Sounders directory.\n" +
+                        "To avoid taking up too much space, it may be wise to go delete old Sounders now.",
+                        "Over 1Gb Sounders", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+
+                if (GetDirectorySize(dirSharePath) > 1000000000)
+                {
+                    MessageBox.Show(this, "You have more than a gigabyte of files in your Shared Sounders directory.\n" +
+                        "To avoid taking up too much space, it may be wise to go delete old Shared Sounders now.",
+                        "Over 1Gb Shared Sounders", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+                if (GetDirectorySize(dirScriptsPath) > 1000000000)
+                {
+                    MessageBox.Show(this, "You have more than a gigabyte of files in your Shared Sounders directory.\n" +
+                        "To avoid taking up too much space, it may be wise to go delete old Shared Sounders now.",
+                        "Over 1Gb Shared Sounders", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+            
+
 
             if (veryOldScripts.Count > 0)
             {
@@ -393,7 +448,8 @@ namespace NewsBuddy
                     {
                         Trace.WriteLine("Gonna get rid of file: " + f.Name);
                         oldScripts.Add(f);
-                    } else { return; }
+                    }
+                    else { return; }
                 }
 
                 if (oldScripts.Count > 0)
@@ -421,7 +477,7 @@ namespace NewsBuddy
 
                     }
 
-                }
+                } 
             }
         }
 
@@ -518,7 +574,7 @@ namespace NewsBuddy
         public void ChangeTabName(string uri)
         {
             TabItem current = DynamicTabs.SelectedItem as TabItem;
-            
+
             if (current != null)
             {
                 DynamicTabs.DataContext = null;
@@ -739,12 +795,13 @@ namespace NewsBuddy
                 try
                 {
                     browser.Focus();
-                } 
+                }
                 catch
                 {
                     MessageBox.Show("Browser Unresponsive");
                 }
-            } else
+            }
+            else
             {
                 browser = new NJWebBrowser();
                 browser.Show();

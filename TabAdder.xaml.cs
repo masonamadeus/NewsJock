@@ -27,7 +27,7 @@ namespace NewsBuddy
         {
             InitializeComponent();
             PopulateList();
-            MonitorDirectory();
+            //MonitorDirectory();
         }
 
         public string chosenFile;

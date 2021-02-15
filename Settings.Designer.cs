@@ -154,5 +154,17 @@ namespace NewsBuddy {
                 this["Homepage"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool WarnDirSize {
+            get {
+                return ((bool)(this["WarnDirSize"]));
+            }
+            set {
+                this["WarnDirSize"] = value;
+            }
+        }
     }
 }

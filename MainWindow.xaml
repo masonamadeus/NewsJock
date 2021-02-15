@@ -16,8 +16,8 @@
         FontFamily="{StaticResource OpenSans}"
         FontSize="14"
         ShowInTaskbar="True">
-    
-    
+
+
     <DockPanel HorizontalAlignment="Stretch">
         <MediaElement x:Name="SoundersPlayer" Source="{Binding}" LoadedBehavior="Manual" UnloadedBehavior="Manual"
                       MediaOpened="TimerSounders"/>
@@ -41,70 +41,102 @@
                 </MenuItem.Icon>
             </MenuItem>
 
-         <!--   <MenuItem HorizontalAlignment="Center" Margin="100,0,0,0" Name="Browser" Header="Browser" Click="Browser_Click">
+            <!--   <MenuItem HorizontalAlignment="Center" Margin="100,0,0,0" Name="Browser" Header="Browser" Click="Browser_Click">
                 <MenuItem.Icon>
                     <TextBlock FontFamily="{StaticResource FA}"></TextBlock>
                 </MenuItem.Icon>
             </MenuItem> -->
             <MenuItem HorizontalAlignment="Right" Header="Settings">
-                    <MenuItem.Icon>
-                        <TextBlock FontFamily="{StaticResource FA}"></TextBlock>
-                    </MenuItem.Icon>
-                    <MenuItem x:Name="mnNJSettings" Header="NewsJock Settings" Click="mnNJSettings_Click"/>
-                  <!--  <MenuItem Name="mnWebSettings" Header="Web Browser Settings" Click="mnWebSettings_Click"/> -->
+                <MenuItem.Icon>
+                    <TextBlock FontFamily="{StaticResource FA}"></TextBlock>
+                </MenuItem.Icon>
+                <MenuItem x:Name="mnNJSettings" Header="NewsJock Settings" Click="mnNJSettings_Click"/>
+                <!--  <MenuItem Name="mnWebSettings" Header="Web Browser Settings" Click="mnWebSettings_Click"/> -->
 
-                </MenuItem>
+            </MenuItem>
 
-            
+
 
 
 
         </Menu>
 
-        <ScrollViewer DockPanel.Dock="Left" VerticalScrollBarVisibility="Visible" Width="300" HorizontalAlignment="Left" Style="{StaticResource LeftScrollViewer}">
-        <StackPanel Name ="stackL" Width="275">
-                <StackPanel Background="#FF89a6c9">
-                <Label Name="lblSounders" HorizontalAlignment="Center" FontSize="20" FontStyle="Italic" FontWeight="Bold" ToolTip="Double-click this to open your Sounders folder." MouseDoubleClick="lblSounders_MouseDoubleClick">Sounders</Label>
+        <ScrollViewer DockPanel.Dock="Left" VerticalScrollBarVisibility="Visible" Width="350" HorizontalAlignment="Left" Style="{StaticResource LeftScrollViewer}">
+            <StackPanel Name ="stackL" Width="325">
+                <StackPanel>
+                    <StackPanel.Background>
+                        <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                            <GradientStop Color="{DynamicResource GradientStopColor4}" Offset="0.103"/>
+                            <GradientStop Color="{DynamicResource GradientStopColor5}" Offset="0.962"/>
+                            <GradientStop Color="#FF5E7CA0" Offset="0.617"/>
+                        </LinearGradientBrush>
+                    </StackPanel.Background>
+                    <Label Name="lblSounders" HorizontalAlignment="Center" FontSize="20" FontStyle="Italic" FontWeight="Bold" ToolTip="Double-click this to open your Sounders folder." MouseDoubleClick="lblSounders_MouseDoubleClick">Sounders</Label>
                     <WrapPanel Name="SoundersControl" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <Button Name="btnStopSounders" FontFamily="{StaticResource FA}" Click="btnStopSounders_Click" Foreground="DarkRed" Padding="4" Margin="0,0,10,0" Content=""/>
                         <TextBlock x:Name="sndrTimeLeft" HorizontalAlignment="Center" FontWeight="Bold" FontSize="16">0:00</TextBlock>
-                    </WrapPanel>    
-                    
+                    </WrapPanel>
 
-                
-                <Label FontFamily="{StaticResource FA}" HorizontalAlignment="Center"></Label>
-                <Slider Background="DimGray" Name="sVolSlider" VerticalAlignment="Center" ValueChanged="sVolSlider_ValueChanged" Minimum="0" Maximum="1" Value="0.5" IsMoveToPointEnabled="True" />
-                    <ListBox x:Name="listSounders" Background="LightGray" MouseMove="listSounders_MouseMove" Focusable="False" Margin="0,0,0,5" PreviewMouseWheel="HandlePreviewMouseWheel" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Visibility="{Binding ElementName=soundersVisible, Converter={StaticResource BooleanToVisibilityConverter}, Path=IsChecked}"/>
+
+
+                    <Grid HorizontalAlignment="Stretch">
+
+                        <Label FontFamily="{StaticResource FA}" HorizontalAlignment="Left" Content=""/>
+                        <Label FontFamily="{StaticResource FA}" HorizontalAlignment="Center" Content="Volume"/>
+                        <Label FontFamily="{StaticResource FA}" HorizontalAlignment="Right" Content=""/>
+                    </Grid>
+                    <Slider Name="sVolSlider" Margin="0,-1,0,5" VerticalAlignment="Center" ValueChanged="sVolSlider_ValueChanged" Minimum="0" Maximum="1" Value="0.5" IsMoveToPointEnabled="True" />
+
+                    <ListBox x:Name="listSounders" Background="LightGray" MouseMove="listSounders_MouseMove" Focusable="False" Margin="3,0,3,5" PreviewMouseWheel="HandlePreviewMouseWheel" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Visibility="{Binding ElementName=soundersVisible, Converter={StaticResource BooleanToVisibilityConverter}, Path=IsChecked}"/>
                     <ToggleButton x:Name="soundersVisible" HorizontalAlignment="Stretch" FontFamily="{StaticResource FA}" IsChecked="True" Content=" Hide" Click="expandVisible_Click" Margin="0,5,0,5"/>
 
                 </StackPanel>
-            <Separator Height="10" Margin="0,5,0,5"></Separator>
-                <StackPanel Background="#FF86ae6a">
-                <Label Name="lblClips" HorizontalAlignment="Center" FontSize="20" FontStyle="Italic" FontWeight="Bold" ToolTip="Double-click this to open your Clips folder." MouseDoubleClick="lblClips_MouseDoubleClick">Clips</Label>
+                <Separator Height="10" Margin="0,5,0,5"></Separator>
+                <StackPanel>
+                    <StackPanel.Background>
+                        <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                            <GradientStop Color="#FF86AE6A" Offset="0.138"/>
+                            <GradientStop Color="#FF86AE6A" Offset="0.995"/>
+                            <GradientStop Color="#FF64854F" Offset="0.569"/>
+                        </LinearGradientBrush>
+                    </StackPanel.Background>
+                    <Label Name="lblClips" HorizontalAlignment="Center" FontSize="20" FontStyle="Italic" FontWeight="Bold" ToolTip="Double-click this to open your Clips folder." MouseDoubleClick="lblClips_MouseDoubleClick">Clips</Label>
                     <WrapPanel Name="ClipsControl" HorizontalAlignment="Center" Visibility="Collapsed" VerticalAlignment="Center">
-                <Button Name="btnStopClips" FontFamily="{StaticResource FA}" Click="btnStopClips_Click" Foreground="DarkRed" Padding="4" Margin="0,0,10,0" Content=""/>
-                <TextBlock x:Name="clipTimeLeft" HorizontalAlignment="Center" FontWeight="Bold" FontSize="16">0:00</TextBlock>
+                        <Button Name="btnStopClips" FontFamily="{StaticResource FA}" Click="btnStopClips_Click" Foreground="DarkRed" Padding="4" Margin="0,0,10,0" Content=""/>
+                        <TextBlock x:Name="clipTimeLeft" HorizontalAlignment="Center" FontWeight="Bold" FontSize="16">0:00</TextBlock>
                     </WrapPanel>
-                
-                <Label FontFamily="{StaticResource FA}" HorizontalAlignment="Center"></Label>
-                <Slider Background="DimGray" Name="cVolSlider" VerticalAlignment="Center" ValueChanged="cVolSlider_ValueChanged" Minimum="0" Maximum="1" Value="0.5" IsMoveToPointEnabled="True"/>
 
-                    <ListBox Name="listClips" Background="LightGray" MouseMove="listClips_MouseMove" Margin="0,0,0,5" PreviewMouseWheel="HandlePreviewMouseWheel"  ScrollViewer.HorizontalScrollBarVisibility="Disabled" Visibility="{Binding ElementName=clipsVisible, Converter={StaticResource BooleanToVisibilityConverter}, Path=IsChecked}"></ListBox>
+                    <Grid HorizontalAlignment="Stretch">
+
+                        <Label FontFamily="{StaticResource FA}" HorizontalAlignment="Left" Content=""/>
+                        <Label FontFamily="{StaticResource FA}" HorizontalAlignment="Center" Content="Volume"/>
+                        <Label FontFamily="{StaticResource FA}" HorizontalAlignment="Right" Content=""/>
+                    </Grid>
+                    <Slider Name="cVolSlider" VerticalAlignment="Center" ValueChanged="cVolSlider_ValueChanged" Margin="0,-1,0,5" Minimum="0" Maximum="1" Value="0.5" IsMoveToPointEnabled="True"/>
+
+                    <ListBox Name="listClips" Background="LightGray" MouseMove="listClips_MouseMove" Margin="3,0,3,5" PreviewMouseWheel="HandlePreviewMouseWheel"  ScrollViewer.HorizontalScrollBarVisibility="Disabled" Visibility="{Binding ElementName=clipsVisible, Converter={StaticResource BooleanToVisibilityConverter}, Path=IsChecked}"></ListBox>
                     <ToggleButton x:Name="clipsVisible" HorizontalAlignment="Stretch" FontFamily="{StaticResource FA}" IsChecked="True" Content=" Hide" Click="expandVisible_Click" Margin="0,5,0,5"/>
 
                 </StackPanel>
-            <Separator Height ="10" Margin="0,5,0,5"/>
-            
-            
-            <StackPanel Background="DarkGray">
+                <Separator Height ="10" Margin="0,5,0,5"/>
+
+
+                <StackPanel>
+                    <StackPanel.Background>
+                        <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                            <GradientStop Color="#FFB4B4B4"/>
+                            <GradientStop Color="#FFC5C5C5" Offset="1"/>
+                            <GradientStop Color="#FF909090" Offset="0.536"/>
+                        </LinearGradientBrush>
+                    </StackPanel.Background>
 
                     <Label Name="lblScripts" HorizontalAlignment="Center" FontSize="20" FontStyle="Italic" FontWeight="Bold" MouseDoubleClick="lblScripts_MouseDoubleClick" ToolTip="Double-click this to open your Scripts folder">Scripts</Label>
                     <Label FontStyle="Italic" HorizontalAlignment="center" Content="Double-click to Open" Visibility="{Binding ElementName=scriptsVisible, Converter={StaticResource BooleanToVisibilityConverter}, Path=IsChecked}"></Label>
-                    <ListBox Name="listScripts" Visibility="{Binding ElementName=scriptsVisible, Converter={StaticResource BooleanToVisibilityConverter}, Path=IsChecked}" Background="LightGray" Margin="0,0,0,5" MouseDoubleClick="listScripts_MouseDoubleClick" PreviewMouseWheel="HandlePreviewMouseWheel"  ScrollViewer.HorizontalScrollBarVisibility="Disabled"></ListBox>
+                    <ListBox Name="listScripts" Visibility="{Binding ElementName=scriptsVisible, Converter={StaticResource BooleanToVisibilityConverter}, Path=IsChecked}" Background="LightGray" Margin="3,0,3,5" MouseDoubleClick="listScripts_MouseDoubleClick" PreviewMouseWheel="HandlePreviewMouseWheel"  ScrollViewer.HorizontalScrollBarVisibility="Disabled"></ListBox>
                     <ToggleButton x:Name="scriptsVisible" HorizontalAlignment="Stretch" FontFamily="{StaticResource FA}" IsChecked="False" Content=" Show" Click="expandVisible_Click" Margin="0,0,0,5"/>
 
                 </StackPanel>
-        </StackPanel>
+            </StackPanel>
         </ScrollViewer>
 
         <StackPanel Name="stackR" DockPanel.Dock="Right">
@@ -149,6 +181,11 @@
         <DataTemplate DataType="{x:Type local:ScriptFile}">
             <TextBlock Text="{Binding SCname}"/>
         </DataTemplate>
+        <Color x:Key="GradientStopColor1">#FF89A6C9</Color>
+        <Color x:Key="GradientStopColor2">#FF86AE6A</Color>
+        <Color x:Key="GradientStopColor3">#FF89A6C9</Color>
+        <Color x:Key="GradientStopColor4">#FF89A6C9</Color>
+        <Color x:Key="GradientStopColor5">#FF89A6C9</Color>
 
 
 
