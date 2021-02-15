@@ -15,14 +15,19 @@
         Closing="Window_Closing"
         FontFamily="{StaticResource OpenSans}"
         FontSize="14"
-        ShowInTaskbar="True">
+        ShowInTaskbar="True"
+        AllowsTransparency="False">
 
 
     <DockPanel HorizontalAlignment="Stretch">
-        <MediaElement x:Name="SoundersPlayer" Source="{Binding}" LoadedBehavior="Manual" UnloadedBehavior="Manual"
-                      MediaOpened="TimerSounders"/>
-        <MediaElement x:Name="ClipsPlayer" Source="{Binding}" LoadedBehavior="Manual" UnloadedBehavior="Manual"
-                      MediaOpened="TimerClips"/>
+        <MediaElement x:Name="SoundersPlayer" Source="{Binding}" LoadedBehavior="Play" UnloadedBehavior="Close"
+                      MediaOpened="TimerSounders"
+                      MediaEnded="btnStopSounders_Click"
+                      MediaFailed="SoundersPlayer_MediaFailed"/>
+        <MediaElement x:Name="ClipsPlayer" Source="{Binding}" LoadedBehavior="Play" UnloadedBehavior="Close"
+                      MediaOpened="TimerClips"
+                      MediaEnded="btnStopClips_Click"
+                      MediaFailed="ClipsPlayer_MediaFailed"/>
 
         <Menu DockPanel.Dock="Top"
               Padding="2"

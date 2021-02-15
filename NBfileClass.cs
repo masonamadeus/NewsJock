@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Diagnostics;
 
 namespace NewsBuddy
 {
@@ -37,13 +38,12 @@ namespace NewsBuddy
                 {
                     if (homeBase.SoundersPlayer.Source != null)
                     {
-                        homeBase.SoundersPlayer.Stop();
+                        //homeBase.SoundersPlayer.Stop();
 
                         if (homeBase.SoundersPlayer.Source != new Uri(NBPath))
                         {
                             homeBase.SoundersPlayer.Source = new Uri(NBPath);
-
-                            homeBase.SoundersPlayer.Play();
+                            //homeBase.SoundersPlayer.Play();
                         }
                         else
                         {
@@ -54,18 +54,18 @@ namespace NewsBuddy
                     else
                     {
                         homeBase.SoundersPlayer.Source = new Uri(NBPath);
-                        homeBase.SoundersPlayer.Play();
+                        //homeBase.SoundersPlayer.Play();
                     }
                 }
                 else
                 {
                     if (homeBase.ClipsPlayer.Source != null)
                     {
-                        homeBase.ClipsPlayer.Stop();
+                        //homeBase.ClipsPlayer.Stop();
                         if (homeBase.ClipsPlayer.Source != new Uri(NBPath))
                         {
                             homeBase.ClipsPlayer.Source = new Uri(NBPath);
-                            homeBase.ClipsPlayer.Play();
+                            //homeBase.ClipsPlayer.Play();
                         }
                         else
                         {
@@ -76,7 +76,7 @@ namespace NewsBuddy
                     else
                     {
                         homeBase.ClipsPlayer.Source = new Uri(NBPath);
-                        homeBase.ClipsPlayer.Play();
+                        //homeBase.ClipsPlayer.Play();
                     }
                 }
             }
@@ -89,25 +89,41 @@ namespace NewsBuddy
 
         public NButton NBbutton()
         {
-            var bc = new BrushConverter();
-            NButton NBbutton = new NButton();
-            NBbutton.Content = NBName;
-
-            if (NBisSounder)
+            if (!File.Exists(NBPath))
             {
-                NBbutton.Style = (Style)Application.Current.FindResource("btnNBs");
-            } else
-            {
-                NBbutton.Style = (Style)Application.Current.FindResource("btnNBc");
+                NButton badNB = new NButton();
+                badNB.Background = Brushes.DarkRed;
+                badNB.Content = "Couldn't Find: " + NBName;
+                return badNB;
             }
-
-            NBbutton.Click += (sender, args) =>
+            else
             {
-                NBPlay(NBisSounder);
-            };
-            NBbutton.file = this;
+                NButton NBbutton = new NButton();
+                NBbutton.Content = NBName;
 
-            return NBbutton;
+                if (NBisSounder)
+                {
+                    NBbutton.Style = (Style)Application.Current.FindResource("btnNBs");
+                }
+                else
+                {
+                    NBbutton.Style = (Style)Application.Current.FindResource("btnNBc");
+                }
+
+
+                NBbutton.Click += (sender, args) =>
+                {
+                    NBPlay(NBisSounder);
+                };
+                NBbutton.MouseDoubleClick += (sender, args) =>
+                {
+                    NBPlay(NBisSounder);
+                };
+                NBbutton.file = this;
+
+                return NBbutton;
+            }
+            
         }
 
         public string GetIDs(NBfile nb, int index)
