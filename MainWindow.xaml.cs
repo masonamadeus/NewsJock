@@ -358,7 +358,7 @@ namespace NewsBuddy
         {
             // CleanUpWindow cln = new CleanUpWindow(dirScriptsPath, dirClipsPath, dirSoundersPath, dirSharePath);
             // cln.Show();
-            MessageBox.Show("Cleaning up Directories...","Tidying Up",MessageBoxButton.OK,MessageBoxImage.Information);
+            MessageBox.Show("Cleaning up Directories...","Tidying Up");
             
             FileInfo[] allScripts = new DirectoryInfo(dirScriptsPath).GetFiles(
             "*.xaml", SearchOption.AllDirectories);
