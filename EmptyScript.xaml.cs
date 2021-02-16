@@ -434,6 +434,27 @@ namespace NewsBuddy
                         }
                     }
                 }
+                if (block is List)
+                {
+                    List liii = block as List;
+                    foreach (ListItem liit in liii.ListItems)
+                    {
+                        foreach (Paragraph liip in liit.Blocks)
+                        {
+                            foreach (Inline liin in liip.Inlines)
+                            {
+                                if (liin.Tag is NBfile)
+                                {
+                                    NBfile liinb = liin.Tag as NBfile;
+                                    if (liinb.NBPath == e.FullPath)
+                                    {
+                                        deletedNBs.Add(liin);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
 
             }
 
