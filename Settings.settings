@@ -38,5 +38,8 @@
     <Setting Name="WarnDirSize" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>
+    <Setting Name="AudioOutType" Type="System.String" Scope="User">
+      <Value Profile="(Default)">DS</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

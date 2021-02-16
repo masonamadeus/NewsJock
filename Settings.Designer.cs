@@ -166,5 +166,17 @@ namespace NewsBuddy {
                 this["WarnDirSize"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("DS")]
+        public string AudioOutType {
+            get {
+                return ((string)(this["AudioOutType"]));
+            }
+            set {
+                this["AudioOutType"] = value;
+            }
+        }
     }
 }
