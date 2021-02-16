@@ -27,8 +27,25 @@ namespace NewsBuddy
 
         public TextPointer textPointer;
 
+        public NJAudioPlayer player;
 
 
+        public void NBPlayNA(bool isSounder)
+        {
+            if (File.Exists(NBPath))
+            {
+                if (isSounder)
+                {
+                    player = new NJAudioPlayer(NBPath, 1);
+                    player.Play(1);
+                }
+                else
+                {
+                    player = new NJAudioPlayer(NBPath, 100);
+                }
+            }
+
+        }
 
         public void NBPlay(bool isSounder)
         {
@@ -113,11 +130,11 @@ namespace NewsBuddy
 
                 NBbutton.Click += (sender, args) =>
                 {
-                    NBPlay(NBisSounder);
+                    NBPlayNA(NBisSounder);
                 };
                 NBbutton.MouseDoubleClick += (sender, args) =>
                 {
-                    NBPlay(NBisSounder);
+                    NBPlayNA(NBisSounder);
                 };
                 NBbutton.file = this;
 

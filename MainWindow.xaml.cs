@@ -841,6 +841,8 @@ namespace NewsBuddy
             Settings.Default.WindowHeight = this.Height;
             Settings.Default.WindowWidth = this.Width;
             Settings.Default.Save();
+            // dispose of audio player;
+
         }
 
         private void Browser_Click(object sender, RoutedEventArgs e)
