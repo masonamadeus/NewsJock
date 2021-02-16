@@ -552,7 +552,6 @@ namespace NewsBuddy
         private void btnDelTab_Click(object sender, RoutedEventArgs e)
         {
             string tabName = (sender as Button).CommandParameter.ToString();
-            Trace.WriteLine(tabName);
 
             var item = DynamicTabs.Items.Cast<TabItem>().Where(i => i.Name.Equals(tabName)).SingleOrDefault();
 
