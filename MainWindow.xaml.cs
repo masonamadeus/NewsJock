@@ -491,8 +491,19 @@ namespace NewsBuddy
         private List<TabItem> _tabItems;
         TabItem _tabAdd;
 
-
-
+        private readonly Random _random = new Random();
+        private string RandomID()
+        {
+            var builder = new StringBuilder(10);
+            char offset = 'a';
+            const int letters = 26;
+            for (var i = 0; i < 10; i++)
+            {
+                var @char = (char)_random.Next(offset, offset + letters);
+                builder.Append(@char);
+            }
+            return builder.ToString();
+        }
         private TabItem AddTabItem(bool isDefault, string uri = "/EmptyScript.xaml")
         {
             int count = _tabItems.Count;
@@ -506,7 +517,8 @@ namespace NewsBuddy
             TabItem tab = new TabItem();
 
             tab.Header = tabName;
-            tab.Name = string.Format("Script{0}", count);
+
+            tab.Name = RandomID() + _tabItems.Count.ToString();
             tab.HeaderTemplate = DynamicTabs.FindResource("TabHeader") as DataTemplate;
 
             Frame newContent = new Frame();
@@ -540,6 +552,7 @@ namespace NewsBuddy
         private void btnDelTab_Click(object sender, RoutedEventArgs e)
         {
             string tabName = (sender as Button).CommandParameter.ToString();
+            Trace.WriteLine(tabName);
 
             var item = DynamicTabs.Items.Cast<TabItem>().Where(i => i.Name.Equals(tabName)).SingleOrDefault();
 
