@@ -2,10 +2,13 @@
 using System.Collections.Generic;
 using System.Text;
 using NAudio.Wave;
+using System.Windows.Threading;
 using NAudio.MediaFoundation;
+using System.Diagnostics;
 
 namespace NewsBuddy
 {
+
     public class NJAudioPlayer
     {
 
@@ -24,33 +27,31 @@ namespace NewsBuddy
         public event Action PlaybackResumed;
         public event Action PlaybackStopped;
         public event Action PlaybackPaused;
+        public event Action PlaybackStarted;
+        public string source { get; }
 
-        public NJAudioPlayer(string filePath, float volume)
+        public NJAudioPlayer(string path, float volume)
         {
             PlaybackStopType = PlaybackStopTypes.PlaybackStoppedReachingEndOfFile;
-
-            _audioFileReader = new AudioFileReader(filePath) { Volume = volume };
-
+            _audioFileReader = new AudioFileReader(path);
+            _audioFileReader.Volume = volume;
             _outputDS = new DirectSoundOut(200);
             _outputDS.PlaybackStopped += OutputDS_PlaybackStopped;
 
             var wc = new WaveChannel32(_audioFileReader);
             wc.PadWithZeroes = false;
-
+            source = path;
             _outputDS.Init(wc);
+            //Play();
         }
 
-        public void Play(double currentVolume)
+        public void Play()
         {
 
             _outputDS.Play();
-           
-            _audioFileReader.Volume = (float)currentVolume;
 
-            if (PlaybackResumed != null)
-            {
-                PlaybackResumed();
-            }
+            PlaybackStarted?.Invoke();
+
         }
 
         public void Stop()
@@ -58,7 +59,9 @@ namespace NewsBuddy
             if (_outputDS != null)
             {
                 _outputDS.Stop();
+                PlaybackStopped?.Invoke();
             }
+
         }
 
         public void Pause()
@@ -66,20 +69,14 @@ namespace NewsBuddy
             if (_outputDS != null)
             {
                 _outputDS.Pause();
-                if (PlaybackPaused != null)
-                {
-                    PlaybackPaused();
-                }
+                PlaybackPaused?.Invoke();
             }
         }
 
         private void OutputDS_PlaybackStopped(object sender, StoppedEventArgs s)
         {
             Dispose();
-            if (PlaybackStopped != null)
-            {
-                PlaybackStopped();
-            }
+            PlaybackStopped?.Invoke();
         }
 
         public void SetVolume(float value)
@@ -92,12 +89,14 @@ namespace NewsBuddy
 
         public void Dispose()
         {
+            Trace.WriteLine("Disposing");
             if (_outputDS != null)
             {
                 if (_outputDS.PlaybackState == PlaybackState.Playing)
                 {
                     _outputDS.Stop();
                 }
+                _outputDS.PlaybackStopped -= OutputDS_PlaybackStopped;
                 _outputDS.Dispose();
                 _outputDS = null;
             }
@@ -129,6 +128,18 @@ namespace NewsBuddy
         {
             double TimeRemaining = GetLengthInSeconds() - GetPosition();
             return TimeRemaining;
+        }
+
+        public bool IsPlaying()
+        {
+            if (_outputDS != null && _outputDS.PlaybackState == PlaybackState.Playing)
+            {
+                return true;
+            } else
+            {
+                return false;
+            }
+            
         }
     }
 }

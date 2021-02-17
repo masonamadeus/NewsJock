@@ -8,6 +8,7 @@ using System.Windows.Media;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Diagnostics;
+using NAudio.Wave;
 
 namespace NewsBuddy
 {
@@ -17,8 +18,6 @@ namespace NewsBuddy
 
         public string NBName { get; set; }
 
-        public string replaceName { get; set; }
-
         public string NBPath { get; set; }
 
         public bool NBisSounder { get; set; }
@@ -27,8 +26,6 @@ namespace NewsBuddy
 
         public TextPointer textPointer;
 
-        public NJAudioPlayer player;
-
 
         public void NBPlayNA(bool isSounder)
         {
@@ -36,12 +33,11 @@ namespace NewsBuddy
             {
                 if (isSounder)
                 {
-                    player = new NJAudioPlayer(NBPath, 1);
-                    player.Play(1);
+                    homeBase.PlaySounder(NBPath);
                 }
                 else
                 {
-                    player = new NJAudioPlayer(NBPath, 100);
+                    homeBase.PlayClip(NBPath);
                 }
             }
 

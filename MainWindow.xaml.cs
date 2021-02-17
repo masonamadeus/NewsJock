@@ -29,6 +29,8 @@ namespace NewsBuddy
     {
 
         FileSystemWatcher fs;
+        NJWebBrowser browser;
+        bool flashBox = true;
 
         public string dirClipsPath = Settings.Default.ClipsDirectory;
         public string dirSoundersPath = Settings.Default.SoundersDirectory;
@@ -37,8 +39,13 @@ namespace NewsBuddy
         public string dirTemplatesPath = Settings.Default.TemplatesDirectory;
         public string[] audioExtensions = new[] { ".mp3", ".wav", ".wma", ".m4a", ".flac" };
         public string scriptExtension = ".xaml";
-        NJWebBrowser browser;
-        bool flashBox = true;
+
+        public NJAudioPlayer SoundersPlayerNA;
+        public NJAudioPlayer ClipsPlayerNA;
+
+        private Cursor nbDropCur = null;
+
+
         public MainWindow()
         {
             InitializeComponent();
@@ -102,7 +109,9 @@ namespace NewsBuddy
             }
         }
 
-        private Cursor nbDropCur = null;
+
+        #region Drag&Drop Controls
+
         protected override void OnGiveFeedback(GiveFeedbackEventArgs e)
         {
             try
@@ -131,47 +140,6 @@ namespace NewsBuddy
 
 
         }
-
-        void CheckDirectories()
-        {
-            if (!Directory.Exists(dirClipsPath) || !Directory.Exists(dirScriptsPath) ||
-                !Directory.Exists(dirSoundersPath) || !Directory.Exists(dirTemplatesPath)
-                || !Directory.Exists(dirSharePath))
-            {
-                flashBox = false;
-                DirConfig dlg = new DirConfig();
-                //dlg.Owner = this;
-                if ((bool)dlg.ShowDialog())
-                {
-                    
-                    DisplayDirectories();
-                    MonitorDirectory(dirClipsPath);
-                    MonitorDirectory(dirSoundersPath);
-                    MonitorDirectory(dirScriptsPath);
-                    MonitorDirectory(dirSharePath);
-                   
-                }
-                else
-                {
-                    
-                    MessageBox.Show("Error configuring directories. Try launching NewsJock again.");
-                }
-
-
-            }
-            else
-            {
-                DisplayDirectories();
-                MonitorDirectory(dirClipsPath);
-                MonitorDirectory(dirSoundersPath);
-                MonitorDirectory(dirScriptsPath);
-                MonitorDirectory(dirSharePath);
-            }
-        }
-
-
-
-        #region Drag&Drop Controls
 
         private void listSounders_MouseMove(object sender, MouseEventArgs e)
         {
@@ -222,6 +190,43 @@ namespace NewsBuddy
         List<NBfile> sounders = new List<NBfile>();
         List<NBfile> clips = new List<NBfile>();
         List<ScriptFile> scripts = new List<ScriptFile>();
+
+        void CheckDirectories()
+        {
+            if (!Directory.Exists(dirClipsPath) || !Directory.Exists(dirScriptsPath) ||
+                !Directory.Exists(dirSoundersPath) || !Directory.Exists(dirTemplatesPath)
+                || !Directory.Exists(dirSharePath))
+            {
+                flashBox = false;
+                DirConfig dlg = new DirConfig();
+                //dlg.Owner = this;
+                if ((bool)dlg.ShowDialog())
+                {
+                    
+                    DisplayDirectories();
+                    MonitorDirectory(dirClipsPath);
+                    MonitorDirectory(dirSoundersPath);
+                    MonitorDirectory(dirScriptsPath);
+                    MonitorDirectory(dirSharePath);
+                   
+                }
+                else
+                {
+                    
+                    MessageBox.Show("Error configuring directories. Try launching NewsJock again.");
+                }
+
+
+            }
+            else
+            {
+                DisplayDirectories();
+                MonitorDirectory(dirClipsPath);
+                MonitorDirectory(dirSoundersPath);
+                MonitorDirectory(dirScriptsPath);
+                MonitorDirectory(dirSharePath);
+            }
+        }
 
         public void DisplayDirectories()
         {
@@ -313,7 +318,6 @@ namespace NewsBuddy
             }
         }
 
-
         void MonitorDirectory(string dirPath)
         {
             Trace.WriteLine("Monitoring Started for " + dirPath);
@@ -327,7 +331,6 @@ namespace NewsBuddy
             fs.Renamed += new RenamedEventHandler(ReloadDir);
             //fs.Deleted += new FileSystemEventHandler(ReloadDir);
         }
-
 
         void ReloadDir(Object sender, FileSystemEventArgs e)
         {
@@ -610,16 +613,6 @@ namespace NewsBuddy
         #endregion
 
         #region Menu Controls
-        private void sVolSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            SoundersPlayer.Volume = (double)sVolSlider.Value;
-        }
-
-        private void cVolSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            ClipsPlayer.Volume = (double)cVolSlider.Value;
-        }
-
 
 
         private void mnNJSettings_Click(object sender, RoutedEventArgs e)
@@ -637,20 +630,8 @@ namespace NewsBuddy
 
         private void mnWebSettings_Click(object sender, RoutedEventArgs e)
         {
+
         }
-
-
-
-        #endregion
-
-        private void mnSilence_Click(object sender, RoutedEventArgs e)
-        {
-            SoundersPlayer.Stop();
-            SoundersPlayer.Source = null;
-            ClipsPlayer.Stop();
-            ClipsPlayer.Source = null;
-        }
-
 
         private void lblSounders_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
@@ -666,13 +647,154 @@ namespace NewsBuddy
         {
             Process.Start("explorer.exe", Settings.Default.ScriptsDirectory);
         }
+        private void listScripts_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            ScriptFile chosen = listScripts.SelectedItem as ScriptFile;
+            if (chosen != null)
+            {
+
+                this.Dispatcher.Invoke(() =>
+                {
+                    AddNewTabFromFrame(chosen.SCpath);
+                });
+
+                listScripts.SelectedItem = null;
+            }
+        }
+
+        private void btnStopClips_Click(object sender, RoutedEventArgs e)
+        {
+            //ClipsPlayer.Stop();
+            ClipsPlayer.Source = null;
+        }
+
+        private void btnStopSounders_Click(object sender, RoutedEventArgs e)
+        {
+            SoundersPlayerNA.Stop();
+            SoundersPlayerNA = null;
+        }
+
+        private void expandVisible_Click(object sender, RoutedEventArgs e)
+        {
+            var bt = sender as System.Windows.Controls.Primitives.ToggleButton;
+            if (bt != null)
+            {
+                if (bt.IsChecked == true)
+                {
+                    bt.Content = " Hide";
+                }
+                else
+                {
+                    bt.Content = " Show";
+                }
+            }
+
+        }
+        private void mnRefresh_Click(object sender, RoutedEventArgs e)
+        {
+            CheckDirectories();
+        }
+        private void Window_Closing(object sender, CancelEventArgs e)
+        {
+            Settings.Default.WindowHeight = this.Height;
+            Settings.Default.WindowWidth = this.Width;
+            Settings.Default.Save();
+            // dispose of audio player;
+
+        }
+
+        private void Browser_Click(object sender, RoutedEventArgs e)
+        {
+            if (browser != null)
+            {
+                try
+                {
+                    browser.Focus();
+                }
+                catch
+                {
+                    MessageBox.Show("Browser Unresponsive");
+                }
+            }
+            else
+            {
+                browser = new NJWebBrowser();
+                browser.Show();
+            }
+
+        }
+        private void HandlePreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (!e.Handled)
+            {
+                e.Handled = true;
+                var eventArg = new MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta);
+                eventArg.RoutedEvent = UIElement.MouseWheelEvent;
+                eventArg.Source = sender;
+                var parent = ((Control)sender).Parent as UIElement;
+                parent.RaiseEvent(eventArg);
+            }
+        }
+
+        #endregion
+
+        #region Audio Player Controls
 
         DispatcherTimer sounderTimer;
         DispatcherTimer clipTimer;
-        private void TimerSounders(object sender, EventArgs e)
+        private void sVolSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (SoundersPlayerNA != null)
+            {
+                SoundersPlayerNA.SetVolume((float)sVolSlider.Value);
+            }
+
+        }
+
+        private void cVolSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (ClipsPlayerNA != null)
+            {
+                 ClipsPlayerNA.SetVolume((float)cVolSlider.Value);
+            }
+        }
+
+        public void PlaySounder(string filePath)
+        {
+            if (SoundersPlayerNA != null)
+            {
+                SoundersPlayerNA.Stop();
+                if (SoundersPlayerNA.source == filePath)
+                {
+                    SoundersPlayerNA = null;
+                    return;
+                } else
+                {
+                    SoundersPlayerNA = new NJAudioPlayer(filePath, (float)sVolSlider.Value);
+                    SoundersPlayerNA.PlaybackStarted += TimerSounders;
+                    SoundersPlayerNA.Play();
+                }
+            }
+
+            else
+            {
+                
+                SoundersPlayerNA = new NJAudioPlayer(filePath, (float)sVolSlider.Value);
+                SoundersPlayerNA.PlaybackStarted += TimerSounders;
+                SoundersPlayerNA.Play();
+            }
+
+
+        }
+
+        public void PlayClip(string filePath)
+        {
+
+        }
+        private void TimerSounders()
         {
             
-            if (SoundersPlayer.Source != null && SoundersPlayer.NaturalDuration.HasTimeSpan)
+            if (SoundersPlayerNA != null && SoundersPlayerNA.IsPlaying())
             {
                 sounderTimer = new DispatcherTimer();
                 sounderTimer.Tick += new EventHandler(sndrTick);
@@ -690,14 +812,13 @@ namespace NewsBuddy
         {
             try
             {
-                if (SoundersPlayer.NaturalDuration.HasTimeSpan && SoundersPlayer.Position != SoundersPlayer.NaturalDuration.TimeSpan && SoundersPlayer.Source != null)
+                if (SoundersPlayerNA != null && SoundersPlayerNA.IsPlaying())
                 {
-                    int sndDur = (int)Math.Ceiling(SoundersPlayer.NaturalDuration.TimeSpan.TotalSeconds);
-                    int sndPos = (int)Math.Ceiling(SoundersPlayer.Position.TotalSeconds);
-                    string sndRem = ((sndDur - sndPos) / 60).ToString() + ":" + ((sndDur - sndPos) % 60).ToString("00");
+                    int remain = (int)Math.Ceiling(SoundersPlayerNA.GetTimeRemaining());
+                    string sndRem = (remain / 60).ToString() + ":" + (remain % 60).ToString("00");
 
                     sndrTimeLeft.Text = sndRem;
-                    lblSounders.Content = System.IO.Path.GetFileNameWithoutExtension(SoundersPlayer.Source.LocalPath);
+                    lblSounders.Content = System.IO.Path.GetFileNameWithoutExtension(SoundersPlayerNA.source);
                     SoundersControl.Visibility = Visibility.Visible;
                 }
                 else
@@ -706,7 +827,7 @@ namespace NewsBuddy
                     SoundersControl.Visibility = Visibility.Collapsed;
                     lblSounders.Content = "Sounders";
                     sndrTimeLeft.Text = "0:00";
-                    SoundersPlayer.Source = null;
+                    SoundersPlayerNA = null;
                 }
             }
             catch
@@ -772,100 +893,6 @@ namespace NewsBuddy
            
         }
 
-        private void listScripts_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-            ScriptFile chosen = listScripts.SelectedItem as ScriptFile;
-            if (chosen != null)
-            {
-
-                this.Dispatcher.Invoke(() =>
-                {
-                    AddNewTabFromFrame(chosen.SCpath);
-                });
-
-                listScripts.SelectedItem = null;
-            }
-        }
-
-        private void btnStopClips_Click(object sender, RoutedEventArgs e)
-        {
-            //ClipsPlayer.Stop();
-            ClipsPlayer.Source = null;
-        }
-
-        private void btnStopSounders_Click(object sender, RoutedEventArgs e)
-        {
-            //SoundersPlayer.Stop();
-            SoundersPlayer.Source = null;
-        }
-
-
-
-        private void HandlePreviewMouseWheel(object sender, MouseWheelEventArgs e)
-        {
-            if (!e.Handled)
-            {
-                e.Handled = true;
-                var eventArg = new MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta);
-                eventArg.RoutedEvent = UIElement.MouseWheelEvent;
-                eventArg.Source = sender;
-                var parent = ((Control)sender).Parent as UIElement;
-                parent.RaiseEvent(eventArg);
-            }
-        }
-
-        private void expandVisible_Click(object sender, RoutedEventArgs e)
-        {
-            var bt = sender as System.Windows.Controls.Primitives.ToggleButton;
-            if (bt != null)
-            {
-                if (bt.IsChecked == true)
-                {
-                    bt.Content = " Hide";
-                }
-                else
-                {
-                    bt.Content = " Show";
-                }
-            }
-
-        }
-
-        private void mnRefresh_Click(object sender, RoutedEventArgs e)
-        {
-            CheckDirectories();
-        }
-
-        private void Window_Closing(object sender, CancelEventArgs e)
-        {
-            Settings.Default.WindowHeight = this.Height;
-            Settings.Default.WindowWidth = this.Width;
-            Settings.Default.Save();
-            // dispose of audio player;
-
-        }
-
-        private void Browser_Click(object sender, RoutedEventArgs e)
-        {
-            if (browser != null)
-            {
-                try
-                {
-                    browser.Focus();
-                }
-                catch
-                {
-                    MessageBox.Show("Browser Unresponsive");
-                }
-            }
-            else
-            {
-                browser = new NJWebBrowser();
-                browser.Show();
-            }
-
-        }
-
         private void SoundersPlayer_MediaFailed(object sender, ExceptionRoutedEventArgs e)
         {
             Trace.WriteLine("Sounders Media Failed: " + e.ErrorException.Message);
@@ -884,6 +911,10 @@ namespace NewsBuddy
                 ClipsPlayer.Source = null;
             }
         }
+
+        #endregion
+
+
     }
 
 }
