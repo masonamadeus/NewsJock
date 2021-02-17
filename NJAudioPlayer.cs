@@ -22,9 +22,7 @@ namespace NewsBuddy
         private AudioFileReader _audioFileReader;
         private DirectSoundOut _outputDS;
         private AsioOut _outputASIO;
-        private string _filepath;
 
-        public event Action PlaybackResumed;
         public event Action PlaybackStopped;
         public event Action PlaybackPaused;
         public event Action PlaybackStarted;
@@ -35,20 +33,34 @@ namespace NewsBuddy
             PlaybackStopType = PlaybackStopTypes.PlaybackStoppedReachingEndOfFile;
             _audioFileReader = new AudioFileReader(path);
             _audioFileReader.Volume = volume;
-            _outputDS = new DirectSoundOut(200);
-            _outputDS.PlaybackStopped += OutputDS_PlaybackStopped;
-
+            source = path;
             var wc = new WaveChannel32(_audioFileReader);
             wc.PadWithZeroes = false;
-            source = path;
-            _outputDS.Init(wc);
-            //Play();
+
+            if (Settings.Default.AudioOutType == 1)
+            {
+                _outputASIO = new AsioOut(Settings.Default.ASIOindex);
+                _outputASIO.PlaybackStopped += OutputDS_PlaybackStopped;
+                _outputASIO.Init(wc);
+            } else
+            {
+                _outputDS = new DirectSoundOut(Settings.Default.AudioLatency);
+                _outputDS.PlaybackStopped += OutputDS_PlaybackStopped;
+                _outputDS.Init(wc);
+            }
+
         }
 
         public void Play()
         {
-
-            _outputDS.Play();
+            if (_outputASIO != null)
+            {
+                _outputASIO.Play();
+            } 
+            else if (_outputDS != null)
+            {
+                _outputDS.Play();
+            }
 
             PlaybackStarted?.Invoke();
 
@@ -60,6 +72,11 @@ namespace NewsBuddy
             {
                 _outputDS.Stop();
                 PlaybackStopped?.Invoke();
+            } 
+            else if (_outputASIO != null)
+            {
+                _outputASIO.Stop();
+                PlaybackStopped?.Invoke();
             }
 
         }
@@ -69,6 +86,11 @@ namespace NewsBuddy
             if (_outputDS != null)
             {
                 _outputDS.Pause();
+                PlaybackPaused?.Invoke();
+            } 
+            else if (_outputASIO != null)
+            {
+                _outputASIO.Pause();
                 PlaybackPaused?.Invoke();
             }
         }
@@ -81,7 +103,7 @@ namespace NewsBuddy
 
         public void SetVolume(float value)
         {
-            if (_outputDS != null)
+            if (_outputDS != null || _outputASIO != null)
             {
                 _audioFileReader.Volume = value;
             }
@@ -100,6 +122,18 @@ namespace NewsBuddy
                 _outputDS.Dispose();
                 _outputDS = null;
             }
+
+            if (_outputASIO != null)
+            {
+                if (_outputASIO.PlaybackState == PlaybackState.Playing)
+                {
+                    _outputASIO.Stop();
+                }
+                _outputASIO.PlaybackStopped -= OutputDS_PlaybackStopped;
+                _outputASIO.Dispose();
+                _outputASIO = null;
+            }
+
             if (_audioFileReader != null)
             {
                 _audioFileReader.Dispose();
@@ -109,14 +143,7 @@ namespace NewsBuddy
 
         public double GetLengthInSeconds()
         {
-            if (_audioFileReader != null)
-            {
-                return _audioFileReader.TotalTime.TotalSeconds;
-            }
-            else
-            {
-                return 0;
-            }
+            return _audioFileReader != null ? _audioFileReader.TotalTime.TotalSeconds : 0;
         }
 
         public double GetPosition()
@@ -135,7 +162,12 @@ namespace NewsBuddy
             if (_outputDS != null && _outputDS.PlaybackState == PlaybackState.Playing)
             {
                 return true;
-            } else
+            } 
+            else if (_outputASIO != null && _outputASIO.PlaybackState == PlaybackState.Playing)
+            {
+                return true;
+            } 
+            else 
             {
                 return false;
             }

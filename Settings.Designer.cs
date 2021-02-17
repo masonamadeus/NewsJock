@@ -97,7 +97,7 @@ namespace NewsBuddy {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("3")]
+        [global::System.Configuration.DefaultSettingValueAttribute("5")]
         public double CleanUpDays {
             get {
                 return ((double)(this["CleanUpDays"]));
@@ -169,13 +169,37 @@ namespace NewsBuddy {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("DS")]
-        public string AudioOutType {
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int AudioOutType {
             get {
-                return ((string)(this["AudioOutType"]));
+                return ((int)(this["AudioOutType"]));
             }
             set {
                 this["AudioOutType"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("200")]
+        public int AudioLatency {
+            get {
+                return ((int)(this["AudioLatency"]));
+            }
+            set {
+                this["AudioLatency"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int ASIOindex {
+            get {
+                return ((int)(this["ASIOindex"]));
+            }
+            set {
+                this["ASIOindex"] = value;
             }
         }
     }

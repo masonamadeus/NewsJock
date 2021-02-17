@@ -157,7 +157,7 @@ namespace NewsBuddy
                 }
                 else
                 {
-                    MessageBox.Show("Audio file still loading.\nTry again in a moment", "File Not Ready", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                    Trace.WriteLine("Audio File Not Ready.");
                 }
             }
         }
@@ -664,8 +664,8 @@ namespace NewsBuddy
 
         private void btnStopClips_Click(object sender, RoutedEventArgs e)
         {
-            //ClipsPlayer.Stop();
-            ClipsPlayer.Source = null;
+            ClipsPlayerNA.Stop();
+            ClipsPlayerNA = null;
         }
 
         private void btnStopSounders_Click(object sender, RoutedEventArgs e)
@@ -789,7 +789,29 @@ namespace NewsBuddy
 
         public void PlayClip(string filePath)
         {
+            if (ClipsPlayerNA != null)
+            {
+                ClipsPlayerNA.Stop();
+                if (ClipsPlayerNA.source == filePath)
+                {
+                    ClipsPlayerNA = null;
+                    return;
+                }
+                else
+                {
+                    ClipsPlayerNA = new NJAudioPlayer(filePath, (float)cVolSlider.Value);
+                    ClipsPlayerNA.PlaybackStarted += TimerClips;
+                    ClipsPlayerNA.Play();
+                }
+            }
 
+            else
+            {
+
+                ClipsPlayerNA = new NJAudioPlayer(filePath, (float)cVolSlider.Value);
+                ClipsPlayerNA.PlaybackStarted += TimerClips;
+                ClipsPlayerNA.Play();
+            }
         }
         private void TimerSounders()
         {
@@ -836,18 +858,17 @@ namespace NewsBuddy
                 SoundersControl.Visibility = Visibility.Collapsed;
                 lblSounders.Content = "Sounders";
                 sndrTimeLeft.Text = "0:00";
-                
-                SoundersPlayer.Source = null;
+                SoundersPlayerNA = null;
                 Trace.WriteLine("Sounders Player Display Failed.");
             }
            
 
         }
 
-        private void TimerClips(object sender, EventArgs e)
+        private void TimerClips()
         {
             
-            if (ClipsPlayer.Source != null && ClipsPlayer.NaturalDuration.HasTimeSpan)
+            if (ClipsPlayerNA != null && ClipsPlayerNA.IsPlaying())
             {
                 clipTimer = new DispatcherTimer();
                 clipTimer.Tick += new EventHandler(clipTick);
@@ -861,13 +882,12 @@ namespace NewsBuddy
         {
             try
             {
-                if (ClipsPlayer.NaturalDuration.HasTimeSpan && ClipsPlayer.Position != ClipsPlayer.NaturalDuration.TimeSpan && ClipsPlayer.Source != null)
+                if (ClipsPlayerNA != null && ClipsPlayerNA.IsPlaying())
                 {
-                    int clpDur = (int)Math.Ceiling(ClipsPlayer.NaturalDuration.TimeSpan.TotalSeconds);
-                    int clpPos = (int)Math.Ceiling(ClipsPlayer.Position.TotalSeconds);
-                    string clpRem = ((clpDur - clpPos) / 60).ToString() + ":" + ((clpDur - clpPos) % 60).ToString("00");
+                    int clpDur = (int)Math.Ceiling(ClipsPlayerNA.GetTimeRemaining());
+                    string clpRem = (clpDur / 60).ToString() + ":" + (clpDur % 60).ToString("00");
 
-                    lblClips.Content = System.IO.Path.GetFileNameWithoutExtension(ClipsPlayer.Source.LocalPath);
+                    lblClips.Content = System.IO.Path.GetFileNameWithoutExtension(ClipsPlayerNA.source);
                     ClipsControl.Visibility = Visibility.Visible;
 
                     clipTimeLeft.Text = clpRem;
@@ -878,7 +898,7 @@ namespace NewsBuddy
                     ClipsControl.Visibility = Visibility.Collapsed;
                     lblClips.Content = "Clips";
                     clipTimeLeft.Text = "0:00";
-                    ClipsPlayer.Source = null;
+                    ClipsPlayerNA = null;
                 }
             }
             catch
@@ -887,7 +907,7 @@ namespace NewsBuddy
                 ClipsControl.Visibility = Visibility.Collapsed;
                 lblClips.Content = "Clips";
                 clipTimeLeft.Text = "0:00";
-                ClipsPlayer.Source = null;
+                ClipsPlayerNA = null;
                 Trace.WriteLine("Clips Timer Display Failed");
             }
            
