@@ -194,12 +194,24 @@ namespace NewsBuddy {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public int ASIOindex {
+        public int ASIOindexS {
             get {
-                return ((int)(this["ASIOindex"]));
+                return ((int)(this["ASIOindexS"]));
             }
             set {
-                this["ASIOindex"] = value;
+                this["ASIOindexS"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int ASIOindexC {
+            get {
+                return ((int)(this["ASIOindexC"]));
+            }
+            set {
+                this["ASIOindexC"] = value;
             }
         }
     }

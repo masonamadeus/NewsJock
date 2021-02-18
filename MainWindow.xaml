@@ -20,14 +20,6 @@
 
 
     <DockPanel HorizontalAlignment="Stretch">
-        <MediaElement x:Name="SoundersPlayer" Source="{Binding}" LoadedBehavior="Play" UnloadedBehavior="Close"
-                      
-                      MediaEnded="btnStopSounders_Click"
-                      MediaFailed="SoundersPlayer_MediaFailed"/>
-        <MediaElement x:Name="ClipsPlayer" Source="{Binding}" LoadedBehavior="Play" UnloadedBehavior="Close"
-                      
-                      MediaEnded="btnStopClips_Click"
-                      MediaFailed="ClipsPlayer_MediaFailed"/>
 
         <Menu DockPanel.Dock="Top"
               Padding="2"

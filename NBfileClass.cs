@@ -26,6 +26,8 @@ namespace NewsBuddy
 
         public TextPointer textPointer;
 
+        public NJAudioPlayer player;
+
 
         public void NBPlayNA(bool isSounder)
         {
@@ -33,71 +35,14 @@ namespace NewsBuddy
             {
                 if (isSounder)
                 {
-                    homeBase.PlaySounder(NBPath);
+                    homeBase.PlaySounder(player);
                 }
                 else
                 {
-                    homeBase.PlayClip(NBPath);
+                    homeBase.PlayClip(player);
                 }
             }
 
-        }
-
-        public void NBPlay(bool isSounder)
-        {
-            if (File.Exists(NBPath))
-            {
-                if (isSounder)
-                {
-                    if (homeBase.SoundersPlayer.Source != null)
-                    {
-                        //homeBase.SoundersPlayer.Stop();
-
-                        if (homeBase.SoundersPlayer.Source != new Uri(NBPath))
-                        {
-                            homeBase.SoundersPlayer.Source = new Uri(NBPath);
-                            //homeBase.SoundersPlayer.Play();
-                        }
-                        else
-                        {
-                            homeBase.SoundersPlayer.Source = null;
-                        }
-
-                    }
-                    else
-                    {
-                        homeBase.SoundersPlayer.Source = new Uri(NBPath);
-                        //homeBase.SoundersPlayer.Play();
-                    }
-                }
-                else
-                {
-                    if (homeBase.ClipsPlayer.Source != null)
-                    {
-                        //homeBase.ClipsPlayer.Stop();
-                        if (homeBase.ClipsPlayer.Source != new Uri(NBPath))
-                        {
-                            homeBase.ClipsPlayer.Source = new Uri(NBPath);
-                            //homeBase.ClipsPlayer.Play();
-                        }
-                        else
-                        {
-                            homeBase.ClipsPlayer.Source = null;
-                        }
-
-                    }
-                    else
-                    {
-                        homeBase.ClipsPlayer.Source = new Uri(NBPath);
-                        //homeBase.ClipsPlayer.Play();
-                    }
-                }
-            }
-            else
-            {
-                MessageBox.Show("Error. The file is missing. It may have been moved, renamed, or deleted.");
-            }
-            
         }
 
         public NButton NBbutton()
@@ -113,6 +58,8 @@ namespace NewsBuddy
             {
                 NButton NBbutton = new NButton();
                 NBbutton.Content = NBName;
+                NBbutton.Loaded += MakePlayer;
+                NBbutton.Unloaded += DisposePlayer;
 
                 if (NBisSounder)
                 {
@@ -139,25 +86,32 @@ namespace NewsBuddy
             
         }
 
-        public string GetIDs(NBfile nb, int index)
+        private void MakePlayer(object sender, RoutedEventArgs e)
         {
-            string repName;
-
-
-            repName = String.Format("%@!${0}", index) + nb.NBPath + String.Format("$@!%{0}", index);
-
-
-            return repName;
+            if (player == null)
+            {
+                player = new NJAudioPlayer(NBPath);
+                Trace.WriteLine("Player made for " + NBName);
+            } else
+            {
+                Trace.WriteLine("Player was not null when MakePlayer called: " + NBName);
+            }
         }
 
-        public string GetIDc(NBfile nb, int index)
+        private void DisposePlayer(object sender, RoutedEventArgs e)
         {
-            string repName;
-
-            repName = String.Format("%@!#{0}", index) + nb.NBPath + String.Format("#@!%{0}", index);
-
-            return repName;
+            if (player != null && !player.IsPlaying())
+            {
+                player.Dispose();
+                Trace.WriteLine("Disposed of player for " + NBName);
+                player = null;
+            } else
+            {
+                Trace.WriteLine("Player called for dispose but was null OR playing: " + NBName);
+            }
         }
+
+
 
     }
 

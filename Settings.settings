@@ -44,7 +44,10 @@
     <Setting Name="AudioLatency" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">200</Value>
     </Setting>
-    <Setting Name="ASIOindex" Type="System.Int32" Scope="User">
+    <Setting Name="ASIOindexS" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="ASIOindexC" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">0</Value>
     </Setting>
   </Settings>

@@ -28,31 +28,34 @@ namespace NewsBuddy
         public event Action PlaybackStarted;
         public string source { get; }
 
-        public NJAudioPlayer(string path, float volume)
+        public NJAudioPlayer(string path)
         {
             PlaybackStopType = PlaybackStopTypes.PlaybackStoppedReachingEndOfFile;
             _audioFileReader = new AudioFileReader(path);
-            _audioFileReader.Volume = volume;
             source = path;
             var wc = new WaveChannel32(_audioFileReader);
             wc.PadWithZeroes = false;
 
             if (Settings.Default.AudioOutType == 1)
             {
-                _outputASIO = new AsioOut(Settings.Default.ASIOindex);
-                _outputASIO.PlaybackStopped += OutputDS_PlaybackStopped;
+                _outputASIO = new AsioOut(Settings.Default.ASIOindexS);
+                _outputASIO.PlaybackStopped += Output_PlaybackStopped;
                 _outputASIO.Init(wc);
             } else
             {
                 _outputDS = new DirectSoundOut(Settings.Default.AudioLatency);
-                _outputDS.PlaybackStopped += OutputDS_PlaybackStopped;
+                _outputDS.PlaybackStopped += Output_PlaybackStopped;
                 _outputDS.Init(wc);
             }
 
         }
 
-        public void Play()
+        public void Play(float volume)
         {
+            if (_audioFileReader != null)
+            {
+                _audioFileReader.Volume = volume;
+            }
             if (_outputASIO != null)
             {
                 _outputASIO.Play();
@@ -78,6 +81,10 @@ namespace NewsBuddy
                 _outputASIO.Stop();
                 PlaybackStopped?.Invoke();
             }
+            if (_audioFileReader != null)
+            {
+                _audioFileReader.Position = 0;
+            }
 
         }
 
@@ -95,9 +102,9 @@ namespace NewsBuddy
             }
         }
 
-        private void OutputDS_PlaybackStopped(object sender, StoppedEventArgs s)
+        private void Output_PlaybackStopped(object sender, StoppedEventArgs s)
         {
-            Dispose();
+            _audioFileReader.Position = 0;
             PlaybackStopped?.Invoke();
         }
 
@@ -118,7 +125,7 @@ namespace NewsBuddy
                 {
                     _outputDS.Stop();
                 }
-                _outputDS.PlaybackStopped -= OutputDS_PlaybackStopped;
+                _outputDS.PlaybackStopped -= Output_PlaybackStopped;
                 _outputDS.Dispose();
                 _outputDS = null;
             }
@@ -129,7 +136,7 @@ namespace NewsBuddy
                 {
                     _outputASIO.Stop();
                 }
-                _outputASIO.PlaybackStopped -= OutputDS_PlaybackStopped;
+                _outputASIO.PlaybackStopped -= Output_PlaybackStopped;
                 _outputASIO.Dispose();
                 _outputASIO = null;
             }

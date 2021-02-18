@@ -92,9 +92,6 @@ namespace NewsBuddy
             DynamicTabs.DataContext = _tabItems;
             DynamicTabs.SelectedIndex = 0;
 
-            SoundersPlayer.BeginInit();
-            ClipsPlayer.BeginInit();
-
 
             Trace.WriteLine("Started Running");
         }
@@ -202,17 +199,17 @@ namespace NewsBuddy
                 //dlg.Owner = this;
                 if ((bool)dlg.ShowDialog())
                 {
-                    
+
                     DisplayDirectories();
                     MonitorDirectory(dirClipsPath);
                     MonitorDirectory(dirSoundersPath);
                     MonitorDirectory(dirScriptsPath);
                     MonitorDirectory(dirSharePath);
-                   
+
                 }
                 else
                 {
-                    
+
                     MessageBox.Show("Error configuring directories. Try launching NewsJock again.");
                 }
 
@@ -363,8 +360,8 @@ namespace NewsBuddy
             {
                 MessageBox.Show("Loaded.", "Tidying Up");
             }
-            
-            
+
+
             FileInfo[] allScripts = new DirectoryInfo(dirScriptsPath).GetFiles(
             "*.xaml", SearchOption.AllDirectories);
             List<FileInfo> veryOldScripts = new List<FileInfo>();
@@ -405,7 +402,7 @@ namespace NewsBuddy
                         "Over 1Gb Shared Sounders", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
-            
+
 
 
             if (veryOldScripts.Count > 0)
@@ -482,7 +479,7 @@ namespace NewsBuddy
 
                     }
 
-                } 
+                }
             }
         }
 
@@ -755,67 +752,67 @@ namespace NewsBuddy
         {
             if (ClipsPlayerNA != null)
             {
-                 ClipsPlayerNA.SetVolume((float)cVolSlider.Value);
+                ClipsPlayerNA.SetVolume((float)cVolSlider.Value);
             }
         }
 
-        public void PlaySounder(string filePath)
+        public void PlaySounder(NJAudioPlayer player)
         {
             if (SoundersPlayerNA != null)
             {
                 SoundersPlayerNA.Stop();
-                if (SoundersPlayerNA.source == filePath)
+                if (SoundersPlayerNA.source == player.source)
                 {
                     SoundersPlayerNA = null;
                     return;
                 } else
                 {
-                    SoundersPlayerNA = new NJAudioPlayer(filePath, (float)sVolSlider.Value);
+                    SoundersPlayerNA = player;
                     SoundersPlayerNA.PlaybackStarted += TimerSounders;
-                    SoundersPlayerNA.Play();
+                    SoundersPlayerNA.Play((float)sVolSlider.Value);
                 }
             }
 
             else
             {
-                
-                SoundersPlayerNA = new NJAudioPlayer(filePath, (float)sVolSlider.Value);
+
+                SoundersPlayerNA = player;
                 SoundersPlayerNA.PlaybackStarted += TimerSounders;
-                SoundersPlayerNA.Play();
+                SoundersPlayerNA.Play((float)sVolSlider.Value);
             }
 
 
         }
 
-        public void PlayClip(string filePath)
+        public void PlayClip(NJAudioPlayer player)
         {
             if (ClipsPlayerNA != null)
             {
                 ClipsPlayerNA.Stop();
-                if (ClipsPlayerNA.source == filePath)
+                if (ClipsPlayerNA.source == player.source)
                 {
                     ClipsPlayerNA = null;
                     return;
                 }
                 else
                 {
-                    ClipsPlayerNA = new NJAudioPlayer(filePath, (float)cVolSlider.Value);
+                    ClipsPlayerNA = player;
                     ClipsPlayerNA.PlaybackStarted += TimerClips;
-                    ClipsPlayerNA.Play();
+                    ClipsPlayerNA.Play((float)cVolSlider.Value);
                 }
             }
 
             else
             {
 
-                ClipsPlayerNA = new NJAudioPlayer(filePath, (float)cVolSlider.Value);
+                ClipsPlayerNA = player;
                 ClipsPlayerNA.PlaybackStarted += TimerClips;
-                ClipsPlayerNA.Play();
+                ClipsPlayerNA.Play((float)cVolSlider.Value);
             }
         }
         private void TimerSounders()
         {
-            
+
             if (SoundersPlayerNA != null && SoundersPlayerNA.IsPlaying())
             {
                 sounderTimer = new DispatcherTimer();
@@ -911,25 +908,6 @@ namespace NewsBuddy
                 Trace.WriteLine("Clips Timer Display Failed");
             }
            
-        }
-
-        private void SoundersPlayer_MediaFailed(object sender, ExceptionRoutedEventArgs e)
-        {
-            Trace.WriteLine("Sounders Media Failed: " + e.ErrorException.Message);
-            if (SoundersPlayer.Source != null)
-            {
-                
-                SoundersPlayer.Source = null;
-            }
-        }
-
-        private void ClipsPlayer_MediaFailed(object sender, ExceptionRoutedEventArgs e)
-        {
-            Trace.WriteLine("Clips Media Failed: " + e.ErrorException.Message);
-            if (ClipsPlayer.Source != null)
-            {
-                ClipsPlayer.Source = null;
-            }
         }
 
         #endregion
