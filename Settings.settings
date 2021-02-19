@@ -41,14 +41,32 @@
     <Setting Name="AudioOutType" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">0</Value>
     </Setting>
-    <Setting Name="AudioLatency" Type="System.Int32" Scope="User">
+    <Setting Name="DSLatency" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">200</Value>
     </Setting>
-    <Setting Name="ASIOindexS" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">0</Value>
+    <Setting Name="ASIODevice" Type="System.String" Scope="User">
+      <Value Profile="(Default)">None</Value>
     </Setting>
     <Setting Name="ASIOindexC" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="DSDevice" Type="NAudio.Wave.DirectSoundDeviceInfo" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="DSSounders" Type="NAudio.Wave.DirectSoundDeviceInfo" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="DSClips" Type="NAudio.Wave.DirectSoundDeviceInfo" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="DSSeparate" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="ASIOSounders" Type="System.String" Scope="User">
+      <Value Profile="(Default)">None</Value>
+    </Setting>
+    <Setting Name="ASIOClips" Type="System.String" Scope="User">
+      <Value Profile="(Default)">None</Value>
     </Setting>
   </Settings>
 </SettingsFile>

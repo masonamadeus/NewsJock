@@ -182,24 +182,24 @@ namespace NewsBuddy {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("200")]
-        public int AudioLatency {
+        public int DSLatency {
             get {
-                return ((int)(this["AudioLatency"]));
+                return ((int)(this["DSLatency"]));
             }
             set {
-                this["AudioLatency"] = value;
+                this["DSLatency"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public int ASIOindexS {
+        [global::System.Configuration.DefaultSettingValueAttribute("None")]
+        public string ASIODevice {
             get {
-                return ((int)(this["ASIOindexS"]));
+                return ((string)(this["ASIODevice"]));
             }
             set {
-                this["ASIOindexS"] = value;
+                this["ASIODevice"] = value;
             }
         }
         
@@ -212,6 +212,75 @@ namespace NewsBuddy {
             }
             set {
                 this["ASIOindexC"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::NAudio.Wave.DirectSoundDeviceInfo DSDevice {
+            get {
+                return ((global::NAudio.Wave.DirectSoundDeviceInfo)(this["DSDevice"]));
+            }
+            set {
+                this["DSDevice"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::NAudio.Wave.DirectSoundDeviceInfo DSSounders {
+            get {
+                return ((global::NAudio.Wave.DirectSoundDeviceInfo)(this["DSSounders"]));
+            }
+            set {
+                this["DSSounders"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::NAudio.Wave.DirectSoundDeviceInfo DSClips {
+            get {
+                return ((global::NAudio.Wave.DirectSoundDeviceInfo)(this["DSClips"]));
+            }
+            set {
+                this["DSClips"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool DSSeparate {
+            get {
+                return ((bool)(this["DSSeparate"]));
+            }
+            set {
+                this["DSSeparate"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("None")]
+        public string ASIOSounders {
+            get {
+                return ((string)(this["ASIOSounders"]));
+            }
+            set {
+                this["ASIOSounders"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("None")]
+        public string ASIOClips {
+            get {
+                return ((string)(this["ASIOClips"]));
+            }
+            set {
+                this["ASIOClips"] = value;
             }
         }
     }

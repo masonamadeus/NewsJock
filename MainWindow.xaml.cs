@@ -30,7 +30,6 @@ namespace NewsBuddy
 
         FileSystemWatcher fs;
         NJWebBrowser browser;
-        bool flashBox = true;
 
         public string dirClipsPath = Settings.Default.ClipsDirectory;
         public string dirSoundersPath = Settings.Default.SoundersDirectory;
@@ -51,24 +50,19 @@ namespace NewsBuddy
             InitializeComponent();
 
             // Debugger messages
-
-
             if (!Debugger.IsAttached)
             {
                 AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
-                    ExceptionCatcher(args.ExceptionObject as Exception, "AppDomain.CurrentDomain.UnhandledException", false);
+                    ExceptionCatcher(args.ExceptionObject as Exception, false);
                 TaskScheduler.UnobservedTaskException += (sender, args) =>
-                    ExceptionCatcher(args.Exception, "TaskScheduler.UnobservedTaskException", false);
+                    ExceptionCatcher(args.Exception, false);
                 Dispatcher.UnhandledException += (sender, args) =>
-                    ExceptionCatcher(args.Exception, "Dispatcher.UnhandledException", true);
+                    ExceptionCatcher(args.Exception, true);
             }
-
-
 
 
             this.Height = Settings.Default.WindowHeight;
             this.Width = Settings.Default.WindowWidth;
-
 
 
             CheckDirectories();
@@ -96,7 +90,7 @@ namespace NewsBuddy
             Trace.WriteLine("Started Running");
         }
 
-        void ExceptionCatcher(Exception e, string exceptionType, bool promptForShutdown)
+        void ExceptionCatcher(Exception e, bool promptForShutdown)
         {
             ProblemWindow pw = new ProblemWindow(e, promptForShutdown);
             pw.Owner = this;
@@ -194,7 +188,7 @@ namespace NewsBuddy
                 !Directory.Exists(dirSoundersPath) || !Directory.Exists(dirTemplatesPath)
                 || !Directory.Exists(dirSharePath))
             {
-                flashBox = false;
+                
                 DirConfig dlg = new DirConfig();
                 //dlg.Owner = this;
                 if ((bool)dlg.ShowDialog())
@@ -356,11 +350,7 @@ namespace NewsBuddy
 
         void CleanUpScripts()
         {
-            if (flashBox)
-            {
-                MessageBox.Show("Loaded.", "Tidying Up");
-            }
-
+            GhostWindow gw;
 
             FileInfo[] allScripts = new DirectoryInfo(dirScriptsPath).GetFiles(
             "*.xaml", SearchOption.AllDirectories);
@@ -375,6 +365,8 @@ namespace NewsBuddy
             }
             if (Settings.Default.WarnDirSize)
             {
+                gw = new GhostWindow();
+                gw.Show();
                 if (GetDirectorySize(dirClipsPath) > 1000000000)
                 {
                     MessageBox.Show(this, "You have more than a gigabyte of clips in your Clips directory.\n" +
@@ -401,12 +393,15 @@ namespace NewsBuddy
                         "To avoid taking up too much space, it may be wise to go delete old Shared Sounders now.",
                         "Over 1Gb Shared Sounders", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
+                gw.Close();
             }
 
 
 
             if (veryOldScripts.Count > 0)
             {
+                gw = new GhostWindow();
+                gw.Show();
                 MessageBoxResult result = MessageBox.Show("You have scripts in your drive that are over two years old. To avoid taking up too much space, would you like me to delete them?", "Wicked Old Scripts Detected", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 switch (result)
                 {
@@ -425,14 +420,17 @@ namespace NewsBuddy
                                 Trace.WriteLine("failed to remove old script " + vosc.Name);
                             }
                         }
-
+                        
                         break;
                     case MessageBoxResult.No:
+                        
                         break;
                     case MessageBoxResult.None:
+                        
                         break;
                 }
 
+                gw.Close();
             }
 
 
@@ -480,7 +478,9 @@ namespace NewsBuddy
                     }
 
                 }
+
             }
+           
         }
 
 
@@ -810,6 +810,7 @@ namespace NewsBuddy
                 ClipsPlayerNA.Play((float)cVolSlider.Value);
             }
         }
+
         private void TimerSounders()
         {
 
@@ -910,9 +911,20 @@ namespace NewsBuddy
            
         }
 
+
         #endregion
 
-
+        private void mnAudioSettings_Click(object sender, RoutedEventArgs e)
+        {
+            AudioConfigWindow ac = new AudioConfigWindow();
+            if ((bool)ac.ShowDialog())
+            {
+                DynamicTabs.DataContext = null;
+                Settings.Default.Reload();
+                DynamicTabs.DataContext = _tabItems;
+                DynamicTabs.SelectedItem = _tabItems[0];
+            }
+        }
     }
 
 }

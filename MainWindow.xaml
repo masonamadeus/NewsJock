@@ -48,6 +48,7 @@
                     <TextBlock FontFamily="{StaticResource FA}"></TextBlock>
                 </MenuItem.Icon>
                 <MenuItem x:Name="mnNJSettings" Header="NewsJock Settings" Click="mnNJSettings_Click"/>
+                <MenuItem x:Name="mnAudioSettings" Header="Audio Device Settings" Click="mnAudioSettings_Click"/>
                 <!--  <MenuItem Name="mnWebSettings" Header="Web Browser Settings" Click="mnWebSettings_Click"/> -->
 
             </MenuItem>

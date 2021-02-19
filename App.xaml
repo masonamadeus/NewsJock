@@ -124,8 +124,11 @@
             <Cursor x:Key="NBDropCur">/resources/buttondrop.cur</Cursor>
         </ResourceDictionary>
 
-        
-        
+
+        <local:BoolToVisInverter
+            x:Key="BoolToVisInverter"
+            True="Collapsed"
+            False="Visible" />
 
     </Application.Resources>
 </Application>

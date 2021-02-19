@@ -90,7 +90,25 @@ namespace NewsBuddy
         {
             if (player == null)
             {
-                player = new NJAudioPlayer(NBPath);
+                if (Settings.Default.DSSeparate & Settings.Default.AudioOutType == 0)
+                {
+                    if (NBisSounder)
+                    {
+                        player = new NJAudioPlayer(NBPath, Settings.Default.DSSounders.Guid);
+                    }
+                    else
+                    {
+                        player = new NJAudioPlayer(NBPath, Settings.Default.DSClips.Guid);
+                    }
+                }
+                else if (Settings.Default.AudioOutType == 1)
+                {
+                    Trace.WriteLine("ASIO not implemented yet");
+                }
+                else
+                {
+                    player = new NJAudioPlayer(NBPath);
+                }
                 Trace.WriteLine("Player made for " + NBName);
             } else
             {

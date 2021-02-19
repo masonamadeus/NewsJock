@@ -28,6 +28,7 @@ namespace NewsBuddy
         public event Action PlaybackStarted;
         public string source { get; }
 
+        // for standard DS output
         public NJAudioPlayer(string path)
         {
             PlaybackStopType = PlaybackStopTypes.PlaybackStoppedReachingEndOfFile;
@@ -38,17 +39,67 @@ namespace NewsBuddy
 
             if (Settings.Default.AudioOutType == 1)
             {
-                _outputASIO = new AsioOut(Settings.Default.ASIOindexS);
+                _outputASIO = new AsioOut(Settings.Default.ASIODevice);
                 _outputASIO.PlaybackStopped += Output_PlaybackStopped;
                 _outputASIO.Init(wc);
             } else
             {
-                _outputDS = new DirectSoundOut(Settings.Default.AudioLatency);
+                _outputDS = new DirectSoundOut(Settings.Default.DSDevice.Guid,Settings.Default.DSLatency);
                 _outputDS.PlaybackStopped += Output_PlaybackStopped;
                 _outputDS.Init(wc);
             }
 
         }
+
+        // for separate DS devices
+        public NJAudioPlayer(string path, Guid guid)
+        {
+            PlaybackStopType = PlaybackStopTypes.PlaybackStoppedReachingEndOfFile;
+            _audioFileReader = new AudioFileReader(path);
+            source = path;
+            var wc = new WaveChannel32(_audioFileReader);
+            wc.PadWithZeroes = false;
+
+            if (Settings.Default.AudioOutType == 1)
+            {
+                _outputASIO = new AsioOut(Settings.Default.ASIODevice);
+                _outputASIO.PlaybackStopped += Output_PlaybackStopped;
+                _outputASIO.Init(wc);
+            }
+            else
+            {
+                _outputDS = new DirectSoundOut(guid, Settings.Default.DSLatency);
+                _outputDS.PlaybackStopped += Output_PlaybackStopped;
+                _outputDS.Init(wc);
+            }
+
+        }
+
+        // for separate ASIO outputs
+        public NJAudioPlayer(string path, string ASIOname)
+        {
+            PlaybackStopType = PlaybackStopTypes.PlaybackStoppedReachingEndOfFile;
+            _audioFileReader = new AudioFileReader(path);
+            source = path;
+            var wc = new WaveChannel32(_audioFileReader);
+            wc.PadWithZeroes = false;
+
+            if (Settings.Default.AudioOutType == 1)
+            {
+                _outputASIO = new AsioOut(Settings.Default.ASIODevice);
+                _outputASIO.PlaybackStopped += Output_PlaybackStopped;
+                _outputASIO.Init(wc);
+            }
+            else
+            {
+                _outputDS = new DirectSoundOut(Settings.Default.DSDevice.Guid, Settings.Default.DSLatency);
+                _outputDS.PlaybackStopped += Output_PlaybackStopped;
+                _outputDS.Init(wc);
+            }
+
+        }
+
+
 
         public void Play(float volume)
         {
