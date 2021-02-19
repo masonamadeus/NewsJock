@@ -12,7 +12,7 @@
     <Company>NewsJock</Company>
     <Description>A standalone text editor, with the capability of adding and playing back inline audio files. Designed to aid in the presentation of audio news.</Description>
     <Copyright>2021</Copyright>
-    <SignAssembly>true</SignAssembly>
+    <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>Mason Amadeus Key.pfx</AssemblyOriginatorKeyFile>
     <ApplicationIcon>NewsJockIcon.ico</ApplicationIcon>
     <DelaySign>false</DelaySign>
