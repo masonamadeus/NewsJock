@@ -42,6 +42,8 @@ namespace NewsBuddy
         public NJAudioPlayer SoundersPlayerNA;
         public NJAudioPlayer ClipsPlayerNA;
 
+        public NJAsioMixer asioMixer;
+
         private Cursor nbDropCur = null;
 
 
@@ -86,6 +88,10 @@ namespace NewsBuddy
             DynamicTabs.DataContext = _tabItems;
             DynamicTabs.SelectedIndex = 0;
 
+            if (Settings.Default.AudioOutType == 1)
+            {
+                asioMixer = new NJAsioMixer(Settings.Default.ASIODevice);
+            }
 
             Trace.WriteLine("Started Running");
         }
@@ -205,6 +211,7 @@ namespace NewsBuddy
                 {
 
                     MessageBox.Show("Error configuring directories. Try launching NewsJock again.");
+                    Application.Current.Shutdown();
                 }
 
 

@@ -65,7 +65,7 @@ namespace NewsBuddy
         private void srchSounder_Click(object sender, RoutedEventArgs e)
         {
             VistaFolderBrowserDialog srch = new VistaFolderBrowserDialog();
-            srch.Description = "Please select your 'Sounders' folder.";
+            srch.Description = "Please select your 'Personal Sounders' folder.";
             srch.UseDescriptionForTitle = true;
             if ((bool)srch.ShowDialog(this))
             selDirSounder.Text = srch.SelectedPath;

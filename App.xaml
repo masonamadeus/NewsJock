@@ -130,5 +130,8 @@
             True="Collapsed"
             False="Visible" />
 
+        <local:IndexToCollapse
+            x:Key="IndexToCollapse"
+            />
     </Application.Resources>
 </Application>

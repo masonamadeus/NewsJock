@@ -59,14 +59,14 @@
     <Setting Name="DSClips" Type="NAudio.Wave.DirectSoundDeviceInfo" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
-    <Setting Name="DSSeparate" Type="System.Boolean" Scope="User">
+    <Setting Name="SeparateOutputs" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
-    <Setting Name="ASIOSounders" Type="System.String" Scope="User">
-      <Value Profile="(Default)">None</Value>
+    <Setting Name="ASIOSounders" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
     </Setting>
-    <Setting Name="ASIOClips" Type="System.String" Scope="User">
-      <Value Profile="(Default)">None</Value>
+    <Setting Name="ASIOClips" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
     </Setting>
   </Settings>
 </SettingsFile>

@@ -30,13 +30,14 @@ namespace NewsBuddy
         int latency { get; set; }
 
         string selAS { get; set; }
-        string selASsounder { get; set; }
-        string selASclip { get; set; }
+        int selASsounder { get; set; }
+        int selASclip { get; set; }
 
         public AudioConfigWindow()
         {
             InitializeComponent();
             GetDevices();
+            GetASIOChannels();
             latency = Settings.Default.DSLatency;
 
 
@@ -45,23 +46,41 @@ namespace NewsBuddy
             DSDevices.ItemsSource = dsD;
             DSClips.ItemsSource = dsD;
             DSSounders.ItemsSource = dsD;
-            DSlatency.ItemsSource = new List<int> { 0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500 };
+            DSlatency.ItemsSource = new List<int> { 0, 5, 10, 20, 25, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500 };
 
-            if (asioD.Count != 0)
+            if (Settings.Default.DSDevice != null)
             {
-                ASIODevices.Text = Settings.Default.ASIODevice;
+                DSDevices.SelectedItem = dsD.Find(item => item.Guid == Settings.Default.DSDevice.Guid);
+
             }
-            else
+            if (Settings.Default.DSClips != null)
             {
-                ASIOmenu.Visibility = Visibility.Collapsed;
+                DSClips.SelectedItem = dsD.Find(item => item.Guid == Settings.Default.DSClips.Guid);
+
             }
-            DSDevices.SelectedItem = dsD.Find(item => item.Guid == Settings.Default.DSDevice.Guid);
-            DSClips.SelectedItem = dsD.Find(item => item.Guid == Settings.Default.DSClips.Guid);
-            DSSounders.SelectedItem = dsD.Find(item => item.Guid == Settings.Default.DSSounders.Guid);
-            ASIODevices.SelectedItem = asioD.Find(item => item == Settings.Default.ASIODevice);
+            if (Settings.Default.DSSounders != null)
+            {
+                DSSounders.SelectedItem = dsD.Find(item => item.Guid == Settings.Default.DSSounders.Guid);
+
+            }
+            if (Settings.Default.ASIODevice != null)
+            {
+                ASIODevices.SelectedItem = asioD.Find(item => item == Settings.Default.ASIODevice);
+            }
+            try
+            {
+                ASIOSounders.SelectedItem = asioChannels.Find(item => item.index == Settings.Default.ASIOSounders);
+                ASIOClips.SelectedItem = asioChannels.Find(item => item.index == Settings.Default.ASIOClips);
+            }
+            catch
+            {
+                ASIOSounders.SelectedItem = null;
+                ASIOClips.SelectedItem = null;
+            }
         }
         List<DirectSoundDeviceInfo> dsD;
         List<String> asioD;
+        List<ASIOOutputInfo> asioChannels = new List<ASIOOutputInfo>();
         public void GetDevices()
         {
             asioD = AsioOut.GetDriverNames().ToList();
@@ -87,17 +106,15 @@ namespace NewsBuddy
             if (selAS != null)
             {
                 Settings.Default.ASIODevice = selAS;
-
             }
-            if (selASsounder != null)
+            if (ASIOSounders.Visibility == Visibility.Visible)
             {
                 Settings.Default.ASIOSounders = selASsounder;
             }
-            if (selASclip != null)
+            if (ASIOClips.Visibility == Visibility.Visible)
             {
                 Settings.Default.ASIOClips = selASclip;
             }
-
             Settings.Default.Save();
             this.DialogResult = true;
             this.Close();
@@ -106,12 +123,17 @@ namespace NewsBuddy
         private void audioCancel_Click(object sender, RoutedEventArgs e)
         {
             this.DialogResult = false;
+            Settings.Default.Reload();
             this.Close();
         }
 
         private void ASIODevices_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             selAS = ASIODevices.SelectedItem as String;
+            Settings.Default.ASIODevice = selAS;
+            Settings.Default.Save();
+            Settings.Default.Reload();
+            GetASIOChannels();
            // Trace.WriteLine(selAS);
         }
 
@@ -136,5 +158,91 @@ namespace NewsBuddy
             //Trace.WriteLine(selDSclip.Guid);
         }
 
+        private void DriverDropdown_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (DriverDropdown.SelectedIndex == 1)
+            {
+                GetASIOChannels();
+            }
+        }
+
+        private void GetASIOChannels()
+        {
+            if (Settings.Default.ASIODevice != null)
+            {
+                try
+                {
+                    if (ASIOSounders != null & ASIOClips != null)
+                    {
+                        ASIOSounders.ItemsSource = null;
+                        ASIOClips.ItemsSource = null;
+                    }
+
+                    asioChannels.Clear();
+
+                    var asio = new AsioOut(Settings.Default.ASIODevice);
+
+                    int outputs = asio.NumberOfOutputChannels;
+
+                    for (int i = 0; i <= outputs; i++)
+                    {
+                        ASIOOutputInfo inf = new ASIOOutputInfo();
+                        inf.index = i;
+                        inf.name = asio.AsioOutputChannelName(i);
+                        asioChannels.Add(inf);
+                    }
+                    asio.Dispose();
+
+                    if (ASIOSounders != null & ASIOClips != null)
+                    {
+                        ASIOSounders.ItemsSource = asioChannels;
+                        ASIOClips.ItemsSource = asioChannels;
+                    }
+                    
+                }
+                catch
+                {
+                    Trace.WriteLine("No ASIO Driver.");
+                }
+
+            }
+        }
+
+        private void ASIOSounders_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ASIOSounders.SelectedItem is ASIOOutputInfo)
+            {
+                selASsounder = ((ASIOOutputInfo)ASIOSounders.SelectedItem).index;
+
+            }
+        }
+
+        private void ASIOClips_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ASIOClips.SelectedItem is ASIOOutputInfo)
+            {
+                selASclip = ((ASIOOutputInfo)ASIOClips.SelectedItem).index;
+            }
+        }
+
+        private void SeparateOutputs_Click(object sender, RoutedEventArgs e)
+        {
+            GetASIOChannels();
+            ASIOSounders.ItemsSource = asioChannels;
+            ASIOClips.ItemsSource = asioChannels;
+        }
+
+        private void StackPanel_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            GetASIOChannels();
+            ASIOSounders.ItemsSource = asioChannels;
+            ASIOClips.ItemsSource = asioChannels;
+        }
+    }
+
+    public class ASIOOutputInfo
+    {
+        public int index { get; set; }
+        public string name { get; set; }
     }
 }

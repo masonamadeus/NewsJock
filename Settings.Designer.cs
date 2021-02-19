@@ -251,21 +251,21 @@ namespace NewsBuddy {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool DSSeparate {
+        public bool SeparateOutputs {
             get {
-                return ((bool)(this["DSSeparate"]));
+                return ((bool)(this["SeparateOutputs"]));
             }
             set {
-                this["DSSeparate"] = value;
+                this["SeparateOutputs"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("None")]
-        public string ASIOSounders {
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int ASIOSounders {
             get {
-                return ((string)(this["ASIOSounders"]));
+                return ((int)(this["ASIOSounders"]));
             }
             set {
                 this["ASIOSounders"] = value;
@@ -274,10 +274,10 @@ namespace NewsBuddy {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("None")]
-        public string ASIOClips {
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int ASIOClips {
             get {
-                return ((string)(this["ASIOClips"]));
+                return ((int)(this["ASIOClips"]));
             }
             set {
                 this["ASIOClips"] = value;

@@ -6,7 +6,7 @@
     <UseWPF>true</UseWPF>
     <StartupObject>NewsBuddy.App</StartupObject>
     <NoWin32Manifest>true</NoWin32Manifest>
-    <AssemblyName>NewsJock v0.2</AssemblyName>
+    <AssemblyName>NewsJock</AssemblyName>
     <Version>0.2.0</Version>
     <Authors>Mason Amadeus</Authors>
     <Company>NewsJock</Company>
@@ -20,8 +20,12 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <OutputPath>C:\Users\Mason\VS Builds\NewsJock\</OutputPath>
+    <OutputPath>C:\Users\_shamel\Desktop\NewsJock\BuildFolder\</OutputPath>
     <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <OutputPath>C:\Users\_shamel\Desktop\NewsJock\DebugBuildFolder\</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>

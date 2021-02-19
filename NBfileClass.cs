@@ -33,14 +33,22 @@ namespace NewsBuddy
         {
             if (File.Exists(NBPath))
             {
-                if (isSounder)
+                if(Settings.Default.AudioOutType == 1 & !Settings.Default.SeparateOutputs)
                 {
-                    homeBase.PlaySounder(player);
+                    homeBase.asioMixer.Play(NBPath);
                 }
                 else
                 {
-                    homeBase.PlayClip(player);
+                    if (isSounder)
+                    {
+                        homeBase.PlaySounder(player);
+                    }
+                    else
+                    {
+                        homeBase.PlayClip(player);
+                    }
                 }
+                
             }
 
         }
@@ -90,24 +98,57 @@ namespace NewsBuddy
         {
             if (player == null)
             {
-                if (Settings.Default.DSSeparate & Settings.Default.AudioOutType == 0)
+                if (Settings.Default.AudioOutType == 0)
                 {
-                    if (NBisSounder)
+                    if (Settings.Default.SeparateOutputs)
                     {
-                        player = new NJAudioPlayer(NBPath, Settings.Default.DSSounders.Guid);
-                    }
+                        if (Settings.Default.DSSounders != null & Settings.Default.DSClips != null)
+                        {
+                            if (NBisSounder)
+                            {
+                                player = new NJAudioPlayer(NBPath, Settings.Default.DSSounders.Guid);
+                            }
+                            else
+                            {
+                                player = new NJAudioPlayer(NBPath, Settings.Default.DSClips.Guid);
+                            }
+                        }
+                        else
+                        {
+                            MessageBox.Show("Audio Output not selected.\nCheck your settings under Settings > Audio Device Settings", "No Audio Device Selected", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                       
+                    } 
                     else
                     {
-                        player = new NJAudioPlayer(NBPath, Settings.Default.DSClips.Guid);
+                        player = new NJAudioPlayer(NBPath);
+
                     }
+
                 }
                 else if (Settings.Default.AudioOutType == 1)
                 {
-                    Trace.WriteLine("ASIO not implemented yet");
+                   /* if (Settings.Default.SeparateOutputs)
+                    {
+                        if (NBisSounder)
+                        {
+                            player = new NJAudioPlayer(NBPath, Settings.Default.ASIODevice, Settings.Default.ASIOSounders);
+                        }
+                        else
+                        {
+                            player = new NJAudioPlayer(NBPath, Settings.Default.ASIODevice, Settings.Default.ASIOClips);
+                        }
+                    }
+                    else
+                    {
+                        player = new NJAudioPlayer(NBPath, Settings.Default.ASIODevice);
+                    }
+                   */
+
                 }
                 else
                 {
-                    player = new NJAudioPlayer(NBPath);
+                    MessageBox.Show("Audio Device Error.\nCheck your Settings under:\nSettings > Audio Device Settings", "Audio Device Error");
                 }
                 Trace.WriteLine("Player made for " + NBName);
             } else
