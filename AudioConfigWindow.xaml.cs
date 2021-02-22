@@ -179,18 +179,36 @@ namespace NewsBuddy
                     }
 
                     asioChannels.Clear();
-
-                    var asio = new AsioOut(Settings.Default.ASIODevice);
-
-                    int outputs = asio.NumberOfOutputChannels;
-
-                    for (int i = 0; i <= outputs; i++)
+                    AsioOut asio;
+                    int outputs = 0;
+                    if (Settings.Default.ASIOSplit)
                     {
-                        ASIOOutputInfo inf = new ASIOOutputInfo();
-                        inf.index = i;
-                        inf.name = asio.AsioOutputChannelName(i);
-                        asioChannels.Add(inf);
+                        asio = new AsioOut(Settings.Default.ASIODevice);
+
+                        outputs = asio.DriverOutputChannelCount;
+                        for (int i = 0; i <= outputs; i++)
+                        {
+                            ASIOOutputInfo inf = new ASIOOutputInfo();
+                            inf.index = i;
+                            inf.name = asio.AsioOutputChannelName(i);
+                            asioChannels.Add(inf);
+                        }
+
                     }
+                    else
+                    {
+                        asio = new AsioOut(Settings.Default.ASIODevice);
+
+                        outputs = asio.NumberOfOutputChannels;
+                        for (int i = 0; i <= outputs; i++)
+                        {
+                            ASIOOutputInfo inf = new ASIOOutputInfo();
+                            inf.index = i;
+                            inf.name = asio.AsioOutputChannelName(i);
+                            asioChannels.Add(inf);
+                        }
+                    }
+
                     asio.Dispose();
 
                     if (ASIOSounders != null & ASIOClips != null)
@@ -235,6 +253,14 @@ namespace NewsBuddy
         private void StackPanel_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
             GetASIOChannels();
+            ASIOSounders.ItemsSource = asioChannels;
+            ASIOClips.ItemsSource = asioChannels;
+        }
+
+        private void ASIOMono_Click(object sender, RoutedEventArgs e)
+        {
+
+                GetASIOChannels();
             ASIOSounders.ItemsSource = asioChannels;
             ASIOClips.ItemsSource = asioChannels;
         }

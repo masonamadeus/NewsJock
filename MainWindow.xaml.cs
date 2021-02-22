@@ -19,6 +19,7 @@ using System.Windows.Threading;
 using System.Windows.Resources;
 using System.Diagnostics;
 using Ookii.Dialogs.Wpf;
+using NAudio.Wave;
 
 namespace NewsBuddy
 {
@@ -91,6 +92,7 @@ namespace NewsBuddy
             if (Settings.Default.AudioOutType == 1)
             {
                 asioMixer = new NJAsioMixer(Settings.Default.ASIODevice);
+                Trace.WriteLine("Created ASIO Mixer");
             }
 
             Trace.WriteLine("Started Running");
@@ -668,14 +670,29 @@ namespace NewsBuddy
 
         private void btnStopClips_Click(object sender, RoutedEventArgs e)
         {
-            ClipsPlayerNA.Stop();
-            ClipsPlayerNA = null;
+            if (ClipsPlayerNA != null)
+            {
+                ClipsPlayerNA.Stop();
+                ClipsPlayerNA = null;
+            }
+            if (asioMixer != null && asioMixer.currentClip != null)
+            {
+                asioMixer.ClipDone();
+            }
+
         }
 
         private void btnStopSounders_Click(object sender, RoutedEventArgs e)
         {
-            SoundersPlayerNA.Stop();
-            SoundersPlayerNA = null;
+            if (SoundersPlayerNA != null)
+            {
+                SoundersPlayerNA.Stop();
+                SoundersPlayerNA = null;
+            }
+            if (asioMixer != null && asioMixer.currentSounder != null)
+            {
+                asioMixer.SounderDone();
+            }
         }
 
         private void expandVisible_Click(object sender, RoutedEventArgs e)
@@ -761,6 +778,80 @@ namespace NewsBuddy
             {
                 ClipsPlayerNA.SetVolume((float)cVolSlider.Value);
             }
+        }
+
+        public void PlayAsioMixer(NJFileReader NJF)
+        {
+            asioMixer.Play(NJF);
+            if (NJF.isSounder)
+            {
+                AsioSounderTimer();
+            } 
+            else if (!NJF.isSounder)
+            {
+                AsioClipTimer();
+            }
+        }
+
+        public void AsioSounderTimer()
+        {
+            if (asioMixer.currentSounder != null)
+            {
+                sounderTimer = new DispatcherTimer();
+                sounderTimer.Tick += new EventHandler(AsioSndrTick);
+                sounderTimer.Interval = TimeSpan.FromMilliseconds(250);
+                sounderTimer.Start();
+            }
+        }
+
+        public void AsioSndrTick(object sender, EventArgs e)
+        {
+            if (asioMixer.currentSounder != null && asioMixer.currentSounder.isPlaying)
+            {
+                int remain = asioMixer.GetTimeLeft(asioMixer.currentSounder.reader);
+                string sndRem = (remain / 60).ToString() + ":" + (remain % 60).ToString("00");
+                sndrTimeLeft.Text = sndRem;
+                lblSounders.Content = asioMixer.currentSounder.source;
+                SoundersControl.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                sounderTimer.Stop();
+                SoundersControl.Visibility = Visibility.Collapsed;
+                lblSounders.Content = "Sounders";
+                sndrTimeLeft.Text = "0:00";
+            }
+
+        }
+        public void AsioClipTimer()
+        {
+            if (asioMixer.currentClip != null)
+            {
+                clipTimer = new DispatcherTimer();
+                clipTimer.Tick += new EventHandler(AsioClipTick);
+                clipTimer.Interval = TimeSpan.FromMilliseconds(250);
+                clipTimer.Start();
+            }
+        }
+
+        public void AsioClipTick(object sender, EventArgs e)
+        {
+            if (asioMixer.currentClip != null && asioMixer.currentClip.isPlaying)
+            {
+                int remain = asioMixer.GetTimeLeft(asioMixer.currentClip.reader);
+                string sndRem = (remain / 60).ToString() + ":" + (remain % 60).ToString("00");
+                clipTimeLeft.Text = sndRem;
+                lblClips.Content = asioMixer.currentClip.source;
+                ClipsControl.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                clipTimer.Stop();
+                ClipsControl.Visibility = Visibility.Collapsed;
+                lblClips.Content = "Sounders";
+                clipTimeLeft.Text = "0:00";
+            }
+
         }
 
         public void PlaySounder(NJAudioPlayer player)
@@ -924,13 +1015,32 @@ namespace NewsBuddy
         private void mnAudioSettings_Click(object sender, RoutedEventArgs e)
         {
             AudioConfigWindow ac = new AudioConfigWindow();
-            if ((bool)ac.ShowDialog())
+            ac.ShowDialog();
+
+            DynamicTabs.DataContext = null;
+            Settings.Default.Reload();
+            if (Settings.Default.AudioOutType == 1 && 
+                ((Settings.Default.SeparateOutputs & Settings.Default.ASIOSplit) 
+                || Settings.Default.ASIOSounders == Settings.Default.ASIOClips))
             {
-                DynamicTabs.DataContext = null;
-                Settings.Default.Reload();
-                DynamicTabs.DataContext = _tabItems;
-                DynamicTabs.SelectedItem = _tabItems[0];
+                if (asioMixer != null)
+                {
+                    asioMixer.KillMixer();
+                    asioMixer = null;
+                    Trace.WriteLine("Killed ASIO Mixer because you needed a new one.");
+                }
+                asioMixer = new NJAsioMixer(Settings.Default.ASIODevice);
             }
+            else if (asioMixer != null)
+            {
+                asioMixer.KillMixer();
+                asioMixer = null;
+                Trace.WriteLine("Killed ASIO Mixer because you don't want it.");
+            }
+            DynamicTabs.DataContext = _tabItems;
+            DynamicTabs.SelectedItem = _tabItems[0];
+
+
         }
     }
 

@@ -6,6 +6,7 @@ using System.Windows.Threading;
 using NAudio.MediaFoundation;
 using System.Diagnostics;
 using System.Windows;
+using NAudio.Wave.SampleProviders;
 
 namespace NewsBuddy
 {
@@ -30,11 +31,13 @@ namespace NewsBuddy
 
         public string source { get; }
 
-        WaveChannel32 wave { get; set; }
+        WaveChannel32 _wave { get; set; }
+
+        StereoToMonoSampleProvider _monoWave { get; set; }
 
         string _ASIOname { get; set; }
 
-        int offset { get; set; }
+        int _offset { get; set; }
 
         /// <summary>
         /// Create a DirectSound Player with the specified file.
@@ -87,8 +90,8 @@ namespace NewsBuddy
             _audioFileReader = new AudioFileReader(path);
             source = path;
             _ASIOname = ASIOname;
-            wave = new WaveChannel32(_audioFileReader);
-            wave.PadWithZeroes = false;
+            _wave = new WaveChannel32(_audioFileReader);
+            _wave.PadWithZeroes = false;
         }
 
 
@@ -96,11 +99,13 @@ namespace NewsBuddy
         {
             PlaybackStopType = PlaybackStopTypes.PlaybackStoppedReachingEndOfFile;
             _audioFileReader = new AudioFileReader(path);
+            _monoWave = new StereoToMonoSampleProvider(_audioFileReader);
             source = path;
-            offset = ASIOchannel;
+            _offset = ASIOchannel;
             _ASIOname = ASIOname;
-            wave = new WaveChannel32(_audioFileReader);
-            wave.PadWithZeroes = false;
+            _wave = new WaveChannel32(_audioFileReader);
+            _wave.PadWithZeroes = false;
+
         }
 
         public void ASIODispose()
@@ -123,9 +128,9 @@ namespace NewsBuddy
             if (Settings.Default.AudioOutType == 1 && Settings.Default.SeparateOutputs)
             {
                 _outputASIO = new AsioOut(_ASIOname);
-                _outputASIO.ChannelOffset = offset;          
+                _outputASIO.ChannelOffset = _offset;          
                 _outputASIO.PlaybackStopped += Output_PlaybackStopped;
-                _outputASIO.Init(wave);
+                _outputASIO.Init(_monoWave);
                 _outputASIO.Play();
             } 
             else if (_outputDS != null & Settings.Default.AudioOutType == 0)
@@ -218,6 +223,11 @@ namespace NewsBuddy
             {
                 _audioFileReader.Dispose();
                 _audioFileReader = null;
+            }
+
+            if (_wave != null)
+            {
+                _wave.Dispose();
             }
         }
 

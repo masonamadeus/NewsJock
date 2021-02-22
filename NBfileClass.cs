@@ -26,16 +26,18 @@ namespace NewsBuddy
 
         public TextPointer textPointer;
 
-        public NJAudioPlayer player;
+        public NJAudioPlayer player { get; set; }
+
+        public NJFileReader NJF { get; set; }
 
 
         public void NBPlayNA(bool isSounder)
         {
             if (File.Exists(NBPath))
             {
-                if(Settings.Default.AudioOutType == 1 & !Settings.Default.SeparateOutputs)
+                if (Settings.Default.AudioOutType == 1 && ((Settings.Default.ASIOSounders == Settings.Default.ASIOClips) || Settings.Default.ASIOSplit || !Settings.Default.SeparateOutputs))
                 {
-                    homeBase.asioMixer.Play(NBPath);
+                    homeBase.PlayAsioMixer(NJF);
                 }
                 else
                 {
@@ -47,10 +49,8 @@ namespace NewsBuddy
                     {
                         homeBase.PlayClip(player);
                     }
-                }
-                
+                }                                           
             }
-
         }
 
         public NButton NBbutton()
@@ -115,6 +115,7 @@ namespace NewsBuddy
                         }
                         else
                         {
+                          
                             MessageBox.Show("Audio Output not selected.\nCheck your settings under Settings > Audio Device Settings", "No Audio Device Selected", MessageBoxButton.OK, MessageBoxImage.Error);
                         }
                        
@@ -128,7 +129,8 @@ namespace NewsBuddy
                 }
                 else if (Settings.Default.AudioOutType == 1)
                 {
-                   /* if (Settings.Default.SeparateOutputs)
+                    // if they're separate devices but not splitting channels, new output for each each time.
+                    if (Settings.Default.SeparateOutputs & !Settings.Default.ASIOSplit)
                     {
                         if (NBisSounder)
                         {
@@ -139,11 +141,16 @@ namespace NewsBuddy
                             player = new NJAudioPlayer(NBPath, Settings.Default.ASIODevice, Settings.Default.ASIOClips);
                         }
                     }
-                    else
+                    // if they're both using the same device, or using split channels, OR not separated
+                    else if ((Settings.Default.ASIOSounders == Settings.Default.ASIOClips) || Settings.Default.ASIOSplit || !Settings.Default.SeparateOutputs)
                     {
-                        player = new NJAudioPlayer(NBPath, Settings.Default.ASIODevice);
+                        if (NJF == null)
+                        {
+                            NJF = new NJFileReader(new AudioFileReader(NBPath), NBisSounder, NBName);
+                            Trace.WriteLine("Mixer Player Made for " + NBName);
+                        }
+                        
                     }
-                   */
 
                 }
                 else
@@ -168,6 +175,19 @@ namespace NewsBuddy
             {
                 Trace.WriteLine("Player called for dispose but was null OR playing: " + NBName);
             }
+            if (NJF != null && !NJF.isPlaying)
+            {
+                NJF.reader.Position = 0;
+                NJF.reader.Dispose();
+                NJF = null;
+            }
+            else
+            {
+
+
+                Trace.WriteLine("NJF called for dispose but was null or playing." + NBName);
+            }
+
         }
 
 

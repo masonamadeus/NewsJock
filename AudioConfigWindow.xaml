@@ -22,8 +22,9 @@
             </WrapPanel>
             <StackPanel x:Name="ASIOmenu" Visibility="{Binding ElementName=DriverDropdown, Converter={StaticResource IndexToCollapse}, ConverterParameter=1, Path=SelectedIndex}">
                 <Label Content="ASIO Devices"/>
-                <ComboBox x:Name="ASIODevices" Background="Gray" SelectionChanged="ASIODevices_SelectionChanged">
-                </ComboBox>
+                <ComboBox x:Name="ASIODevices" Background="Gray" SelectionChanged="ASIODevices_SelectionChanged"/>
+                <Label Content="WARNING: Beta Feature. Audio files MUST be stereo, even in split mode."/>
+
                 <Separator Margin="0,15,0,15"/>
             </StackPanel>
 
@@ -52,8 +53,10 @@
             </StackPanel>
             <StackPanel Visibility="{Binding ElementName=SeparateOutputs, Converter={StaticResource BooleanToVisibilityConverter}, Path=IsChecked}" IsVisibleChanged="StackPanel_IsVisibleChanged">
             <StackPanel Visibility="{Binding ElementName=DriverDropdown, Converter={StaticResource IndexToCollapse}, ConverterParameter=1, Path=SelectedIndex}">
-                
-                <Label Content="Sounders Channel"/>
+                    <CheckBox x:Name="ASIOMono" Content="Split Stereo Channels into Mono Outputs"
+                              IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=ASIOSplit, Mode=TwoWay}"
+                              Click="ASIOMono_Click"/>
+                    <Label Content="Sounders Channel"/>
                 <ComboBox Name="ASIOSounders" SelectionChanged="ASIOSounders_SelectionChanged"/>
                 <Label Content="Clips Channel"/>
                 <ComboBox Name="ASIOClips" SelectionChanged="ASIOClips_SelectionChanged"/>

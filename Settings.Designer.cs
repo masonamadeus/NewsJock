@@ -283,5 +283,17 @@ namespace NewsBuddy {
                 this["ASIOClips"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ASIOSplit {
+            get {
+                return ((bool)(this["ASIOSplit"]));
+            }
+            set {
+                this["ASIOSplit"] = value;
+            }
+        }
     }
 }
