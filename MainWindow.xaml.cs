@@ -91,7 +91,7 @@ namespace NewsBuddy
 
             if (Settings.Default.AudioOutType == 1)
             {
-                asioMixer = new NJAsioMixer(Settings.Default.ASIODevice);
+                asioMixer = new NJAsioMixer(Settings.Default.ASIODevice, Settings.Default.ASIOOutput);
                 Trace.WriteLine("Created ASIO Mixer");
             }
 
@@ -769,6 +769,10 @@ namespace NewsBuddy
             {
                 SoundersPlayerNA.SetVolume((float)sVolSlider.Value);
             }
+            if (asioMixer != null && asioMixer.currentSounder != null)
+            {
+                asioMixer.SetVolume((float)sVolSlider.Value, true);
+            }
 
         }
 
@@ -778,17 +782,23 @@ namespace NewsBuddy
             {
                 ClipsPlayerNA.SetVolume((float)cVolSlider.Value);
             }
+            if (asioMixer != null && asioMixer.currentClip != null)
+            {
+                asioMixer.SetVolume((float)cVolSlider.Value, false);
+            }
         }
 
         public void PlayAsioMixer(NJFileReader NJF)
         {
-            asioMixer.Play(NJF);
+            
             if (NJF.isSounder)
             {
+                asioMixer.Play(NJF, (float)sVolSlider.Value);
                 AsioSounderTimer();
             } 
             else if (!NJF.isSounder)
             {
+                asioMixer.Play(NJF, (float)cVolSlider.Value);
                 AsioClipTimer();
             }
         }
@@ -1029,7 +1039,7 @@ namespace NewsBuddy
                     asioMixer = null;
                     Trace.WriteLine("Killed ASIO Mixer because you needed a new one.");
                 }
-                asioMixer = new NJAsioMixer(Settings.Default.ASIODevice);
+                asioMixer = new NJAsioMixer(Settings.Default.ASIODevice, Settings.Default.ASIOOutput);
             }
             else if (asioMixer != null)
             {

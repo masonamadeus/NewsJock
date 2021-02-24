@@ -295,5 +295,17 @@ namespace NewsBuddy {
                 this["ASIOSplit"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int ASIOOutput {
+            get {
+                return ((int)(this["ASIOOutput"]));
+            }
+            set {
+                this["ASIOOutput"] = value;
+            }
+        }
     }
 }

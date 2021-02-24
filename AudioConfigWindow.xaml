@@ -21,9 +21,11 @@
                 </ComboBox>
             </WrapPanel>
             <StackPanel x:Name="ASIOmenu" Visibility="{Binding ElementName=DriverDropdown, Converter={StaticResource IndexToCollapse}, ConverterParameter=1, Path=SelectedIndex}">
-                <Label Content="ASIO Devices"/>
+                <Label Content="ASIO Drivers"/>
                 <ComboBox x:Name="ASIODevices" Background="Gray" SelectionChanged="ASIODevices_SelectionChanged"/>
-                <Label Content="WARNING: Beta Feature. Audio files MUST be stereo, even in split mode."/>
+                <Label Content="Output" Visibility="{Binding ElementName=SeparateOutputs, Path=IsChecked, Converter={StaticResource BoolToVisInverter}}"/>
+                <ComboBox Name="ASIOChannel" Background="Gray" SelectionChanged="ASIOChannel_SelectionChanged" Visibility="{Binding ElementName=SeparateOutputs, Path=IsChecked, Converter={StaticResource BoolToVisInverter}}"/>
+                <Label Content="WARNING: Beta Feature. Not fully implemented."/>
 
                 <Separator Margin="0,15,0,15"/>
             </StackPanel>

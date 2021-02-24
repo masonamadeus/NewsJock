@@ -33,11 +33,14 @@ namespace NewsBuddy
 
         WaveChannel32 _wave { get; set; }
 
-        StereoToMonoSampleProvider _monoWave { get; set; }
-
         string _ASIOname { get; set; }
 
         int _offset { get; set; }
+
+        public NJAudioPlayer()
+        {
+
+        }
 
         /// <summary>
         /// Create a DirectSound Player with the specified file.
@@ -99,7 +102,6 @@ namespace NewsBuddy
         {
             PlaybackStopType = PlaybackStopTypes.PlaybackStoppedReachingEndOfFile;
             _audioFileReader = new AudioFileReader(path);
-            _monoWave = new StereoToMonoSampleProvider(_audioFileReader);
             source = path;
             _offset = ASIOchannel;
             _ASIOname = ASIOname;
@@ -130,7 +132,7 @@ namespace NewsBuddy
                 _outputASIO = new AsioOut(_ASIOname);
                 _outputASIO.ChannelOffset = _offset;          
                 _outputASIO.PlaybackStopped += Output_PlaybackStopped;
-                _outputASIO.Init(_monoWave);
+                _outputASIO.Init(_wave);
                 _outputASIO.Play();
             } 
             else if (_outputDS != null & Settings.Default.AudioOutType == 0)

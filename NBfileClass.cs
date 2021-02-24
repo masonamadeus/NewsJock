@@ -69,6 +69,8 @@ namespace NewsBuddy
                 NBbutton.Loaded += MakePlayer;
                 NBbutton.Unloaded += DisposePlayer;
 
+                DisposePlayer(this, new RoutedEventArgs());
+                
                 if (NBisSounder)
                 {
                     NBbutton.Style = (Style)Application.Current.FindResource("btnNBs");
@@ -107,10 +109,14 @@ namespace NewsBuddy
                             if (NBisSounder)
                             {
                                 player = new NJAudioPlayer(NBPath, Settings.Default.DSSounders.Guid);
+                                Trace.WriteLine("Player made for " + NBName);
+
                             }
                             else
                             {
                                 player = new NJAudioPlayer(NBPath, Settings.Default.DSClips.Guid);
+                                Trace.WriteLine("Player made for " + NBName);
+
                             }
                         }
                         else
@@ -123,26 +129,31 @@ namespace NewsBuddy
                     else
                     {
                         player = new NJAudioPlayer(NBPath);
+                        Trace.WriteLine("Player made for " + NBName);
 
                     }
 
                 }
                 else if (Settings.Default.AudioOutType == 1)
                 {
-                    // if they're separate devices but not splitting channels, new output for each each time.
-                    if (Settings.Default.SeparateOutputs & !Settings.Default.ASIOSplit)
+                    // if they're separate devices but not splitting channels, and not on the same device channel, new output for each each time.
+                    if (Settings.Default.SeparateOutputs & !Settings.Default.ASIOSplit && (Settings.Default.ASIOSounders != Settings.Default.ASIOClips))
                     {
                         if (NBisSounder)
                         {
                             player = new NJAudioPlayer(NBPath, Settings.Default.ASIODevice, Settings.Default.ASIOSounders);
+                            Trace.WriteLine("Player made for " + NBName);
+
                         }
                         else
                         {
                             player = new NJAudioPlayer(NBPath, Settings.Default.ASIODevice, Settings.Default.ASIOClips);
+                            Trace.WriteLine("Player made for " + NBName);
+
                         }
                     }
                     // if they're both using the same device, or using split channels, OR not separated
-                    else if ((Settings.Default.ASIOSounders == Settings.Default.ASIOClips) || Settings.Default.ASIOSplit || !Settings.Default.SeparateOutputs)
+                    else if ((Settings.Default.ASIOSounders == Settings.Default.ASIOClips) || (Settings.Default.ASIOSplit && Settings.Default.SeparateOutputs) || !Settings.Default.SeparateOutputs)
                     {
                         if (NJF == null)
                         {
@@ -151,13 +162,14 @@ namespace NewsBuddy
                         }
                         
                     }
+                    
+                    
 
                 }
                 else
                 {
                     MessageBox.Show("Audio Device Error.\nCheck your Settings under:\nSettings > Audio Device Settings", "Audio Device Error");
                 }
-                Trace.WriteLine("Player made for " + NBName);
             } else
             {
                 Trace.WriteLine("Player was not null when MakePlayer called: " + NBName);
@@ -183,8 +195,6 @@ namespace NewsBuddy
             }
             else
             {
-
-
                 Trace.WriteLine("NJF called for dispose but was null or playing." + NBName);
             }
 

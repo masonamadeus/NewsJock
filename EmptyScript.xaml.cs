@@ -312,6 +312,7 @@ namespace NewsBuddy
                 rtbScript.Document = loaded;
                 scriptUri = uri;
                 RestoreNBXaml();
+
             }
             else { MessageBox.Show("This file is busted. Sorry!"); }
 
@@ -321,7 +322,6 @@ namespace NewsBuddy
         void RestoreNBXaml()
         {
             List<Inline> nbInlines = new List<Inline>();
-
             foreach (var block in rtbScript.Document.Blocks)
             {
                 if (block is Paragraph)
@@ -362,6 +362,7 @@ namespace NewsBuddy
                 NBfile nb = inl.Tag as NBfile;
                 nbi.Child = nb.NBbutton();
             }
+
             ((MainWindow)Application.Current.MainWindow).ChangeTabName(scriptUri);
         }
 

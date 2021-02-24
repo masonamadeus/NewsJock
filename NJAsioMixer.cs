@@ -80,16 +80,17 @@ namespace NewsBuddy
         public NJFileReader currentSounder;
         public NJFileReader currentClip;
 
-        public NJAsioMixer(string ASIOdriver)
+        public NJAsioMixer(string ASIOdriver, int ASIOoffset)
         {
             _outputASIO = new AsioOut(ASIOdriver);
             mixer = new MixingWaveProvider32();
+            _outputASIO.ChannelOffset = ASIOoffset;
             _outputASIO.Init(mixer);
             _outputASIO.Play();
             
         }
 
-        public void Play(NJFileReader NJF)
+        public void Play(NJFileReader NJF, float volume)
         {
             if (NJF.isSounder)
             {
@@ -103,13 +104,15 @@ namespace NewsBuddy
                     SounderDone();
                     currentSounder = NJF;
                     currentSounder.DonePlaying += SounderStop;
-                    mixer.AddInputStream(currentSounder);
+                    currentSounder.reader.Volume = volume;
+                    AddToMixer(currentSounder);
                 }
                 else
                 {
                     currentSounder = NJF;
                     currentSounder.DonePlaying += SounderStop;
-                    mixer.AddInputStream(currentSounder);
+                    currentSounder.reader.Volume = volume;
+                    AddToMixer(currentSounder);
                 }
             }
             else
@@ -123,16 +126,36 @@ namespace NewsBuddy
                     ClipDone();
                     currentClip = NJF;
                     currentClip.DonePlaying += ClipStop;
-                    mixer.AddInputStream(currentClip);
+                    currentClip.reader.Volume = volume;
+                    AddToMixer(currentClip);
                 }
                 else
                 {
                     currentClip = NJF;
                     currentClip.DonePlaying += ClipStop;
-                    mixer.AddInputStream(currentClip);
+                    currentClip.reader.Volume = volume;
+                    AddToMixer(currentClip);
                 }
             }
 
+        }
+
+        public void AddToMixer(IWaveProvider waveProvider)
+        {
+            if (waveProvider.WaveFormat.Channels == mixer.WaveFormat.Channels)
+            {
+                mixer.AddInputStream(waveProvider);
+            }
+            if (waveProvider.WaveFormat.Channels == 1 && mixer.WaveFormat.Channels == 2)
+            {
+                MonoToStereoProvider16 mono = new MonoToStereoProvider16(waveProvider);
+                mixer.AddInputStream(mono);
+            }
+            if (waveProvider.WaveFormat.Channels == 2 && mixer.WaveFormat.Channels == 1)
+            {
+                StereoToMonoProvider16 stereo = new StereoToMonoProvider16(waveProvider);
+                mixer.AddInputStream(stereo);
+            }
         }
 
         public void SounderStop()
@@ -148,6 +171,18 @@ namespace NewsBuddy
             {
                 ClipDone();
             });
+        }
+
+        public void SetVolume(float volume, bool isSounder)
+        {
+            if (isSounder && currentSounder != null)
+            {
+                currentSounder.reader.Volume = volume;
+            } 
+            else if (currentClip != null)
+            {
+                currentClip.reader.Volume = volume;
+            }
         }
 
         public void SounderDone()

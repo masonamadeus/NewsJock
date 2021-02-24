@@ -30,6 +30,8 @@ namespace NewsBuddy
         int latency { get; set; }
 
         string selAS { get; set; }
+
+        int selASout { get; set; }
         int selASsounder { get; set; }
         int selASclip { get; set; }
 
@@ -42,6 +44,7 @@ namespace NewsBuddy
 
 
             ASIODevices.ItemsSource = asioD;
+            ASIOChannel.ItemsSource = asioChannels;
 
             DSDevices.ItemsSource = dsD;
             DSClips.ItemsSource = dsD;
@@ -80,7 +83,7 @@ namespace NewsBuddy
         }
         List<DirectSoundDeviceInfo> dsD;
         List<String> asioD;
-        List<ASIOOutputInfo> asioChannels = new List<ASIOOutputInfo>();
+        List<ASIOOutputInfo> asioChannels;
         public void GetDevices()
         {
             asioD = AsioOut.GetDriverNames().ToList();
@@ -115,6 +118,12 @@ namespace NewsBuddy
             {
                 Settings.Default.ASIOClips = selASclip;
             }
+            if (ASIOChannel.Visibility == Visibility.Visible)
+            {
+                Settings.Default.ASIOOutput = selASout;
+                Settings.Default.ASIOClips = selASout;
+                Settings.Default.ASIOSounders = selASout;
+            }
             Settings.Default.Save();
             this.DialogResult = true;
             this.Close();
@@ -131,8 +140,8 @@ namespace NewsBuddy
         {
             selAS = ASIODevices.SelectedItem as String;
             Settings.Default.ASIODevice = selAS;
-            Settings.Default.Save();
-            Settings.Default.Reload();
+            //Settings.Default.Save();
+            //Settings.Default.Reload();
             GetASIOChannels();
            // Trace.WriteLine(selAS);
         }
@@ -172,10 +181,15 @@ namespace NewsBuddy
             {
                 try
                 {
-                    if (ASIOSounders != null & ASIOClips != null)
+                    if (asioChannels == null)
+                    {
+                        asioChannels = new List<ASIOOutputInfo>();
+                    }
+                    if (ASIOSounders != null & ASIOClips != null & ASIOChannel != null)
                     {
                         ASIOSounders.ItemsSource = null;
                         ASIOClips.ItemsSource = null;
+                        ASIOChannel.ItemsSource = null;
                     }
 
                     asioChannels.Clear();
@@ -211,10 +225,11 @@ namespace NewsBuddy
 
                     asio.Dispose();
 
-                    if (ASIOSounders != null & ASIOClips != null)
+                    if (ASIOSounders != null & ASIOClips != null & ASIOChannel != null)
                     {
                         ASIOSounders.ItemsSource = asioChannels;
                         ASIOClips.ItemsSource = asioChannels;
+                        ASIOChannel.ItemsSource = asioChannels;
                     }
                     
                 }
@@ -263,6 +278,14 @@ namespace NewsBuddy
                 GetASIOChannels();
             ASIOSounders.ItemsSource = asioChannels;
             ASIOClips.ItemsSource = asioChannels;
+        }
+
+        private void ASIOChannel_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ASIOChannel.SelectedItem is ASIOOutputInfo)
+            {
+                selASout = ((ASIOOutputInfo)ASIOChannel.SelectedItem).index;
+            }
         }
     }
 
