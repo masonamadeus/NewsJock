@@ -807,13 +807,17 @@ namespace NewsBuddy
         {
             if (asioMixer.currentSounder != null)
             {
+                if (sounderTimer != null)
+                {
+                    sounderTimer.Stop();
+                    sounderTimer = null;
+                }
                 sounderTimer = new DispatcherTimer();
                 sounderTimer.Tick += new EventHandler(AsioSndrTick);
                 sounderTimer.Interval = TimeSpan.FromMilliseconds(250);
                 sounderTimer.Start();
             }
         }
-
         public void AsioSndrTick(object sender, EventArgs e)
         {
             if (asioMixer.currentSounder != null && asioMixer.currentSounder.isPlaying)
@@ -830,13 +834,21 @@ namespace NewsBuddy
                 SoundersControl.Visibility = Visibility.Collapsed;
                 lblSounders.Content = "Sounders";
                 sndrTimeLeft.Text = "0:00";
+                asioMixer.SounderDone();
+                Trace.WriteLine("Sounder Timer Stopped.");
             }
+
 
         }
         public void AsioClipTimer()
         {
             if (asioMixer.currentClip != null)
             {
+                if (clipTimer != null)
+                {
+                    clipTimer.Stop();
+                    clipTimer = null;
+                }
                 clipTimer = new DispatcherTimer();
                 clipTimer.Tick += new EventHandler(AsioClipTick);
                 clipTimer.Interval = TimeSpan.FromMilliseconds(250);
@@ -860,8 +872,8 @@ namespace NewsBuddy
                 ClipsControl.Visibility = Visibility.Collapsed;
                 lblClips.Content = "Sounders";
                 clipTimeLeft.Text = "0:00";
+                asioMixer.SounderDone();
             }
-
         }
 
         public void PlaySounder(NJAudioPlayer player)
@@ -1049,6 +1061,16 @@ namespace NewsBuddy
             }
             DynamicTabs.DataContext = _tabItems;
             DynamicTabs.SelectedItem = _tabItems[0];
+
+            Trace.WriteLine("ASIO Sounders: " + Settings.Default.ASIOSounders);
+            Trace.WriteLine("ASIO Clips: " + Settings.Default.ASIOClips);
+            Trace.WriteLine("ASIO Device: " + Settings.Default.ASIODevice);
+            Trace.WriteLine("ASIO Output Offset: " + Settings.Default.ASIOOutput);
+            Trace.WriteLine("ASIO Split: " + Settings.Default.ASIOSplit);
+            Trace.WriteLine("Separate Outputs: " + Settings.Default.SeparateOutputs);
+            Trace.WriteLine("DSDevice: " + Settings.Default.DSDevice.Description);
+            Trace.WriteLine("DS Sounders: " + Settings.Default.DSSounders.Description);
+            Trace.WriteLine("DS Clips: " + Settings.Default.DSClips.Description);
 
 
         }

@@ -7,59 +7,131 @@ using System.Diagnostics;
 using System.Windows.Threading;
 using System.ComponentModel;
 using System.Windows;
+using System.Threading;
 
 namespace NewsBuddy
 {
 
 
-    public class NJFileReader : IWaveProvider
+    public class NJFileReader : ISampleProvider
     {
         public readonly AudioFileReader reader;
+
         public bool isSounder;
+
         public bool isDone { get; set; }
+
         public bool isPlaying { get; set; }
+
+        public bool toMono { get; set; }
+
+        public bool toStereo { get; set; }
 
         public string source { get; set; }
 
         public event Action DonePlaying;
-        public WaveFormat WaveFormat { get; private set; }
+
+        public WaveFormat WaveFormat { get; set; }
+
+        private float[] sourceBuffer;
+
+
+
         public NJFileReader(AudioFileReader reader, bool isSounder, string name)
         {
             this.reader = reader;
             this.WaveFormat = reader.WaveFormat;
             this.isSounder = isSounder;
             this.source = name;
+            toMono = false;
+            toStereo = false;
+
         }
 
-        public int Read(byte[] buffer, int offset, int count)
+
+
+        public void MakeMono()
+        {
+            toMono = true;
+            this.WaveFormat = WaveFormat.CreateIeeeFloatWaveFormat(44100, 1);
+        }
+
+        public void MakeStereo()
+        {
+            toStereo = true;
+            this.WaveFormat = WaveFormat.CreateIeeeFloatWaveFormat(44100, 2);
+        }
+
+
+
+        public int Read(float[] buffer, int offset, int count)
         {
             if (isDone)
             {
                 if (isPlaying)
                 {
                     isPlaying = false;
+                    Trace.WriteLine("NotPlayingAnoymore");
                 }
                 return 0;
             }
-            try
+
+            if (toStereo)
             {
-                int read = reader.Read(buffer, offset, count);
-                if (read == 0)
+                var sourceSamplesRequired = count / 2;
+                var outIndex = offset;
+                EnsureSourceBuffer(sourceSamplesRequired);
+                int sourceSamplesRead = reader.Read(sourceBuffer, 0, sourceSamplesRequired);
+                if (sourceSamplesRead < sourceSamplesRequired)
                 {
                     isDone = true;
-                    DonePlaying.Invoke();
+                    DonePlaying?.Invoke();
+                }
+                for (var n=0; n < sourceSamplesRead; n++)
+                {
+                    buffer[outIndex++] = sourceBuffer[n]; // add left vol multiplier here;
+                    buffer[outIndex++] = sourceBuffer[n];
                 }
                 if (!isPlaying)
                 {
                     isPlaying = true;
                 }
-                return read;
-            }
-            catch
-            {
-                return 0;
-            }
+                Trace.WriteLine(sourceSamplesRead * 2);
+                return sourceSamplesRead * 2;
+            }   
 
+            if (!toStereo && !toMono)
+            {
+                try
+                {
+                    int read = reader.Read(buffer, offset, count);
+                    if (read < count)
+                    {
+                        isDone = true;
+                        DonePlaying?.Invoke();
+                    }
+                    if (!isPlaying)
+                    {
+                        isPlaying = true;
+                    }
+                    //Trace.WriteLine(read);
+                    return read;
+                }
+                catch
+                {
+                    return 0;
+                }
+            }
+            return 0;
+
+        }
+
+        private void EnsureSourceBuffer(int count)
+        {
+            if (sourceBuffer == null || sourceBuffer.Length < count)
+            {
+                sourceBuffer = new float[count];
+            }
         }
     }
 
@@ -76,14 +148,16 @@ namespace NewsBuddy
         private AsioOut _outputASIO;
 
 
-        private readonly MixingWaveProvider32 mixer;
+        private readonly MixingSampleProvider mixer;
         public NJFileReader currentSounder;
         public NJFileReader currentClip;
 
         public NJAsioMixer(string ASIOdriver, int ASIOoffset)
         {
             _outputASIO = new AsioOut(ASIOdriver);
-            mixer = new MixingWaveProvider32();
+            mixer = new MixingSampleProvider(
+                WaveFormat.CreateIeeeFloatWaveFormat(44100,2));
+            mixer.ReadFully = true;
             _outputASIO.ChannelOffset = ASIOoffset;
             _outputASIO.Init(mixer);
             _outputASIO.Play();
@@ -139,27 +213,23 @@ namespace NewsBuddy
             }
 
         }
-
-        public void AddToMixer(IWaveProvider waveProvider)
+        
+        public void AddToMixer(NJFileReader waveProvider)
         {
-            if (waveProvider.WaveFormat.Channels == mixer.WaveFormat.Channels)
+            if (waveProvider.reader.WaveFormat.Channels == 1 && mixer.WaveFormat.Channels == 2)
             {
-                mixer.AddInputStream(waveProvider);
+                waveProvider.MakeStereo();
             }
-            if (waveProvider.WaveFormat.Channels == 1 && mixer.WaveFormat.Channels == 2)
+            if (waveProvider.reader.WaveFormat.Channels == 2 && mixer.WaveFormat.Channels == 1)
             {
-                MonoToStereoProvider16 mono = new MonoToStereoProvider16(waveProvider);
-                mixer.AddInputStream(mono);
+                waveProvider.MakeMono();
             }
-            if (waveProvider.WaveFormat.Channels == 2 && mixer.WaveFormat.Channels == 1)
-            {
-                StereoToMonoProvider16 stereo = new StereoToMonoProvider16(waveProvider);
-                mixer.AddInputStream(stereo);
-            }
-        }
+            mixer.AddMixerInput(waveProvider);
+        } 
 
         public void SounderStop()
         {
+            Trace.WriteLine("Trying to stop sounder");
             Application.Current.Dispatcher.BeginInvoke(() =>
             {
                 SounderDone();
@@ -189,10 +259,11 @@ namespace NewsBuddy
         {  
             if (currentSounder != null)
             {
-                mixer.RemoveInputStream(currentSounder);
+                mixer.RemoveMixerInput(currentSounder);
                 currentSounder.reader.Position = 0;
                 currentSounder.isDone = false;
                 currentSounder.isPlaying = false;
+                currentSounder.DonePlaying -= SounderStop;
                 currentSounder = null;
                 Trace.WriteLine("Sounder Stopped");
             }
@@ -207,17 +278,18 @@ namespace NewsBuddy
         {
             if (currentClip != null)
             {
-                mixer.RemoveInputStream(currentClip);
+                mixer.RemoveMixerInput(currentClip);
                 currentClip.reader.Position = 0;
                 currentClip.isDone = false;
                 currentClip.isPlaying = false;
+                currentClip.DonePlaying -= ClipStop;
                 currentClip = null;
             }
         }
 
         public void Stop(NJFileReader path)
         {
-            mixer.RemoveInputStream(path.reader);
+            mixer.RemoveMixerInput(path.reader);
         }
 
         public int GetTimeLeft(AudioFileReader path)

@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Diagnostics;
 using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 
 namespace NewsBuddy
 {
@@ -157,8 +158,19 @@ namespace NewsBuddy
                     {
                         if (NJF == null)
                         {
-                            NJF = new NJFileReader(new AudioFileReader(NBPath), NBisSounder, NBName);
-                            Trace.WriteLine("Mixer Player Made for " + NBName);
+                            var checkSamp = new AudioFileReader(NBPath);
+                            if (checkSamp.WaveFormat.SampleRate != 44100)
+                            {
+                                Trace.WriteLine("need to resample");
+                                Resample(checkSamp);
+                                MakePlayer(new object(), new RoutedEventArgs());
+                            } else
+                            {
+                                NJF = new NJFileReader(new AudioFileReader(NBPath), NBisSounder, NBName);
+                                Trace.WriteLine("Mixer Player Made for " + NBName);
+                                Trace.WriteLine("Path is " + NBPath);
+                            }
+                            
                         }
                         
                     }
@@ -192,6 +204,7 @@ namespace NewsBuddy
                 NJF.reader.Position = 0;
                 NJF.reader.Dispose();
                 NJF = null;
+                Trace.WriteLine("Disposing NJF player for " + NBName);
             }
             else
             {
@@ -200,6 +213,17 @@ namespace NewsBuddy
 
         }
 
+        public void Resample(AudioFileReader reader)
+        {
+            var outFormat = new WaveFormat(44100, reader.WaveFormat.Channels);
+            var outFile = Path.GetDirectoryName(NBPath)+@"\"+NBName+"_44-1.wav";
+            Trace.WriteLine(outFile);
+            var resampler = new WdlResamplingSampleProvider(reader, 44100);
+            WaveFileWriter.CreateWaveFile16(outFile, resampler);
+            File.Delete(NBPath);
+            NBPath = outFile;
+
+        }
 
 
     }
