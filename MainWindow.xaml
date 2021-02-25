@@ -19,6 +19,7 @@
         AllowsTransparency="False">
 
 
+    <Grid>
     <DockPanel HorizontalAlignment="Stretch">
 
         <Menu DockPanel.Dock="Top"
@@ -137,10 +138,10 @@
             </StackPanel>
         </ScrollViewer>
 
-        <StackPanel Name="stackR" DockPanel.Dock="Right">
 
 
-        </StackPanel>
+        
+
         <TabControl Name="DynamicTabs" ItemsSource="{Binding}" Margin="1,0,5,5">
             <TabControl.Resources>
                 <DataTemplate x:Key="TabHeader" DataType="TabItem">
@@ -160,9 +161,10 @@
             </TabControl.Resources>
         </TabControl>
 
-    </DockPanel>
+        </DockPanel>
 
-
+        <TextBlock Name="TraceBox" Visibility="{Binding Source={x:Static local:Settings.Default}, Path=DebugBar, Converter={StaticResource BooleanToVisibilityConverter}}" VerticalAlignment="Bottom" Background="Gray">TEST</TextBlock>
+    </Grid>
 
 
 

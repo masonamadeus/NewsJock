@@ -5,15 +5,14 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWPF>true</UseWPF>
     <StartupObject>NewsBuddy.App</StartupObject>
-    <NoWin32Manifest>true</NoWin32Manifest>
     <AssemblyName>NewsJock</AssemblyName>
     <Version>0.2.0</Version>
     <Authors>Mason Amadeus</Authors>
     <Company>NewsJock</Company>
     <Description>A standalone text editor, with the capability of adding and playing back inline audio files. Designed to aid in the presentation of audio news.</Description>
     <Copyright>2021</Copyright>
-    <SignAssembly>false</SignAssembly>
-    <AssemblyOriginatorKeyFile>Mason Amadeus Key.pfx</AssemblyOriginatorKeyFile>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>NewsJock key2.snk</AssemblyOriginatorKeyFile>
     <ApplicationIcon>NewsJockIcon.ico</ApplicationIcon>
     <DelaySign>false</DelaySign>
     <PackageId>2NewsJock v0.1</PackageId>

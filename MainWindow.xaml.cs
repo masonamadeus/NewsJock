@@ -51,6 +51,16 @@ namespace NewsBuddy
         public MainWindow()
         {
             InitializeComponent();
+            if (Settings.Default.UpgradeNeeded)
+            {
+                Settings.Default.Upgrade();
+                Settings.Default.UpgradeNeeded = false;
+                Settings.Default.Save();
+                Trace.WriteLine("Upgrading Settings");
+            } else
+            {
+                Trace.WriteLine("Settings Upgrade not called");
+            }
 
             // Debugger messages
             if (!Debugger.IsAttached)
@@ -93,6 +103,12 @@ namespace NewsBuddy
             {
                 asioMixer = new NJAsioMixer(Settings.Default.ASIODevice, Settings.Default.ASIOOutput);
                 Trace.WriteLine("Created ASIO Mixer");
+            }
+
+            if (Settings.Default.DSDevice == null)
+            {
+                Settings.Default.DSDevice = DirectSoundOut.Devices.First();
+                Settings.Default.Save();
             }
 
             Trace.WriteLine("Started Running");
