@@ -19,6 +19,8 @@ namespace NewsBuddy
     {
         public Exception issue { get; set; }
 
+        public enum FunnyErrors {  }
+
         public bool tryLife { get; set; }
         public ProblemWindow(Exception exception, bool optionalShutdown)
         {

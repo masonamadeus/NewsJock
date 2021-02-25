@@ -35,6 +35,7 @@ namespace NewsBuddy
             rtbScript.AddHandler(RichTextBox.DropEvent, new DragEventHandler(Script_Drop), true);
             rtbScript.IsDocumentEnabled = true;
             selFontSize.ItemsSource = new List<Double>() { 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 50, 60, 72 };
+            selFontSize.Focusable = false;
 
             if (fromTemplate)
             {
@@ -655,13 +656,20 @@ namespace NewsBuddy
                 {
                     e.CancelCommand();
                 }
-            }
-           /* if (e.DataObject.GetDataPresent("NBfile"))
+            } else
+            if (e.DataObject.GetDataPresent("Text"))
             {
-                NBfile pastedNB = e.DataObject.GetData("NBfile") as NBfile;
-                
-                
-            }*/
+                e.FormatToApply = "Text";
+                Trace.WriteLine("Pasting as text");
+            }
+
+            if (Debugger.IsAttached)
+            {
+                foreach (string s in e.DataObject.GetFormats())
+                {
+                    Trace.WriteLine(s);
+                }
+            }
 
         }
 
