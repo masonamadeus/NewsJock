@@ -53,12 +53,14 @@ namespace NewsBuddy
         public void MakeMono()
         {
             toMono = true;
+            toStereo = false;
             this.WaveFormat = WaveFormat.CreateIeeeFloatWaveFormat(44100, 1);
         }
 
         public void MakeStereo()
         {
             toStereo = true;
+            toMono = false;
             this.WaveFormat = WaveFormat.CreateIeeeFloatWaveFormat(44100, 2);
         }
 

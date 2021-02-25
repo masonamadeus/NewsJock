@@ -124,6 +124,25 @@ namespace NewsBuddy
                 Settings.Default.ASIOClips = selASout;
                 Settings.Default.ASIOSounders = selASout;
             }
+            if (ASIO_sounderL.IsChecked == true)
+            {
+                Settings.Default.ASIOSounderLeft = true;
+            } else if (ASIO_sounderR.IsChecked == true)
+            {
+                Settings.Default.ASIOSounderLeft = false;
+            }
+            if (ASIO_clipL.IsChecked == true)
+            {
+                Settings.Default.ASIOClipLeft = true;
+            }
+            else if (ASIO_clipR.IsChecked == true)
+            {
+                Settings.Default.ASIOClipLeft = false;
+            }
+            if ((ASIO_clipL.IsChecked == true && ASIO_sounderL.IsChecked == true) || (ASIO_clipR.IsChecked == true && ASIO_sounderR.IsChecked == true))
+            {
+                Settings.Default.ASIOSplit = false;
+            }
             Settings.Default.Save();
             this.DialogResult = true;
             this.Close();
@@ -195,22 +214,7 @@ namespace NewsBuddy
                     asioChannels.Clear();
                     AsioOut asio;
                     int outputs = 0;
-                    if (Settings.Default.ASIOSplit)
-                    {
-                        asio = new AsioOut(Settings.Default.ASIODevice);
 
-                        outputs = asio.DriverOutputChannelCount;
-                        for (int i = 0; i <= outputs; i++)
-                        {
-                            ASIOOutputInfo inf = new ASIOOutputInfo();
-                            inf.index = i;
-                            inf.name = asio.AsioOutputChannelName(i);
-                            asioChannels.Add(inf);
-                        }
-
-                    }
-                    else
-                    {
                         asio = new AsioOut(Settings.Default.ASIODevice);
 
                         outputs = asio.NumberOfOutputChannels;
@@ -221,7 +225,7 @@ namespace NewsBuddy
                             inf.name = asio.AsioOutputChannelName(i);
                             asioChannels.Add(inf);
                         }
-                    }
+                    
 
                     asio.Dispose();
 
