@@ -249,7 +249,7 @@ namespace NewsBuddy
             {
 
                 object[] AllClips = new DirectoryInfo(dirClipsPath).GetFiles()
-                .Where(cf => audioExtensions.Contains(cf.Extension.ToLower()))
+                .Where(cf => audioExtensions.Contains(cf.Extension.ToLower())).OrderByDescending(cf2 => cf2.CreationTime)
                 .ToArray();
 
                 object[] AllSounders = new DirectoryInfo(dirSoundersPath).GetFiles()
@@ -261,7 +261,7 @@ namespace NewsBuddy
                 .ToArray();
 
                 object[] AllScripts = new DirectoryInfo(dirScriptsPath).GetFiles()
-                .Where(sf => scriptExtension.Contains(sf.Extension.ToLower()))
+                .Where(sf => scriptExtension.Contains(sf.Extension.ToLower())).OrderByDescending(sf2 => sf2.CreationTime)
                 .ToArray();
 
                 foreach (object c in AllClips)

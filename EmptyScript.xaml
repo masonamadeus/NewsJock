@@ -85,7 +85,7 @@
                      VerticalScrollBarVisibility="Auto"
                      DataObject.Pasting="rtbScript_Pasting"
                      DataObject.Copying="rtbScript_Copying"
-                     
+                     AcceptsTab="True"
                      >
 
             <FlowDocument>

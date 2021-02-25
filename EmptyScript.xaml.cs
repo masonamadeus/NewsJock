@@ -27,6 +27,7 @@ namespace NewsBuddy
     {
         public string scriptUri { get; set; }
 
+
         public Page1(bool fromTemplate, string uri = "")
         {
             InitializeComponent();
