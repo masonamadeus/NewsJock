@@ -819,7 +819,18 @@ namespace NewsBuddy
             Settings.Default.WindowHeight = this.Height;
             Settings.Default.WindowWidth = this.Width;
             Settings.Default.Save();
-            // dispose of audio player;
+            if (SoundersPlayerNA != null)
+            {
+                SoundersPlayerNA.Dispose();
+            }
+            if (ClipsPlayerNA != null)
+            {
+                ClipsPlayerNA.Dispose();
+            }
+            if (asioMixer != null)
+            {
+                asioMixer.KillMixer();
+            }
 
         }
 
