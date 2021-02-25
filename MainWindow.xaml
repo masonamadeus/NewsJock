@@ -163,7 +163,6 @@
 
         </DockPanel>
 
-        <TextBlock Name="TraceBox" Visibility="{Binding Source={x:Static local:Settings.Default}, Path=DebugBar, Converter={StaticResource BooleanToVisibilityConverter}}" VerticalAlignment="Bottom" Background="Gray">TEST</TextBlock>
     </Grid>
 
 
