@@ -61,14 +61,14 @@
                     <Label Content="Sounders Channel"/>
                 <ComboBox Name="ASIOSounders" SelectionChanged="ASIOSounders_SelectionChanged"/>
                     <WrapPanel Visibility="{Binding ElementName=ASIOMono, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <RadioButton GroupName="ASIOsounder" Margin="0,0,20,0" Name="ASIO_sounderL" Content="Left"/>
-                    <RadioButton GroupName="ASIOsounder" Name="ASIO_sounderR" Content="Right"/>
+                        <RadioButton GroupName="ASIOsounder" Margin="0,0,20,0" Name="ASIO_sounderL" Content="Left" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=ASIOSounderLeft,Mode=OneWay}"/>
+                        <RadioButton GroupName="ASIOsounder" Name="ASIO_sounderR" Content="Right" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=ASIOSounderLeft,Mode=OneWay}"/>
                     </WrapPanel>
                     <Label Content="Clips Channel"/>
                 <ComboBox Name="ASIOClips" SelectionChanged="ASIOClips_SelectionChanged"/>
                     <WrapPanel Visibility="{Binding ElementName=ASIOMono, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <RadioButton GroupName="ASIOclip" Margin="0,0,20,0" Name="ASIO_clipL" Content="Left"/>
-                    <RadioButton GroupName="ASIOclip" Name="ASIO_clipR" Content="Right"/>
+                    <RadioButton GroupName="ASIOclip" Margin="0,0,20,0" Name="ASIO_clipL" Content="Left" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=ASIOClipLeft,Mode=OneWay}"/>
+                    <RadioButton GroupName="ASIOclip" Name="ASIO_clipR" Content="Right" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=ASIOClipLeft, Mode=OneWay}"/>
                     </WrapPanel>
                 </StackPanel>
             </StackPanel>
