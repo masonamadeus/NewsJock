@@ -17,9 +17,9 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using System.Windows.Resources;
-using System.Diagnostics;
 using Ookii.Dialogs.Wpf;
 using NAudio.Wave;
+using System.Diagnostics;
 
 namespace NewsBuddy
 {
@@ -363,6 +363,10 @@ namespace NewsBuddy
 
             FileInfo[] allScripts = new DirectoryInfo(dirScriptsPath).GetFiles(
             "*.xaml", SearchOption.AllDirectories);
+            FileInfo[] allClips = new DirectoryInfo(dirClipsPath).GetFiles()
+                .Where(cf => audioExtensions.Contains(cf.Extension.ToLower()))
+                .ToArray();
+            List<FileInfo> veryOldClips = new List<FileInfo>();
             List<FileInfo> veryOldScripts = new List<FileInfo>();
 
             foreach (var af in allScripts)
@@ -372,31 +376,38 @@ namespace NewsBuddy
                     veryOldScripts.Add(af);
                 }
             }
+            foreach (var ac in allClips)
+            {
+                if ((DateTime.Today - ac.LastAccessTime).TotalDays > 730)
+                {
+                    veryOldClips.Add(ac);
+                }
+            }
             if (Settings.Default.WarnDirSize)
             {
                 gw = new GhostWindow();
                 gw.Show();
-                if (GetDirectorySize(dirClipsPath) > 1000000000)
+                if (GetDirectorySize(dirClipsPath) > (Settings.Default.FolderGB*1000000000))
                 {
                     MessageBox.Show(this, "You have more than a gigabyte of clips in your Clips directory.\n" +
                        "To avoid taking up too much space, it may be wise to go delete old clips now.",
                        "Over 1Gb Clips", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
 
-                if (GetDirectorySize(dirSoundersPath) > 1000000000)
+                if (GetDirectorySize(dirSoundersPath) > (Settings.Default.FolderGB * 1000000000))
                 {
                     MessageBox.Show(this, "You have more than a gigabyte of files in your Sounders directory.\n" +
                         "To avoid taking up too much space, it may be wise to go delete old Sounders now.",
                         "Over 1Gb Sounders", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
 
-                if (GetDirectorySize(dirSharePath) > 1000000000)
+                if (GetDirectorySize(dirSharePath) > (Settings.Default.FolderGB * 1000000000))
                 {
                     MessageBox.Show(this, "You have more than a gigabyte of files in your Shared Sounders directory.\n" +
                         "To avoid taking up too much space, it may be wise to go delete old Shared Sounders now.",
                         "Over 1Gb Shared Sounders", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
-                if (GetDirectorySize(dirScriptsPath) > 1000000000)
+                if (GetDirectorySize(dirScriptsPath) > (Settings.Default.FolderGB * 1000000000))
                 {
                     MessageBox.Show(this, "You have more than a gigabyte of files in your Shared Sounders directory.\n" +
                         "To avoid taking up too much space, it may be wise to go delete old Shared Sounders now.",
@@ -442,6 +453,78 @@ namespace NewsBuddy
                 gw.Close();
             }
 
+            if (veryOldClips.Count > 0)
+            {
+                gw = new GhostWindow();
+                gw.Show();
+                MessageBoxResult result = MessageBox.Show("You have clips in your drive that are over two years old. To avoid taking up too much space, would you like me to delete them?", "Wicked Old Clips Detected", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                switch (result)
+                {
+                    case MessageBoxResult.Yes:
+                        for (int ic = 0; ic < veryOldClips.Count; ic++)
+                        {
+
+                            FileInfo voc = veryOldClips[ic];
+                            Trace.WriteLine("got rid of " + voc.Name);
+                            try
+                            {
+                                File.Delete(voc.FullName);
+                            }
+                            catch
+                            {
+                                Trace.WriteLine("failed to remove old clip " + voc.Name);
+                            }
+                        }
+
+                        break;
+                    case MessageBoxResult.No:
+
+                        break;
+                    case MessageBoxResult.None:
+
+                        break;
+                }
+
+                gw.Close();
+            }
+
+            if (Settings.Default.ClipsCleanupToggle)
+            {
+                FileInfo[] allClips2 = new DirectoryInfo(dirClipsPath).GetFiles()
+                    .Where(cf => audioExtensions.Contains(cf.Extension.ToLower()))
+                    .ToArray();
+                List<FileInfo> oldClips = new List<FileInfo>();
+                foreach (var olc in allClips2)
+                {
+                    if ((DateTime.Today - olc.LastAccessTime).TotalDays > Settings.Default.ClipsCleanupDays)
+                    {
+                        oldClips.Add(olc);
+                    }
+                }
+                if (oldClips.Count > 0)
+                {
+                    string destPath = System.IO.Path.Combine(dirClipsPath, "Old Clips - " + DateTime.Now.ToString("MMM"));
+                    Directory.CreateDirectory(destPath);
+
+
+                    for (int iy = 0; iy < oldClips.Count; iy++)
+                    {
+
+                        FileInfo oc = oldClips[iy];
+                        string newPath = System.IO.Path.Combine(destPath, oc.Name);
+                        Trace.WriteLine("got rid of " + oc.Name);
+                        try
+                        {
+                            File.Move(oc.FullName, newPath);
+                        }
+                        catch
+                        {
+                            Trace.WriteLine("failed to remove old script " + oc.Name);
+                        }
+                    }
+                }
+            }
+
 
             if (Settings.Default.CleanUpToggle)
             {
@@ -463,10 +546,8 @@ namespace NewsBuddy
 
                 if (oldScripts.Count > 0)
                 {
-
                     string destPath = System.IO.Path.Combine(dirScriptsPath, "Old Scripts - " + DateTime.Now.ToString("MMM"));
                     Directory.CreateDirectory(destPath);
-
 
                     for (int i = 0; i < oldScripts.Count; i++)
                     {
@@ -625,7 +706,9 @@ namespace NewsBuddy
         {
             DirConfig dlf = new DirConfig();
             dlf.ShowDialog();
+            Settings.Default.Reload();
             DisplayDirectories();
+          
         }
 
         private void mnResetSettings_Click(object sender, RoutedEventArgs e)
@@ -1061,17 +1144,6 @@ namespace NewsBuddy
             }
             DynamicTabs.DataContext = _tabItems;
             DynamicTabs.SelectedItem = _tabItems[0];
-
-            Trace.WriteLine("ASIO Sounders: " + Settings.Default.ASIOSounders);
-            Trace.WriteLine("ASIO Clips: " + Settings.Default.ASIOClips);
-            Trace.WriteLine("ASIO Device: " + Settings.Default.ASIODevice);
-            Trace.WriteLine("ASIO Output Offset: " + Settings.Default.ASIOOutput);
-            Trace.WriteLine("ASIO Split: " + Settings.Default.ASIOSplit);
-            Trace.WriteLine("Separate Outputs: " + Settings.Default.SeparateOutputs);
-            Trace.WriteLine("DSDevice: " + Settings.Default.DSDevice.Description);
-            Trace.WriteLine("DS Sounders: " + Settings.Default.DSSounders.Description);
-            Trace.WriteLine("DS Clips: " + Settings.Default.DSClips.Description);
-
 
         }
     }

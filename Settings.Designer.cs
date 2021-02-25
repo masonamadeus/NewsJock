@@ -307,5 +307,41 @@ namespace NewsBuddy {
                 this["ASIOOutput"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("5")]
+        public double ClipsCleanupDays {
+            get {
+                return ((double)(this["ClipsCleanupDays"]));
+            }
+            set {
+                this["ClipsCleanupDays"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public double FolderGB {
+            get {
+                return ((double)(this["FolderGB"]));
+            }
+            set {
+                this["FolderGB"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool ClipsCleanupToggle {
+            get {
+                return ((bool)(this["ClipsCleanupToggle"]));
+            }
+            set {
+                this["ClipsCleanupToggle"] = value;
+            }
+        }
     }
 }
