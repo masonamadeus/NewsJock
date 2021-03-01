@@ -379,5 +379,29 @@ namespace NewsBuddy {
                 this["ASIOClipLeft"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.5")]
+        public double ClipsVolLevel {
+            get {
+                return ((double)(this["ClipsVolLevel"]));
+            }
+            set {
+                this["ClipsVolLevel"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.5")]
+        public double SoundersVolLevel {
+            get {
+                return ((double)(this["SoundersVolLevel"]));
+            }
+            set {
+                this["SoundersVolLevel"] = value;
+            }
+        }
     }
 }

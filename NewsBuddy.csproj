@@ -13,7 +13,7 @@
     <Copyright>2021</Copyright>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>NewsJock key2.snk</AssemblyOriginatorKeyFile>
-    <ApplicationIcon>NewsJockIcon.ico</ApplicationIcon>
+    <ApplicationIcon></ApplicationIcon>
     <DelaySign>false</DelaySign>
     <PackageId>2NewsJock v0.1</PackageId>
   </PropertyGroup>
@@ -24,7 +24,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <OutputPath>C:\Users\_shamel\Desktop\NewsJock\DebugBuildFolder\</OutputPath>
+    <OutputPath>C:\Users\Mason\Desktop\NewsJock\Build1\</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>

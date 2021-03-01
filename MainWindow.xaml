@@ -38,8 +38,9 @@
                     <TextBlock FontFamily="{StaticResource FA}" FontSize="15"></TextBlock>
                 </MenuItem.Icon>
             </MenuItem>
+                <MenuItem x:Name="DFB" Header="The DFB" Click="DebuggerFunction_Click" Background="DarkOrange" Visibility="Collapsed"/>
 
-            <!--   <MenuItem HorizontalAlignment="Center" Margin="100,0,0,0" Name="Browser" Header="Browser" Click="Browser_Click">
+                <!--   <MenuItem HorizontalAlignment="Center" Margin="100,0,0,0" Name="Browser" Header="Browser" Click="Browser_Click">
                 <MenuItem.Icon>
                     <TextBlock FontFamily="{StaticResource FA}"></TextBlock>
                 </MenuItem.Icon>

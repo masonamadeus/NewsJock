@@ -71,6 +71,9 @@ namespace NewsBuddy
                     ExceptionCatcher(args.Exception, false);
                 Dispatcher.UnhandledException += (sender, args) =>
                     ExceptionCatcher(args.Exception, true);
+            } else if (Debugger.IsAttached)
+            {
+                DFB.Visibility = Visibility.Visible;
             }
 
 
@@ -111,7 +114,15 @@ namespace NewsBuddy
                 Settings.Default.Save();
             }
 
+            sVolSlider.Value = Settings.Default.SoundersVolLevel;
+            cVolSlider.Value = Settings.Default.ClipsVolLevel;
             Trace.WriteLine("Started Running");
+        }
+
+        void DebuggerFunction_Click(object sender, EventArgs e)
+        {
+            ProblemWindow p = new ProblemWindow(new Exception(), true);
+            p.ShowDialog();
         }
 
         void ExceptionCatcher(Exception e, bool promptForShutdown)
@@ -818,6 +829,8 @@ namespace NewsBuddy
         {
             Settings.Default.WindowHeight = this.Height;
             Settings.Default.WindowWidth = this.Width;
+            Settings.Default.SoundersVolLevel = sVolSlider.Value;
+            Settings.Default.ClipsVolLevel = cVolSlider.Value;
             Settings.Default.Save();
             if (SoundersPlayerNA != null)
             {
@@ -1171,6 +1184,11 @@ namespace NewsBuddy
             }
             DynamicTabs.DataContext = _tabItems;
             DynamicTabs.SelectedItem = _tabItems[0];
+
+        }
+
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        {
 
         }
     }

@@ -28,6 +28,8 @@ namespace NewsBuddy
         public bool toStereo { get; set; }
 
         public string source { get; set; }
+        public float volumeLeft { get; private set; }
+        public float volumeRight { get; private set; }
 
         public event Action DonePlaying;
 
@@ -54,6 +56,31 @@ namespace NewsBuddy
         {
             toMono = true;
             toStereo = false;
+            if (isSounder)
+            {
+                if (Settings.Default.ASIOSounderLeft)
+                {
+                    volumeLeft = 1;
+                    volumeRight = 0;
+                } else
+                {
+                    volumeLeft = 0;
+                    volumeRight = 1;
+                }
+            }
+            else
+            {
+                if (Settings.Default.ASIOClipLeft)
+                {
+                    volumeLeft = 1;
+                    volumeRight = 0;
+                }
+                else
+                {
+                    volumeLeft = 0;
+                    volumeRight = 1;
+                }
+            }
             this.WaveFormat = WaveFormat.CreateIeeeFloatWaveFormat(44100, 1);
         }
 
@@ -61,6 +88,8 @@ namespace NewsBuddy
         {
             toStereo = true;
             toMono = false;
+            volumeRight = 0.5f;
+            volumeLeft = 0.5f;
             this.WaveFormat = WaveFormat.CreateIeeeFloatWaveFormat(44100, 2);
         }
 
