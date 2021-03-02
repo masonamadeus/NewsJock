@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:NewsBuddy"
         xmlns:naudio="clr-namespace:NAudio.Wave;assembly=NAudio.Core"
         mc:Ignorable="d"
-        Title="AudioConfigWindow" 
+        Title="Audio Device Settings" 
         SizeToContent="WidthAndHeight"
         WindowStartupLocation="CenterOwner"
         Background="LightGray"

@@ -13,7 +13,7 @@
     <Copyright>2021</Copyright>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>NewsJock key2.snk</AssemblyOriginatorKeyFile>
-    <ApplicationIcon></ApplicationIcon>
+    <ApplicationIcon>NewsJockIcon.ico</ApplicationIcon>
     <DelaySign>false</DelaySign>
     <PackageId>2NewsJock v0.1</PackageId>
   </PropertyGroup>
