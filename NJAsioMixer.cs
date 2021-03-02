@@ -19,6 +19,8 @@ namespace NewsBuddy
 
         public bool isSounder;
 
+        private bool isExtant { get; set; }
+
         public bool isDone { get; set; }
 
         public bool isPlaying { get; set; }
@@ -37,7 +39,10 @@ namespace NewsBuddy
 
         private float[] sourceBuffer;
 
-
+        public NJFileReader()
+        {
+            isExtant = false;
+        }
 
         public NJFileReader(AudioFileReader reader, bool isSounder, string name)
         {
@@ -47,6 +52,7 @@ namespace NewsBuddy
             this.source = name;
             toMono = false;
             toStereo = false;
+            isExtant = true;
 
         }
 
@@ -97,64 +103,72 @@ namespace NewsBuddy
 
         public int Read(float[] buffer, int offset, int count)
         {
-            if (isDone)
+            if (isExtant)
             {
-                if (isPlaying)
+                if (isDone)
                 {
-                    isPlaying = false;
-                    Trace.WriteLine("NotPlayingAnoymore");
+                    if (isPlaying)
+                    {
+                        isPlaying = false;
+                        Trace.WriteLine("NotPlayingAnoymore");
+                    }
+                    return 0;
                 }
-                return 0;
-            }
 
-            if (toStereo)
-            {
-                var sourceSamplesRequired = count / 2;
-                var outIndex = offset;
-                EnsureSourceBuffer(sourceSamplesRequired);
-                int sourceSamplesRead = reader.Read(sourceBuffer, 0, sourceSamplesRequired);
-                if (sourceSamplesRead < sourceSamplesRequired)
+                if (toStereo)
                 {
-                    isDone = true;
-                    DonePlaying?.Invoke();
-                }
-                for (var n=0; n < sourceSamplesRead; n++)
-                {
-                    buffer[outIndex++] = sourceBuffer[n]; // add left vol multiplier here;
-                    buffer[outIndex++] = sourceBuffer[n];
-                }
-                if (!isPlaying)
-                {
-                    isPlaying = true;
-                }
-                Trace.WriteLine(sourceSamplesRead * 2);
-                return sourceSamplesRead * 2;
-            }   
-
-            if (!toStereo && !toMono)
-            {
-                try
-                {
-                    int read = reader.Read(buffer, offset, count);
-                    if (read < count)
+                    var sourceSamplesRequired = count / 2;
+                    var outIndex = offset;
+                    EnsureSourceBuffer(sourceSamplesRequired);
+                    int sourceSamplesRead = reader.Read(sourceBuffer, 0, sourceSamplesRequired);
+                    if (sourceSamplesRead < sourceSamplesRequired)
                     {
                         isDone = true;
                         DonePlaying?.Invoke();
+                    }
+                    for (var n = 0; n < sourceSamplesRead; n++)
+                    {
+                        buffer[outIndex++] = sourceBuffer[n]; // add left vol multiplier here;
+                        buffer[outIndex++] = sourceBuffer[n];
                     }
                     if (!isPlaying)
                     {
                         isPlaying = true;
                     }
-                    //Trace.WriteLine(read);
-                    return read;
+                    Trace.WriteLine(sourceSamplesRead * 2);
+                    return sourceSamplesRead * 2;
                 }
-                catch
-                {
-                    return 0;
-                }
-            }
-            return 0;
 
+                if (!toStereo && !toMono)
+                {
+                    try
+                    {
+                        int read = reader.Read(buffer, offset, count);
+                        if (read < count)
+                        {
+                            isDone = true;
+                            DonePlaying?.Invoke();
+                        }
+                        if (!isPlaying)
+                        {
+                            isPlaying = true;
+                        }
+                        //Trace.WriteLine(read);
+                        return read;
+                    }
+                    catch
+                    {
+                        return 0;
+                    }
+                }
+                return 0;
+
+            }
+            else
+            {
+                return 0;
+            }
+            
         }
 
         private void EnsureSourceBuffer(int count)
