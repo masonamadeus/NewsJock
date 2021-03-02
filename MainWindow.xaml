@@ -19,15 +19,8 @@
         AllowsTransparency="False">
 
 
+    <Grid>
     <DockPanel HorizontalAlignment="Stretch">
-        <MediaElement x:Name="SoundersPlayer" Source="{Binding}" LoadedBehavior="Play" UnloadedBehavior="Close"
-                      MediaOpened="TimerSounders"
-                      MediaEnded="btnStopSounders_Click"
-                      MediaFailed="SoundersPlayer_MediaFailed"/>
-        <MediaElement x:Name="ClipsPlayer" Source="{Binding}" LoadedBehavior="Play" UnloadedBehavior="Close"
-                      MediaOpened="TimerClips"
-                      MediaEnded="btnStopClips_Click"
-                      MediaFailed="ClipsPlayer_MediaFailed"/>
 
         <Menu DockPanel.Dock="Top"
               Padding="2"
@@ -45,8 +38,9 @@
                     <TextBlock FontFamily="{StaticResource FA}" FontSize="15"></TextBlock>
                 </MenuItem.Icon>
             </MenuItem>
+                <MenuItem x:Name="DFB" Header="The DFB" Click="DebuggerFunction_Click" Background="DarkOrange" Visibility="Collapsed"/>
 
-            <!--   <MenuItem HorizontalAlignment="Center" Margin="100,0,0,0" Name="Browser" Header="Browser" Click="Browser_Click">
+                <!--   <MenuItem HorizontalAlignment="Center" Margin="100,0,0,0" Name="Browser" Header="Browser" Click="Browser_Click">
                 <MenuItem.Icon>
                     <TextBlock FontFamily="{StaticResource FA}"></TextBlock>
                 </MenuItem.Icon>
@@ -56,6 +50,7 @@
                     <TextBlock FontFamily="{StaticResource FA}"></TextBlock>
                 </MenuItem.Icon>
                 <MenuItem x:Name="mnNJSettings" Header="NewsJock Settings" Click="mnNJSettings_Click"/>
+                <MenuItem x:Name="mnAudioSettings" Header="Audio Device Settings" Click="mnAudioSettings_Click"/>
                 <!--  <MenuItem Name="mnWebSettings" Header="Web Browser Settings" Click="mnWebSettings_Click"/> -->
 
             </MenuItem>
@@ -144,10 +139,10 @@
             </StackPanel>
         </ScrollViewer>
 
-        <StackPanel Name="stackR" DockPanel.Dock="Right">
 
 
-        </StackPanel>
+        
+
         <TabControl Name="DynamicTabs" ItemsSource="{Binding}" Margin="1,0,5,5">
             <TabControl.Resources>
                 <DataTemplate x:Key="TabHeader" DataType="TabItem">
@@ -167,9 +162,9 @@
             </TabControl.Resources>
         </TabControl>
 
-    </DockPanel>
+        </DockPanel>
 
-
+    </Grid>
 
 
 

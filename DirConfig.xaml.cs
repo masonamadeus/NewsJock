@@ -28,6 +28,8 @@ namespace NewsBuddy
             selDirScript.Text = Settings.Default.ScriptsDirectory;
             selDirShare.Text = Settings.Default.SharedDirectory;
             bxCleanDays.ItemsSource = new List<double> { 1, 2, 3, 4, 5, 6, 7, 10, 14, 30 };
+            bxClipCleanDays.ItemsSource = new List<double> { 1, 2, 3, 4, 5, 6, 7, 10, 14, 30 };
+            bxWarn.ItemsSource = new List<double> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
         }
 
@@ -65,7 +67,7 @@ namespace NewsBuddy
         private void srchSounder_Click(object sender, RoutedEventArgs e)
         {
             VistaFolderBrowserDialog srch = new VistaFolderBrowserDialog();
-            srch.Description = "Please select your 'Sounders' folder.";
+            srch.Description = "Please select your 'Personal Sounders' folder.";
             srch.UseDescriptionForTitle = true;
             if ((bool)srch.ShowDialog(this))
             selDirSounder.Text = srch.SelectedPath;

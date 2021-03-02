@@ -6,14 +6,13 @@
         xmlns:local="clr-namespace:NewsBuddy"
         mc:Ignorable="d"
         ShowInTaskbar="False"
-        ResizeMode="CanResizeWithGrip"
+        ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
-        Background="Gray"
-        MinHeight="360"
-        MinWidth="450"     
-        Title="NewsJock Settings" Height="500" Width="400"
+        Background="Gray"     
+        Title="NewsJock Settings"
+        SizeToContent="WidthAndHeight"
         FontFamily="{StaticResource OpenSans}">
-    <Grid>
+    <Grid Margin="15">
     <DockPanel>
             <StackPanel DockPanel.Dock="Top">
                 <TextBlock HorizontalAlignment="Center" Margin="0,10,0,5" Padding="3" Background="LightGray">Select the locations where you will store your Sounders, Clips, and Scripts.</TextBlock>
@@ -45,14 +44,26 @@
                 <CheckBox Name="btnSpell" HorizontalAlignment="Left" Margin="10,12,0,0" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=SpellCheck, Mode=TwoWay}">Script Spell Check</CheckBox>
                 
                 <CheckBox Name="btnClean" HorizontalAlignment="Left" Margin="10,12,0,0" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=CleanUpToggle, Mode=TwoWay}">Keep Scripts Directory Clean</CheckBox>
-                <WrapPanel Background="DarkGray" Margin="20,10,20,10" Visibility="{Binding ElementName=btnClean, Converter={StaticResource BooleanToVisibilityConverter}, Path=IsChecked}">
-                    <Label Margin="5,0,10,0" Content="Move scripts to the 'Old Scripts' folder if I haven't opened them for: " />
+                <StackPanel Background="DarkGray" Margin="20,10,20,10" Visibility="{Binding ElementName=btnClean, Converter={StaticResource BooleanToVisibilityConverter}, Path=IsChecked}">
+                    <Label Margin="5,0,5,0" Content="Move scripts to an 'Old Scripts' folder if I haven't opened them for: " />
                     <WrapPanel VerticalAlignment="Center">
-                        <ComboBox Name="bxCleanDays" HorizontalAlignment="Left" Margin="30,1,0,10"  SelectedItem="{Binding Source={x:Static local:Settings.Default}, Path=CleanUpDays, Mode=TwoWay}"/>
-                        <Label Content="days" Padding="7,8,0,0"/>
+                        <ComboBox Name="bxCleanDays" HorizontalAlignment="Left" Margin="10,5,0,5"  SelectedItem="{Binding Source={x:Static local:Settings.Default}, Path=CleanUpDays, Mode=TwoWay}"/>
+                        <Label Content="days" VerticalAlignment="Center" Padding="10,0,10,0"/>
                     </WrapPanel>
+                </StackPanel>
+                <CheckBox Name="btnCleanClips" HorizontalAlignment="Left" Margin="10,12,0,0" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=ClipsCleanupToggle, Mode=TwoWay}">Keep Clips Directory Clean</CheckBox>
+                <StackPanel Background="DarkGray" Margin="20,10,20,10" Visibility="{Binding ElementName=btnCleanClips, Converter={StaticResource BooleanToVisibilityConverter}, Path=IsChecked}">
+                    <Label Margin="5,0,5,0" Content="Move clips to an 'Old Clips' folder if I haven't opened them for: " VerticalAlignment="Center" />
+                    <WrapPanel VerticalAlignment="Center">
+                        <ComboBox Name="bxClipCleanDays" HorizontalAlignment="Left" Margin="10,5,0,5"  SelectedItem="{Binding Source={x:Static local:Settings.Default}, Path=ClipsCleanupDays, Mode=TwoWay}"/>
+                        <Label Content="days" VerticalAlignment="Center" Padding="10,0,10,0"/>
+                    </WrapPanel>
+                </StackPanel>
+                <CheckBox Name="btnWarn" HorizontalAlignment="Left" Margin="10,12,0,10" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=WarnDirSize, Mode=TwoWay}">Notify me If a folder becomes larger than </CheckBox>
+                <WrapPanel>
+                    <ComboBox Margin="30,0,0,0" Name="bxWarn" SelectedItem="{Binding Source={x:Static local:Settings.Default}, Path=FolderGB, Mode=TwoWay}"/>
+                    <Label Content=" Gb (recommended)"/>
                 </WrapPanel>
-                <CheckBox Name="btnWarn" HorizontalAlignment="Left" Margin="10,12,0,0" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=WarnDirSize, Mode=TwoWay}">Notify me If a folder becomes larger than 1Gb. (Recommended)</CheckBox>
 
 
             </StackPanel>

@@ -17,8 +17,9 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using System.Windows.Resources;
-using System.Diagnostics;
 using Ookii.Dialogs.Wpf;
+using NAudio.Wave;
+using System.Diagnostics;
 
 namespace NewsBuddy
 {
@@ -29,6 +30,7 @@ namespace NewsBuddy
     {
 
         FileSystemWatcher fs;
+        NJWebBrowser browser;
 
         public string dirClipsPath = Settings.Default.ClipsDirectory;
         public string dirSoundersPath = Settings.Default.SoundersDirectory;
@@ -37,31 +39,46 @@ namespace NewsBuddy
         public string dirTemplatesPath = Settings.Default.TemplatesDirectory;
         public string[] audioExtensions = new[] { ".mp3", ".wav", ".wma", ".m4a", ".flac" };
         public string scriptExtension = ".xaml";
-        NJWebBrowser browser;
-        bool flashBox = true;
+
+        public NJAudioPlayer SoundersPlayerNA;
+        public NJAudioPlayer ClipsPlayerNA;
+
+        public NJAsioMixer asioMixer;
+
+        private Cursor nbDropCur = null;
+
+
         public MainWindow()
         {
             InitializeComponent();
+            if (Settings.Default.UpgradeNeeded)
+            {
+                Settings.Default.Upgrade();
+                Settings.Default.UpgradeNeeded = false;
+                Settings.Default.Save();
+                Trace.WriteLine("Upgrading Settings");
+            } else
+            {
+                Trace.WriteLine("Settings Upgrade not called");
+            }
 
             // Debugger messages
-
-
             if (!Debugger.IsAttached)
             {
                 AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
-                    ExceptionCatcher(args.ExceptionObject as Exception, "AppDomain.CurrentDomain.UnhandledException", false);
+                    ExceptionCatcher(args.ExceptionObject as Exception, false);
                 TaskScheduler.UnobservedTaskException += (sender, args) =>
-                    ExceptionCatcher(args.Exception, "TaskScheduler.UnobservedTaskException", false);
+                    ExceptionCatcher(args.Exception, false);
                 Dispatcher.UnhandledException += (sender, args) =>
-                    ExceptionCatcher(args.Exception, "Dispatcher.UnhandledException", true);
+                    ExceptionCatcher(args.Exception, true);
+            } else if (Debugger.IsAttached)
+            {
+                DFB.Visibility = Visibility.Visible;
             }
-
-
 
 
             this.Height = Settings.Default.WindowHeight;
             this.Width = Settings.Default.WindowWidth;
-
 
 
             CheckDirectories();
@@ -85,14 +102,30 @@ namespace NewsBuddy
             DynamicTabs.DataContext = _tabItems;
             DynamicTabs.SelectedIndex = 0;
 
-            SoundersPlayer.BeginInit();
-            ClipsPlayer.BeginInit();
+            if (Settings.Default.AudioOutType == 1)
+            {
+                asioMixer = new NJAsioMixer(Settings.Default.ASIODevice, Settings.Default.ASIOOutput);
+                Trace.WriteLine("Created ASIO Mixer");
+            }
 
+            if (Settings.Default.DSDevice == null)
+            {
+                Settings.Default.DSDevice = DirectSoundOut.Devices.First();
+                Settings.Default.Save();
+            }
 
+            sVolSlider.Value = Settings.Default.SoundersVolLevel;
+            cVolSlider.Value = Settings.Default.ClipsVolLevel;
             Trace.WriteLine("Started Running");
         }
 
-        void ExceptionCatcher(Exception e, string exceptionType, bool promptForShutdown)
+        void DebuggerFunction_Click(object sender, EventArgs e)
+        {
+            ProblemWindow p = new ProblemWindow(new Exception(), true);
+            p.ShowDialog();
+        }
+
+        void ExceptionCatcher(Exception e, bool promptForShutdown)
         {
             ProblemWindow pw = new ProblemWindow(e, promptForShutdown);
             pw.Owner = this;
@@ -102,7 +135,9 @@ namespace NewsBuddy
             }
         }
 
-        private Cursor nbDropCur = null;
+
+        #region Drag&Drop Controls
+
         protected override void OnGiveFeedback(GiveFeedbackEventArgs e)
         {
             try
@@ -132,47 +167,6 @@ namespace NewsBuddy
 
         }
 
-        void CheckDirectories()
-        {
-            if (!Directory.Exists(dirClipsPath) || !Directory.Exists(dirScriptsPath) ||
-                !Directory.Exists(dirSoundersPath) || !Directory.Exists(dirTemplatesPath)
-                || !Directory.Exists(dirSharePath))
-            {
-                flashBox = false;
-                DirConfig dlg = new DirConfig();
-                //dlg.Owner = this;
-                if ((bool)dlg.ShowDialog())
-                {
-                    
-                    DisplayDirectories();
-                    MonitorDirectory(dirClipsPath);
-                    MonitorDirectory(dirSoundersPath);
-                    MonitorDirectory(dirScriptsPath);
-                    MonitorDirectory(dirSharePath);
-                   
-                }
-                else
-                {
-                    
-                    MessageBox.Show("Error configuring directories. Try launching NewsJock again.");
-                }
-
-
-            }
-            else
-            {
-                DisplayDirectories();
-                MonitorDirectory(dirClipsPath);
-                MonitorDirectory(dirSoundersPath);
-                MonitorDirectory(dirScriptsPath);
-                MonitorDirectory(dirSharePath);
-            }
-        }
-
-
-
-        #region Drag&Drop Controls
-
         private void listSounders_MouseMove(object sender, MouseEventArgs e)
         {
             ListBox sdrBx = sender as ListBox;
@@ -189,7 +183,7 @@ namespace NewsBuddy
                 }
                 else
                 {
-                    MessageBox.Show("Audio file still loading.\nTry again in a moment", "File Not Ready", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                    Trace.WriteLine("Audio File Not Ready.");
                 }
             }
         }
@@ -223,6 +217,44 @@ namespace NewsBuddy
         List<NBfile> clips = new List<NBfile>();
         List<ScriptFile> scripts = new List<ScriptFile>();
 
+        void CheckDirectories()
+        {
+            if (!Directory.Exists(dirClipsPath) || !Directory.Exists(dirScriptsPath) ||
+                !Directory.Exists(dirSoundersPath) || !Directory.Exists(dirTemplatesPath)
+                || !Directory.Exists(dirSharePath))
+            {
+                
+                DirConfig dlg = new DirConfig();
+                //dlg.Owner = this;
+                if ((bool)dlg.ShowDialog())
+                {
+
+                    DisplayDirectories();
+                    MonitorDirectory(dirClipsPath);
+                    MonitorDirectory(dirSoundersPath);
+                    MonitorDirectory(dirScriptsPath);
+                    MonitorDirectory(dirSharePath);
+
+                }
+                else
+                {
+
+                    MessageBox.Show("Error configuring directories. Try launching NewsJock again.");
+                    Application.Current.Shutdown();
+                }
+
+
+            }
+            else
+            {
+                DisplayDirectories();
+                MonitorDirectory(dirClipsPath);
+                MonitorDirectory(dirSoundersPath);
+                MonitorDirectory(dirScriptsPath);
+                MonitorDirectory(dirSharePath);
+            }
+        }
+
         public void DisplayDirectories()
         {
             Settings.Default.Reload();
@@ -244,7 +276,7 @@ namespace NewsBuddy
             {
 
                 object[] AllClips = new DirectoryInfo(dirClipsPath).GetFiles()
-                .Where(cf => audioExtensions.Contains(cf.Extension.ToLower()))
+                .Where(cf => audioExtensions.Contains(cf.Extension.ToLower())).OrderByDescending(cf2 => cf2.CreationTime)
                 .ToArray();
 
                 object[] AllSounders = new DirectoryInfo(dirSoundersPath).GetFiles()
@@ -256,7 +288,7 @@ namespace NewsBuddy
                 .ToArray();
 
                 object[] AllScripts = new DirectoryInfo(dirScriptsPath).GetFiles()
-                .Where(sf => scriptExtension.Contains(sf.Extension.ToLower()))
+                .Where(sf => scriptExtension.Contains(sf.Extension.ToLower())).OrderByDescending(sf2 => sf2.CreationTime)
                 .ToArray();
 
                 foreach (object c in AllClips)
@@ -313,7 +345,6 @@ namespace NewsBuddy
             }
         }
 
-
         void MonitorDirectory(string dirPath)
         {
             Trace.WriteLine("Monitoring Started for " + dirPath);
@@ -327,7 +358,6 @@ namespace NewsBuddy
             fs.Renamed += new RenamedEventHandler(ReloadDir);
             //fs.Deleted += new FileSystemEventHandler(ReloadDir);
         }
-
 
         void ReloadDir(Object sender, FileSystemEventArgs e)
         {
@@ -356,14 +386,14 @@ namespace NewsBuddy
 
         void CleanUpScripts()
         {
-            if (flashBox)
-            {
-                MessageBox.Show("Loaded.", "Tidying Up");
-            }
-            
-            
+            GhostWindow gw;
+
             FileInfo[] allScripts = new DirectoryInfo(dirScriptsPath).GetFiles(
             "*.xaml", SearchOption.AllDirectories);
+            FileInfo[] allClips = new DirectoryInfo(dirClipsPath).GetFiles()
+                .Where(cf => audioExtensions.Contains(cf.Extension.ToLower()))
+                .ToArray();
+            List<FileInfo> veryOldClips = new List<FileInfo>();
             List<FileInfo> veryOldScripts = new List<FileInfo>();
 
             foreach (var af in allScripts)
@@ -373,40 +403,52 @@ namespace NewsBuddy
                     veryOldScripts.Add(af);
                 }
             }
+            foreach (var ac in allClips)
+            {
+                if ((DateTime.Today - ac.LastAccessTime).TotalDays > 730)
+                {
+                    veryOldClips.Add(ac);
+                }
+            }
             if (Settings.Default.WarnDirSize)
             {
-                if (GetDirectorySize(dirClipsPath) > 1000000000)
+                gw = new GhostWindow();
+                gw.Show();
+                if (GetDirectorySize(dirClipsPath) > (Settings.Default.FolderGB*1000000000))
                 {
                     MessageBox.Show(this, "You have more than a gigabyte of clips in your Clips directory.\n" +
                        "To avoid taking up too much space, it may be wise to go delete old clips now.",
                        "Over 1Gb Clips", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
 
-                if (GetDirectorySize(dirSoundersPath) > 1000000000)
+                if (GetDirectorySize(dirSoundersPath) > (Settings.Default.FolderGB * 1000000000))
                 {
                     MessageBox.Show(this, "You have more than a gigabyte of files in your Sounders directory.\n" +
                         "To avoid taking up too much space, it may be wise to go delete old Sounders now.",
                         "Over 1Gb Sounders", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
 
-                if (GetDirectorySize(dirSharePath) > 1000000000)
+                if (GetDirectorySize(dirSharePath) > (Settings.Default.FolderGB * 1000000000))
                 {
                     MessageBox.Show(this, "You have more than a gigabyte of files in your Shared Sounders directory.\n" +
                         "To avoid taking up too much space, it may be wise to go delete old Shared Sounders now.",
                         "Over 1Gb Shared Sounders", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
-                if (GetDirectorySize(dirScriptsPath) > 1000000000)
+                if (GetDirectorySize(dirScriptsPath) > (Settings.Default.FolderGB * 1000000000))
                 {
                     MessageBox.Show(this, "You have more than a gigabyte of files in your Shared Sounders directory.\n" +
                         "To avoid taking up too much space, it may be wise to go delete old Shared Sounders now.",
                         "Over 1Gb Shared Sounders", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
+                gw.Close();
             }
-            
+
 
 
             if (veryOldScripts.Count > 0)
             {
+                gw = new GhostWindow();
+                gw.Show();
                 MessageBoxResult result = MessageBox.Show("You have scripts in your drive that are over two years old. To avoid taking up too much space, would you like me to delete them?", "Wicked Old Scripts Detected", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 switch (result)
                 {
@@ -425,14 +467,89 @@ namespace NewsBuddy
                                 Trace.WriteLine("failed to remove old script " + vosc.Name);
                             }
                         }
-
+                        
                         break;
                     case MessageBoxResult.No:
+                        
                         break;
                     case MessageBoxResult.None:
+                        
                         break;
                 }
 
+                gw.Close();
+            }
+
+            if (veryOldClips.Count > 0)
+            {
+                gw = new GhostWindow();
+                gw.Show();
+                MessageBoxResult result = MessageBox.Show("You have clips in your drive that are over two years old. To avoid taking up too much space, would you like me to delete them?", "Wicked Old Clips Detected", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                switch (result)
+                {
+                    case MessageBoxResult.Yes:
+                        for (int ic = 0; ic < veryOldClips.Count; ic++)
+                        {
+
+                            FileInfo voc = veryOldClips[ic];
+                            Trace.WriteLine("got rid of " + voc.Name);
+                            try
+                            {
+                                File.Delete(voc.FullName);
+                            }
+                            catch
+                            {
+                                Trace.WriteLine("failed to remove old clip " + voc.Name);
+                            }
+                        }
+
+                        break;
+                    case MessageBoxResult.No:
+
+                        break;
+                    case MessageBoxResult.None:
+
+                        break;
+                }
+
+                gw.Close();
+            }
+
+            if (Settings.Default.ClipsCleanupToggle)
+            {
+                FileInfo[] allClips2 = new DirectoryInfo(dirClipsPath).GetFiles()
+                    .Where(cf => audioExtensions.Contains(cf.Extension.ToLower()))
+                    .ToArray();
+                List<FileInfo> oldClips = new List<FileInfo>();
+                foreach (var olc in allClips2)
+                {
+                    if ((DateTime.Today - olc.LastAccessTime).TotalDays > Settings.Default.ClipsCleanupDays)
+                    {
+                        oldClips.Add(olc);
+                    }
+                }
+                if (oldClips.Count > 0)
+                {
+                    string destPath = System.IO.Path.Combine(dirClipsPath, "Old Clips - " + DateTime.Now.ToString("MMM"));
+                    Directory.CreateDirectory(destPath);
+
+
+                    for (int iy = 0; iy < oldClips.Count; iy++)
+                    {
+
+                        FileInfo oc = oldClips[iy];
+                        string newPath = System.IO.Path.Combine(destPath, oc.Name);
+                        Trace.WriteLine("got rid of " + oc.Name);
+                        try
+                        {
+                            File.Move(oc.FullName, newPath);
+                        }
+                        catch
+                        {
+                            Trace.WriteLine("failed to remove old script " + oc.Name);
+                        }
+                    }
+                }
             }
 
 
@@ -456,10 +573,8 @@ namespace NewsBuddy
 
                 if (oldScripts.Count > 0)
                 {
-
                     string destPath = System.IO.Path.Combine(dirScriptsPath, "Old Scripts - " + DateTime.Now.ToString("MMM"));
                     Directory.CreateDirectory(destPath);
-
 
                     for (int i = 0; i < oldScripts.Count; i++)
                     {
@@ -479,8 +594,10 @@ namespace NewsBuddy
 
                     }
 
-                } 
+                }
+
             }
+           
         }
 
 
@@ -610,23 +727,15 @@ namespace NewsBuddy
         #endregion
 
         #region Menu Controls
-        private void sVolSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            SoundersPlayer.Volume = (double)sVolSlider.Value;
-        }
-
-        private void cVolSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            ClipsPlayer.Volume = (double)cVolSlider.Value;
-        }
-
 
 
         private void mnNJSettings_Click(object sender, RoutedEventArgs e)
         {
             DirConfig dlf = new DirConfig();
             dlf.ShowDialog();
+            Settings.Default.Reload();
             DisplayDirectories();
+          
         }
 
         private void mnResetSettings_Click(object sender, RoutedEventArgs e)
@@ -637,20 +746,8 @@ namespace NewsBuddy
 
         private void mnWebSettings_Click(object sender, RoutedEventArgs e)
         {
+
         }
-
-
-
-        #endregion
-
-        private void mnSilence_Click(object sender, RoutedEventArgs e)
-        {
-            SoundersPlayer.Stop();
-            SoundersPlayer.Source = null;
-            ClipsPlayer.Stop();
-            ClipsPlayer.Source = null;
-        }
-
 
         private void lblSounders_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
@@ -666,112 +763,6 @@ namespace NewsBuddy
         {
             Process.Start("explorer.exe", Settings.Default.ScriptsDirectory);
         }
-
-        DispatcherTimer sounderTimer;
-        DispatcherTimer clipTimer;
-        private void TimerSounders(object sender, EventArgs e)
-        {
-            
-            if (SoundersPlayer.Source != null && SoundersPlayer.NaturalDuration.HasTimeSpan)
-            {
-                sounderTimer = new DispatcherTimer();
-                sounderTimer.Tick += new EventHandler(sndrTick);
-                sounderTimer.Interval = TimeSpan.FromMilliseconds(250);
-                sounderTimer.Start();
-            }
-            else
-            {
-                Trace.WriteLine("Sounders Player Not PLaying for some reason");
-            }
-
-        }
-
-        private void sndrTick(object sender, EventArgs e)
-        {
-            try
-            {
-                if (SoundersPlayer.NaturalDuration.HasTimeSpan && SoundersPlayer.Position != SoundersPlayer.NaturalDuration.TimeSpan && SoundersPlayer.Source != null)
-                {
-                    int sndDur = (int)Math.Ceiling(SoundersPlayer.NaturalDuration.TimeSpan.TotalSeconds);
-                    int sndPos = (int)Math.Ceiling(SoundersPlayer.Position.TotalSeconds);
-                    string sndRem = ((sndDur - sndPos) / 60).ToString() + ":" + ((sndDur - sndPos) % 60).ToString("00");
-
-                    sndrTimeLeft.Text = sndRem;
-                    lblSounders.Content = System.IO.Path.GetFileNameWithoutExtension(SoundersPlayer.Source.LocalPath);
-                    SoundersControl.Visibility = Visibility.Visible;
-                }
-                else
-                {
-                    sounderTimer.Stop();
-                    SoundersControl.Visibility = Visibility.Collapsed;
-                    lblSounders.Content = "Sounders";
-                    sndrTimeLeft.Text = "0:00";
-                    SoundersPlayer.Source = null;
-                }
-            }
-            catch
-            {
-                sounderTimer.Stop();
-                SoundersControl.Visibility = Visibility.Collapsed;
-                lblSounders.Content = "Sounders";
-                sndrTimeLeft.Text = "0:00";
-                
-                SoundersPlayer.Source = null;
-                Trace.WriteLine("Sounders Player Display Failed.");
-            }
-           
-
-        }
-
-        private void TimerClips(object sender, EventArgs e)
-        {
-            
-            if (ClipsPlayer.Source != null && ClipsPlayer.NaturalDuration.HasTimeSpan)
-            {
-                clipTimer = new DispatcherTimer();
-                clipTimer.Tick += new EventHandler(clipTick);
-                clipTimer.Interval = TimeSpan.FromMilliseconds(250);
-                clipTimer.Start();
-            }
-
-        }
-
-        private void clipTick(object sender, EventArgs e)
-        {
-            try
-            {
-                if (ClipsPlayer.NaturalDuration.HasTimeSpan && ClipsPlayer.Position != ClipsPlayer.NaturalDuration.TimeSpan && ClipsPlayer.Source != null)
-                {
-                    int clpDur = (int)Math.Ceiling(ClipsPlayer.NaturalDuration.TimeSpan.TotalSeconds);
-                    int clpPos = (int)Math.Ceiling(ClipsPlayer.Position.TotalSeconds);
-                    string clpRem = ((clpDur - clpPos) / 60).ToString() + ":" + ((clpDur - clpPos) % 60).ToString("00");
-
-                    lblClips.Content = System.IO.Path.GetFileNameWithoutExtension(ClipsPlayer.Source.LocalPath);
-                    ClipsControl.Visibility = Visibility.Visible;
-
-                    clipTimeLeft.Text = clpRem;
-                }
-                else
-                {
-                    clipTimer.Stop();
-                    ClipsControl.Visibility = Visibility.Collapsed;
-                    lblClips.Content = "Clips";
-                    clipTimeLeft.Text = "0:00";
-                    ClipsPlayer.Source = null;
-                }
-            }
-            catch
-            {
-                clipTimer.Stop();
-                ClipsControl.Visibility = Visibility.Collapsed;
-                lblClips.Content = "Clips";
-                clipTimeLeft.Text = "0:00";
-                ClipsPlayer.Source = null;
-                Trace.WriteLine("Clips Timer Display Failed");
-            }
-           
-        }
-
         private void listScripts_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             ScriptFile chosen = listScripts.SelectedItem as ScriptFile;
@@ -789,28 +780,28 @@ namespace NewsBuddy
 
         private void btnStopClips_Click(object sender, RoutedEventArgs e)
         {
-            //ClipsPlayer.Stop();
-            ClipsPlayer.Source = null;
+            if (ClipsPlayerNA != null)
+            {
+                ClipsPlayerNA.Stop();
+                ClipsPlayerNA = null;
+            }
+            if (asioMixer != null && asioMixer.currentClip != null)
+            {
+                asioMixer.ClipDone();
+            }
+
         }
 
         private void btnStopSounders_Click(object sender, RoutedEventArgs e)
         {
-            //SoundersPlayer.Stop();
-            SoundersPlayer.Source = null;
-        }
-
-
-
-        private void HandlePreviewMouseWheel(object sender, MouseWheelEventArgs e)
-        {
-            if (!e.Handled)
+            if (SoundersPlayerNA != null)
             {
-                e.Handled = true;
-                var eventArg = new MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta);
-                eventArg.RoutedEvent = UIElement.MouseWheelEvent;
-                eventArg.Source = sender;
-                var parent = ((Control)sender).Parent as UIElement;
-                parent.RaiseEvent(eventArg);
+                SoundersPlayerNA.Stop();
+                SoundersPlayerNA = null;
+            }
+            if (asioMixer != null && asioMixer.currentSounder != null)
+            {
+                asioMixer.SounderDone();
             }
         }
 
@@ -830,17 +821,30 @@ namespace NewsBuddy
             }
 
         }
-
         private void mnRefresh_Click(object sender, RoutedEventArgs e)
         {
             CheckDirectories();
         }
-
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             Settings.Default.WindowHeight = this.Height;
             Settings.Default.WindowWidth = this.Width;
+            Settings.Default.SoundersVolLevel = sVolSlider.Value;
+            Settings.Default.ClipsVolLevel = cVolSlider.Value;
             Settings.Default.Save();
+            if (SoundersPlayerNA != null)
+            {
+                SoundersPlayerNA.Dispose();
+            }
+            if (ClipsPlayerNA != null)
+            {
+                ClipsPlayerNA.Dispose();
+            }
+            if (asioMixer != null)
+            {
+                asioMixer.KillMixer();
+            }
+
         }
 
         private void Browser_Click(object sender, RoutedEventArgs e)
@@ -863,24 +867,329 @@ namespace NewsBuddy
             }
 
         }
-
-        private void SoundersPlayer_MediaFailed(object sender, ExceptionRoutedEventArgs e)
+        private void HandlePreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
-            Trace.WriteLine("Sounders Media Failed: " + e.ErrorException.Message);
-            if (SoundersPlayer.Source != null)
+            if (!e.Handled)
             {
-                
-                SoundersPlayer.Source = null;
+                e.Handled = true;
+                var eventArg = new MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta);
+                eventArg.RoutedEvent = UIElement.MouseWheelEvent;
+                eventArg.Source = sender;
+                var parent = ((Control)sender).Parent as UIElement;
+                parent.RaiseEvent(eventArg);
             }
         }
 
-        private void ClipsPlayer_MediaFailed(object sender, ExceptionRoutedEventArgs e)
+        #endregion
+
+        #region Audio Player Controls
+
+        DispatcherTimer sounderTimer;
+        DispatcherTimer clipTimer;
+        private void sVolSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            Trace.WriteLine("Clips Media Failed: " + e.ErrorException.Message);
-            if (ClipsPlayer.Source != null)
+            if (SoundersPlayerNA != null)
             {
-                ClipsPlayer.Source = null;
+                SoundersPlayerNA.SetVolume((float)sVolSlider.Value);
             }
+            if (asioMixer != null && asioMixer.currentSounder != null)
+            {
+                asioMixer.SetVolume((float)sVolSlider.Value, true);
+            }
+
+        }
+
+        private void cVolSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (ClipsPlayerNA != null)
+            {
+                ClipsPlayerNA.SetVolume((float)cVolSlider.Value);
+            }
+            if (asioMixer != null && asioMixer.currentClip != null)
+            {
+                asioMixer.SetVolume((float)cVolSlider.Value, false);
+            }
+        }
+
+        public void PlayAsioMixer(NJFileReader NJF)
+        {
+            
+            if (NJF.isSounder)
+            {
+                asioMixer.Play(NJF, (float)sVolSlider.Value);
+                AsioSounderTimer();
+            } 
+            else if (!NJF.isSounder)
+            {
+                asioMixer.Play(NJF, (float)cVolSlider.Value);
+                AsioClipTimer();
+            }
+        }
+
+        public void AsioSounderTimer()
+        {
+            if (asioMixer.currentSounder != null)
+            {
+                if (sounderTimer != null)
+                {
+                    sounderTimer.Stop();
+                    sounderTimer = null;
+                }
+                sounderTimer = new DispatcherTimer();
+                sounderTimer.Tick += new EventHandler(AsioSndrTick);
+                sounderTimer.Interval = TimeSpan.FromMilliseconds(250);
+                sounderTimer.Start();
+            }
+        }
+        public void AsioSndrTick(object sender, EventArgs e)
+        {
+            if (asioMixer.currentSounder != null && asioMixer.currentSounder.isPlaying)
+            {
+                int remain = asioMixer.GetTimeLeft(asioMixer.currentSounder.reader);
+                string sndRem = (remain / 60).ToString() + ":" + (remain % 60).ToString("00");
+                sndrTimeLeft.Text = sndRem;
+                lblSounders.Content = asioMixer.currentSounder.source;
+                SoundersControl.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                sounderTimer.Stop();
+                SoundersControl.Visibility = Visibility.Collapsed;
+                lblSounders.Content = "Sounders";
+                sndrTimeLeft.Text = "0:00";
+                asioMixer.SounderDone();
+                Trace.WriteLine("Sounder Timer Stopped.");
+            }
+
+
+        }
+        public void AsioClipTimer()
+        {
+            if (asioMixer.currentClip != null)
+            {
+                if (clipTimer != null)
+                {
+                    clipTimer.Stop();
+                    clipTimer = null;
+                }
+                clipTimer = new DispatcherTimer();
+                clipTimer.Tick += new EventHandler(AsioClipTick);
+                clipTimer.Interval = TimeSpan.FromMilliseconds(250);
+                clipTimer.Start();
+            }
+        }
+
+        public void AsioClipTick(object sender, EventArgs e)
+        {
+            if (asioMixer.currentClip != null && asioMixer.currentClip.isPlaying)
+            {
+                int remain = asioMixer.GetTimeLeft(asioMixer.currentClip.reader);
+                string sndRem = (remain / 60).ToString() + ":" + (remain % 60).ToString("00");
+                clipTimeLeft.Text = sndRem;
+                lblClips.Content = asioMixer.currentClip.source;
+                ClipsControl.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                clipTimer.Stop();
+                ClipsControl.Visibility = Visibility.Collapsed;
+                lblClips.Content = "Sounders";
+                clipTimeLeft.Text = "0:00";
+                asioMixer.SounderDone();
+            }
+        }
+
+        public void PlaySounder(NJAudioPlayer player)
+        {
+            if (SoundersPlayerNA != null)
+            {
+                SoundersPlayerNA.Stop();
+                if (SoundersPlayerNA.source == player.source)
+                {
+                    SoundersPlayerNA = null;
+                    return;
+                } else
+                {
+                    SoundersPlayerNA = player;
+                    SoundersPlayerNA.PlaybackStarted += TimerSounders;
+                    SoundersPlayerNA.Play((float)sVolSlider.Value);
+                }
+            }
+
+            else
+            {
+
+                SoundersPlayerNA = player;
+                SoundersPlayerNA.PlaybackStarted += TimerSounders;
+                SoundersPlayerNA.Play((float)sVolSlider.Value);
+            }
+
+
+        }
+
+        public void PlayClip(NJAudioPlayer player)
+        {
+            if (ClipsPlayerNA != null)
+            {
+                ClipsPlayerNA.Stop();
+                if (ClipsPlayerNA.source == player.source)
+                {
+                    ClipsPlayerNA = null;
+                    return;
+                }
+                else
+                {
+                    ClipsPlayerNA = player;
+                    ClipsPlayerNA.PlaybackStarted += TimerClips;
+                    ClipsPlayerNA.Play((float)cVolSlider.Value);
+                }
+            }
+
+            else
+            {
+
+                ClipsPlayerNA = player;
+                ClipsPlayerNA.PlaybackStarted += TimerClips;
+                ClipsPlayerNA.Play((float)cVolSlider.Value);
+            }
+        }
+
+        private void TimerSounders()
+        {
+
+            if (SoundersPlayerNA != null && SoundersPlayerNA.IsPlaying())
+            {
+                sounderTimer = new DispatcherTimer();
+                sounderTimer.Tick += new EventHandler(sndrTick);
+                sounderTimer.Interval = TimeSpan.FromMilliseconds(250);
+                sounderTimer.Start();
+            }
+            else
+            {
+                Trace.WriteLine("Sounders Player Not PLaying for some reason");
+            }
+
+        }
+
+        private void sndrTick(object sender, EventArgs e)
+        {
+            try
+            {
+                if (SoundersPlayerNA != null && SoundersPlayerNA.IsPlaying())
+                {
+                    int remain = (int)Math.Ceiling(SoundersPlayerNA.GetTimeRemaining());
+                    string sndRem = (remain / 60).ToString() + ":" + (remain % 60).ToString("00");
+
+                    sndrTimeLeft.Text = sndRem;
+                    lblSounders.Content = System.IO.Path.GetFileNameWithoutExtension(SoundersPlayerNA.source);
+                    SoundersControl.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    sounderTimer.Stop();
+                    SoundersControl.Visibility = Visibility.Collapsed;
+                    lblSounders.Content = "Sounders";
+                    sndrTimeLeft.Text = "0:00";
+                    SoundersPlayerNA = null;
+                }
+            }
+            catch
+            {
+                sounderTimer.Stop();
+                SoundersControl.Visibility = Visibility.Collapsed;
+                lblSounders.Content = "Sounders";
+                sndrTimeLeft.Text = "0:00";
+                SoundersPlayerNA = null;
+                Trace.WriteLine("Sounders Player Display Failed.");
+            }
+           
+
+        }
+
+        private void TimerClips()
+        {
+            
+            if (ClipsPlayerNA != null && ClipsPlayerNA.IsPlaying())
+            {
+                clipTimer = new DispatcherTimer();
+                clipTimer.Tick += new EventHandler(clipTick);
+                clipTimer.Interval = TimeSpan.FromMilliseconds(250);
+                clipTimer.Start();
+            }
+
+        }
+
+        private void clipTick(object sender, EventArgs e)
+        {
+            try
+            {
+                if (ClipsPlayerNA != null && ClipsPlayerNA.IsPlaying())
+                {
+                    int clpDur = (int)Math.Ceiling(ClipsPlayerNA.GetTimeRemaining());
+                    string clpRem = (clpDur / 60).ToString() + ":" + (clpDur % 60).ToString("00");
+
+                    lblClips.Content = System.IO.Path.GetFileNameWithoutExtension(ClipsPlayerNA.source);
+                    ClipsControl.Visibility = Visibility.Visible;
+
+                    clipTimeLeft.Text = clpRem;
+                }
+                else
+                {
+                    clipTimer.Stop();
+                    ClipsControl.Visibility = Visibility.Collapsed;
+                    lblClips.Content = "Clips";
+                    clipTimeLeft.Text = "0:00";
+                    ClipsPlayerNA = null;
+                }
+            }
+            catch
+            {
+                clipTimer.Stop();
+                ClipsControl.Visibility = Visibility.Collapsed;
+                lblClips.Content = "Clips";
+                clipTimeLeft.Text = "0:00";
+                ClipsPlayerNA = null;
+                Trace.WriteLine("Clips Timer Display Failed");
+            }
+           
+        }
+
+
+        #endregion
+
+        private void mnAudioSettings_Click(object sender, RoutedEventArgs e)
+        {
+            AudioConfigWindow ac = new AudioConfigWindow();
+            ac.ShowDialog();
+
+            DynamicTabs.DataContext = null;
+            Settings.Default.Reload();
+            if (Settings.Default.AudioOutType == 1 && 
+                ((Settings.Default.SeparateOutputs & Settings.Default.ASIOSplit) 
+                || Settings.Default.ASIOSounders == Settings.Default.ASIOClips))
+            {
+                if (asioMixer != null)
+                {
+                    asioMixer.KillMixer();
+                    asioMixer = null;
+                    Trace.WriteLine("Killed ASIO Mixer because you needed a new one.");
+                }
+                asioMixer = new NJAsioMixer(Settings.Default.ASIODevice, Settings.Default.ASIOOutput);
+            }
+            else if (asioMixer != null)
+            {
+                asioMixer.KillMixer();
+                asioMixer = null;
+                Trace.WriteLine("Killed ASIO Mixer because you don't want it.");
+            }
+            DynamicTabs.DataContext = _tabItems;
+            DynamicTabs.SelectedItem = _tabItems[0];
+
+        }
+
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 

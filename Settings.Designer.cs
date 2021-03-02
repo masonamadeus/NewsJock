@@ -97,7 +97,7 @@ namespace NewsBuddy {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("3")]
+        [global::System.Configuration.DefaultSettingValueAttribute("5")]
         public double CleanUpDays {
             get {
                 return ((double)(this["CleanUpDays"]));
@@ -164,6 +164,243 @@ namespace NewsBuddy {
             }
             set {
                 this["WarnDirSize"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int AudioOutType {
+            get {
+                return ((int)(this["AudioOutType"]));
+            }
+            set {
+                this["AudioOutType"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("200")]
+        public int DSLatency {
+            get {
+                return ((int)(this["DSLatency"]));
+            }
+            set {
+                this["DSLatency"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("None")]
+        public string ASIODevice {
+            get {
+                return ((string)(this["ASIODevice"]));
+            }
+            set {
+                this["ASIODevice"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int ASIOindexC {
+            get {
+                return ((int)(this["ASIOindexC"]));
+            }
+            set {
+                this["ASIOindexC"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::NAudio.Wave.DirectSoundDeviceInfo DSDevice {
+            get {
+                return ((global::NAudio.Wave.DirectSoundDeviceInfo)(this["DSDevice"]));
+            }
+            set {
+                this["DSDevice"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::NAudio.Wave.DirectSoundDeviceInfo DSSounders {
+            get {
+                return ((global::NAudio.Wave.DirectSoundDeviceInfo)(this["DSSounders"]));
+            }
+            set {
+                this["DSSounders"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::NAudio.Wave.DirectSoundDeviceInfo DSClips {
+            get {
+                return ((global::NAudio.Wave.DirectSoundDeviceInfo)(this["DSClips"]));
+            }
+            set {
+                this["DSClips"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool SeparateOutputs {
+            get {
+                return ((bool)(this["SeparateOutputs"]));
+            }
+            set {
+                this["SeparateOutputs"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int ASIOSounders {
+            get {
+                return ((int)(this["ASIOSounders"]));
+            }
+            set {
+                this["ASIOSounders"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int ASIOClips {
+            get {
+                return ((int)(this["ASIOClips"]));
+            }
+            set {
+                this["ASIOClips"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ASIOSplit {
+            get {
+                return ((bool)(this["ASIOSplit"]));
+            }
+            set {
+                this["ASIOSplit"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int ASIOOutput {
+            get {
+                return ((int)(this["ASIOOutput"]));
+            }
+            set {
+                this["ASIOOutput"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("5")]
+        public double ClipsCleanupDays {
+            get {
+                return ((double)(this["ClipsCleanupDays"]));
+            }
+            set {
+                this["ClipsCleanupDays"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public double FolderGB {
+            get {
+                return ((double)(this["FolderGB"]));
+            }
+            set {
+                this["FolderGB"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool ClipsCleanupToggle {
+            get {
+                return ((bool)(this["ClipsCleanupToggle"]));
+            }
+            set {
+                this["ClipsCleanupToggle"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool UpgradeNeeded {
+            get {
+                return ((bool)(this["UpgradeNeeded"]));
+            }
+            set {
+                this["UpgradeNeeded"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ASIOSounderLeft {
+            get {
+                return ((bool)(this["ASIOSounderLeft"]));
+            }
+            set {
+                this["ASIOSounderLeft"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ASIOClipLeft {
+            get {
+                return ((bool)(this["ASIOClipLeft"]));
+            }
+            set {
+                this["ASIOClipLeft"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.5")]
+        public double ClipsVolLevel {
+            get {
+                return ((double)(this["ClipsVolLevel"]));
+            }
+            set {
+                this["ClipsVolLevel"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.5")]
+        public double SoundersVolLevel {
+            get {
+                return ((double)(this["SoundersVolLevel"]));
+            }
+            set {
+                this["SoundersVolLevel"] = value;
             }
         }
     }

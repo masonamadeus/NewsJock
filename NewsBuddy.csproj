@@ -5,22 +5,26 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWPF>true</UseWPF>
     <StartupObject>NewsBuddy.App</StartupObject>
-    <NoWin32Manifest>true</NoWin32Manifest>
-    <AssemblyName>NewsJock v0.1</AssemblyName>
-    <Version>0.1.0</Version>
+    <AssemblyName>NewsJock</AssemblyName>
+    <Version>0.2.0</Version>
     <Authors>Mason Amadeus</Authors>
     <Company>NewsJock</Company>
     <Description>A standalone text editor, with the capability of adding and playing back inline audio files. Designed to aid in the presentation of audio news.</Description>
     <Copyright>2021</Copyright>
     <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>Mason Amadeus Key.pfx</AssemblyOriginatorKeyFile>
-    <ApplicationIcon>NewsJockIcon.ico</ApplicationIcon>
+    <AssemblyOriginatorKeyFile>NewsJock key2.snk</AssemblyOriginatorKeyFile>
+    <ApplicationIcon></ApplicationIcon>
     <DelaySign>false</DelaySign>
+    <PackageId>2NewsJock v0.1</PackageId>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <OutputPath>C:\Users\Mason\VS Builds\NewsJock\</OutputPath>
+    <OutputPath>C:\Users\_shamel\Desktop\NewsJock\BuildFolder\</OutputPath>
     <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <OutputPath>C:\Users\Mason\Desktop\NewsJock\Build1\</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -58,6 +62,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Toolkit.Wpf.UI.Controls.WebView" Version="6.1.2" />
+    <PackageReference Include="NAudio" Version="2.0.0" />
     <PackageReference Include="Ookii.Dialogs.Wpf" Version="3.1.0" />
   </ItemGroup>
 

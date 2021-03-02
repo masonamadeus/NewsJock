@@ -48,7 +48,7 @@
                            Padding="6,2,6,2" 
                           BorderThickness="2" BorderBrush="DimGray"></ToggleButton>
             <Separator Margin="8,0,15,0"/>
-            <Label></Label><ComboBox x:Name="selFontSize" Margin="7,0,0,0" Width="50" IsEditable="true" TextBoxBase.TextChanged="selFontSize_TextChanged"/>
+            <Label></Label><ComboBox x:Name="selFontSize" Margin="7,0,0,0" Width="50" TextBoxBase.TextChanged="selFontSize_TextChanged" IsEditable="True"/>
             <Separator Margin="18,0,18,0"/>
             <ToggleButton x:Name="btnBullet" Command="EditingCommands.ToggleBullets"  Padding="5,2,5,2" 
                           BorderThickness="2" BorderBrush="DimGray"></ToggleButton>
@@ -85,7 +85,7 @@
                      VerticalScrollBarVisibility="Auto"
                      DataObject.Pasting="rtbScript_Pasting"
                      DataObject.Copying="rtbScript_Copying"
-                     
+                     AcceptsTab="True"
                      >
 
             <FlowDocument>
