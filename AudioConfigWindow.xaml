@@ -55,7 +55,7 @@
             </StackPanel>
             <StackPanel Visibility="{Binding ElementName=SeparateOutputs, Converter={StaticResource BooleanToVisibilityConverter}, Path=IsChecked}" IsVisibleChanged="StackPanel_IsVisibleChanged">
                 <StackPanel Visibility="{Binding ElementName=DriverDropdown, Converter={StaticResource IndexToCollapse}, ConverterParameter=1, Path=SelectedIndex}">
-                    <CheckBox x:Name="ASIOMono" Content="Split Stereo Channels into Mono Outputs"
+                    <CheckBox x:Name="ASIOMono" Content="Split Stereo Channels into Mono Outputs(NOT WORKING YET)"
                               IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=ASIOSplit, Mode=TwoWay}"
                               Click="ASIOMono_Click"/>
                     <Label Content="Sounders Channel"/>

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -9,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using System.Diagnostics;
 
 namespace NewsBuddy
 {
@@ -18,6 +20,8 @@ namespace NewsBuddy
     public partial class ProblemWindow : Window
     {
         public Exception issue { get; set; }
+
+        MainWindow homeBase = Application.Current.Windows[0] as MainWindow;
 
         public string[] funnyErrors = new string[] { 
             "Pretty Big Error",
@@ -46,6 +50,7 @@ namespace NewsBuddy
             lblError.Content = funnyErrors[number];
             Code.Text = issue.ToString();
             Description.Text = issue.Message;
+            PrintLog(issue.ToString());
             if (!tryLife)
             {
                 btnTry.Visibility = Visibility.Collapsed;
@@ -66,7 +71,26 @@ namespace NewsBuddy
         {
             Code.SelectAll();
             Code.Copy();
-            MessageBox.Show("Copied all of that nonsense to the clipboard.\nNow you can just paste it wherever :)");
+            MessageBox.Show("Copied to the clipboard.\nNow you can just paste it wherever.");
+        }
+
+        private void PrintLog(string code)
+        {
+            if (homeBase.logger != null)
+            {
+                string trace = homeBase.logger.Trace;
+                string output = code + "\n\n________________DEBUGGER MESSAGES BELOW________________\n\n" + trace;
+                string filePath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "NewsJock Crash Log "+DateTime.Now.ToString("MM-dd-yy")+".txt");
+                using (StreamWriter outputFile = new StreamWriter(filePath))
+                {
+                    outputFile.Write(output);
+                }
+            } else
+            {
+                Trace.WriteLine("Logger was Not Attached");
+            }
+
+
         }
     }
 }

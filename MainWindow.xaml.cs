@@ -45,7 +45,11 @@ namespace NewsBuddy
 
         public NJAsioMixer asioMixer;
 
+        public ListenerLogger logger;
+
         private Cursor nbDropCur = null;
+
+
 
 
         public MainWindow()
@@ -71,11 +75,14 @@ namespace NewsBuddy
                     ExceptionCatcher(args.Exception, false);
                 Dispatcher.UnhandledException += (sender, args) =>
                     ExceptionCatcher(args.Exception, true);
+                
             } else if (Debugger.IsAttached)
             {
                 DFB.Visibility = Visibility.Visible;
             }
 
+            logger = new ListenerLogger();
+            Trace.Listeners.Add(logger);
 
             this.Height = Settings.Default.WindowHeight;
             this.Width = Settings.Default.WindowWidth;

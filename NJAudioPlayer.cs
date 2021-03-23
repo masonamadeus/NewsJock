@@ -151,7 +151,7 @@ namespace NewsBuddy
         {
             if (_audioFileReader != null)
             {
-                //_audioFileReader.Position = 0;
+                _audioFileReader.Position = 0;
             }
             if (_outputDS != null)
             {

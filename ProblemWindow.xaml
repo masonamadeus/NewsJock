@@ -21,8 +21,8 @@
         <TextBlock x:Name="Description" HorizontalAlignment="Center" TextWrapping="Wrap" Padding="8" Margin="0,0,0,10">Something important went very wrong.</TextBlock>
 
         
-        <TextBox x:Name="Code" Height="110" Width="300" MouseDoubleClick="Code_MouseDoubleClick"  TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"></TextBox>
-        <TextBlock TextWrapping="Wrap" Padding="20" TextAlignment="Center">Double-click the error message above and then<LineBreak/>email it to: 'NewsJock@ThatNerdMason.com'"</TextBlock>
+        <TextBox x:Name="Code" Height="110" Width="370" MouseDoubleClick="Code_MouseDoubleClick"  TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"></TextBox>
+        <TextBlock TextWrapping="Wrap" Padding="20" TextAlignment="Center">Double-click the error message above and then<LineBreak/>email it to: 'NewsJock@ThatNerdMason.com'"<LineBreak/>A crash log file will also be placed on your desktop, attach it with your email.</TextBlock>
         <Button x:Name="btnOK" Content="Close NewsJock" Margin="70,0,70,5" Padding="10" IsDefault="True" Click="btnOK_Click"></Button>
         <Button x:Name="btnTry" Content="Try To Keep Going (Might Work?)" Margin="70,0,70,30" Padding="5" IsCancel="True" Click="btnTry_Click"></Button>
 
