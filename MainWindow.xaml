@@ -16,7 +16,8 @@
         FontFamily="{StaticResource OpenSans}"
         FontSize="14"
         ShowInTaskbar="True"
-        AllowsTransparency="False">
+        AllowsTransparency="False"
+        WindowStartupLocation="CenterScreen">
 
 
     <Grid>

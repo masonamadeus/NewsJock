@@ -26,6 +26,7 @@ namespace NewsBuddy
     public partial class Page1 : Page
     {
         public string scriptUri { get; set; }
+        public bool isChanged { get; set; }
 
 
         public Page1(bool fromTemplate, string uri = "")
@@ -43,6 +44,8 @@ namespace NewsBuddy
                 scriptUri = uri;
                 OpenXamlFromTemplate(uri);
             }
+
+            isChanged = false;
 
             MonitorDirectories(Settings.Default.ClipsDirectory);
             MonitorDirectories(Settings.Default.SoundersDirectory);
@@ -87,7 +90,7 @@ namespace NewsBuddy
                 {
                     Tag = passNB   
                 };
-                
+                isChanged = true;
                 e.Handled = true;
             }
 
@@ -187,6 +190,7 @@ namespace NewsBuddy
                 ((MainWindow)Application.Current.MainWindow).ChangeTabName(scriptUri);
 
             }
+            isChanged = false;
             ToggleLoading(false);
         }
 
@@ -217,7 +221,7 @@ namespace NewsBuddy
                 ((MainWindow)Application.Current.MainWindow).ChangeTabName(scriptUri);
 
             }
-
+            isChanged = false;
             ToggleLoading(false);
         }
 
@@ -271,6 +275,7 @@ namespace NewsBuddy
 
                 }
             }
+            isChanged = false;
             ToggleLoading(false);
         }
 
@@ -657,11 +662,39 @@ namespace NewsBuddy
                 {
                     e.CancelCommand();
                 }
-            } else
+            } 
+            else
             if (e.DataObject.GetDataPresent("Text"))
             {
                 e.FormatToApply = "Text";
                 Trace.WriteLine("Pasting as text");
+            }
+
+            if (e.DataObject.GetDataPresent("NBcount"))
+            {
+                int count = (int)e.DataObject.GetData("NBcount");
+                Trace.WriteLine("NBcount is present.");
+                for (int gg = 0; gg < count; gg++)
+                {
+                    string datacall = (string)e.DataObject.GetData(String.Format("NB{0}", gg));
+                    bool sounder = true;
+                    if (datacall.Contains(Settings.Default.ClipsDirectory))
+                    {
+                        sounder = false;
+                    }
+                    
+                    Trace.WriteLine("Gonna Paste " + datacall);
+                    NBfile passNB = new NBfile(datacall, sounder);
+                    NButton nButton = passNB.NBbutton();
+                    nButton.file = passNB;
+
+                    InlineUIContainer nb = new InlineUIContainer(nButton, rtbScript.CaretPosition)
+                    {
+                        Tag = passNB
+                    };
+                }
+                
+                
             }
 
             if (Debugger.IsAttached)
@@ -676,7 +709,8 @@ namespace NewsBuddy
 
         private void rtbScript_Copying(object sender, DataObjectCopyingEventArgs e)
         {
-            /*
+            List<NBfile> foundNBfiles = new List<NBfile>();
+            
             foreach (var block in rtbScript.Document.Blocks)
             {
                 if (block is Paragraph)
@@ -690,7 +724,8 @@ namespace NewsBuddy
                             if (rtbScript.Selection.Contains(butto.ContentStart))
                             {
                                 Trace.WriteLine("Found a beeean");
-                                e.DataObject.SetData("NBfile", inl.Tag);
+                                foundNBfiles.Add((NBfile)inl.Tag);
+
                             }
                         }
                     }
@@ -710,7 +745,7 @@ namespace NewsBuddy
                                     if (rtbScript.Selection.Contains(butt.ContentStart))
                                     {
                                         Trace.WriteLine("Foudn a bean");
-                                        e.DataObject.SetData("NBfile", line.Tag);
+                                        foundNBfiles.Add((NBfile)butt.Tag);
                                     }
                                 }
                             }
@@ -718,7 +753,12 @@ namespace NewsBuddy
                     }
                 }
             }
-            */
+            e.DataObject.SetData("NBcount", foundNBfiles.Count);
+            for (int ix = 0; ix < foundNBfiles.Count; ix++)
+            {
+                NBfile tempNB = foundNBfiles[ix];
+                e.DataObject.SetData(String.Format("NB{0}", ix), tempNB.NBPath);
+            }
      
         }
 
@@ -732,6 +772,15 @@ namespace NewsBuddy
             {
                 rtbScript.Background = Brushes.White;
                 rtbScript.Foreground = Brushes.Black;
+            }
+        }
+
+        // used to determine if need to prompt on close
+        private void rtbScript_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (!isChanged)
+            {
+                isChanged = true;
             }
         }
     }

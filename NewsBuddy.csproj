@@ -15,11 +15,11 @@
     <AssemblyOriginatorKeyFile>NewsJock key2.snk</AssemblyOriginatorKeyFile>
     <ApplicationIcon>NewsJockIcon.ico</ApplicationIcon>
     <DelaySign>false</DelaySign>
-    <PackageId>2NewsJock v0.1</PackageId>
+    <PackageId>NewsJock v0.1</PackageId>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <OutputPath>C:\Users\_shamel\Desktop\NewsJock\BuildFolder\</OutputPath>
+    <OutputPath>C:\Users\Mason\Desktop\NewsJock\NA Build\</OutputPath>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
@@ -63,6 +63,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Toolkit.Wpf.UI.Controls.WebView" Version="6.1.2" />
     <PackageReference Include="NAudio" Version="2.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Ookii.Dialogs.Wpf" Version="3.1.0" />
   </ItemGroup>
 

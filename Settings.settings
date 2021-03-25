@@ -98,5 +98,8 @@
     <Setting Name="SoundersVolLevel" Type="System.Double" Scope="User">
       <Value Profile="(Default)">0.5</Value>
     </Setting>
+    <Setting Name="PrintDebug" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

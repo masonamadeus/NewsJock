@@ -64,6 +64,7 @@
                     <ComboBox Margin="30,0,0,0" Name="bxWarn" SelectedItem="{Binding Source={x:Static local:Settings.Default}, Path=FolderGB, Mode=TwoWay}"/>
                     <Label Content=" Gb (recommended)"/>
                 </WrapPanel>
+                <CheckBox Name="btnDebug" HorizontalAlignment="Left" Margin="10,12,0,10" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=PrintDebug, Mode=TwoWay}"> Write debug log to desktop when closing NewsJock</CheckBox>
 
 
             </StackPanel>

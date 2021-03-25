@@ -12,5 +12,6 @@ namespace NewsBuddy
     {
         public NBfile file;
         public TextPointer textPointer;
+
     }
 }

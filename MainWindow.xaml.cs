@@ -537,7 +537,7 @@ namespace NewsBuddy
                 }
                 if (oldClips.Count > 0)
                 {
-                    string destPath = System.IO.Path.Combine(dirClipsPath, "Old Clips - " + DateTime.Now.ToString("MMM"));
+                    string destPath = System.IO.Path.Combine(dirClipsPath, "Old Clips - " + DateTime.Now.ToString("MMM yyyy"));
                     Directory.CreateDirectory(destPath);
 
 
@@ -546,14 +546,15 @@ namespace NewsBuddy
 
                         FileInfo oc = oldClips[iy];
                         string newPath = System.IO.Path.Combine(destPath, oc.Name);
-                        Trace.WriteLine("got rid of " + oc.Name);
+                        
                         try
                         {
                             File.Move(oc.FullName, newPath);
+                            Trace.WriteLine("got rid of " + oc.Name);
                         }
                         catch
                         {
-                            Trace.WriteLine("failed to remove old script " + oc.Name);
+                            Trace.WriteLine("failed to remove old clip " + oc.Name);
                         }
                     }
                 }
@@ -575,12 +576,11 @@ namespace NewsBuddy
                         Trace.WriteLine("Gonna get rid of file: " + f.Name);
                         oldScripts.Add(f);
                     }
-                    else { return; }
                 }
 
                 if (oldScripts.Count > 0)
                 {
-                    string destPath = System.IO.Path.Combine(dirScriptsPath, "Old Scripts - " + DateTime.Now.ToString("MMM"));
+                    string destPath = System.IO.Path.Combine(dirScriptsPath, "Old Scripts - " + DateTime.Now.ToString("MMM yyyy"));
                     Directory.CreateDirectory(destPath);
 
                     for (int i = 0; i < oldScripts.Count; i++)
@@ -588,10 +588,11 @@ namespace NewsBuddy
 
                         FileInfo sc = oldScripts[i];
                         string newPath = System.IO.Path.Combine(destPath, sc.Name);
-                        Trace.WriteLine("got rid of " + sc.Name);
+                        
                         try
                         {
                             File.Move(sc.FullName, newPath);
+                            Trace.WriteLine("got rid of " + sc.Name);
                         }
                         catch
                         {
@@ -636,6 +637,10 @@ namespace NewsBuddy
             if (File.Exists(uri) && !isDefault)
             {
                 tabName = System.IO.Path.GetFileNameWithoutExtension(uri);
+            }
+            else if (isDefault)
+            {
+                tabName = "Blank Script";
             }
 
             TabItem tab = new TabItem();
@@ -685,10 +690,49 @@ namespace NewsBuddy
             {
                 if (_tabItems.Count < 3)
                 {
-                    MessageBox.Show("Cannot remove this tab, sorry.", "Cannot Remove");
-                }
-                else if (MessageBox.Show(string.Format("Are you sure you want to close '{0}'?", tab.Header.ToString()),
+                    TabItem selectedTab = DynamicTabs.SelectedItem as TabItem;
+                    if ((((Frame)selectedTab.Content).Content as Page1).isChanged)
+                    {
+                        if (MessageBox.Show(string.Format("'{0}' has not been saved.\nClose without saving?", tab.Header.ToString()),
                   "Close Tab", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                        {
+                            DynamicTabs.DataContext = null;
+                            _tabItems.Remove(tab);
+
+
+                            if (selectedTab == null || selectedTab.Equals(tab))
+                            {
+                                DynamicTabs.SelectedItem = _tabItems[0];
+                            }
+
+                            AddTabItem(true);
+
+                            DynamicTabs.DataContext = _tabItems;
+                        }
+                    }
+
+                }
+                else if ( (((Frame)tab.Content).Content as Page1).isChanged)
+                {
+                    if (MessageBox.Show(string.Format("'{0}' has not been saved.\nClose without saving?", tab.Header.ToString()),
+                  "Close Tab", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                    {
+                        TabItem selectedTab = DynamicTabs.SelectedItem as TabItem;
+                        DynamicTabs.DataContext = null;
+                        _tabItems.Remove(tab);
+
+
+                        if (selectedTab == null || selectedTab.Equals(tab))
+                        {
+                            DynamicTabs.SelectedItem = _tabItems[0];
+                        }
+
+                        DynamicTabs.DataContext = _tabItems;
+                    }
+
+
+                }
+                else
                 {
                     TabItem selectedTab = DynamicTabs.SelectedItem as TabItem;
                     DynamicTabs.DataContext = null;
@@ -701,7 +745,6 @@ namespace NewsBuddy
                     }
 
                     DynamicTabs.DataContext = _tabItems;
-
                 }
 
             }
@@ -830,12 +873,38 @@ namespace NewsBuddy
         }
         private void mnRefresh_Click(object sender, RoutedEventArgs e)
         {
-            CheckDirectories();
+            CleanUpScripts();
+            CheckDirectories();           
         }
+
+        private void PrintLog()
+        {
+            if (logger != null)
+            {
+                string trace = logger.Trace;
+                string filePath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "NewsJock Dump Log.txt" );
+                using (StreamWriter outputFile = new StreamWriter(filePath))
+                {
+                    outputFile.Write(trace);
+                }
+            }
+            else
+            {
+                Trace.WriteLine("Logger was Not Attached");
+            }
+
+
+        }
+
+
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            Settings.Default.WindowHeight = this.Height;
-            Settings.Default.WindowWidth = this.Width;
+            if (this.WindowState != WindowState.Maximized | this.WindowState != WindowState.Minimized)
+            {
+                Settings.Default.WindowHeight = this.Height;
+                Settings.Default.WindowWidth = this.Width;
+            }
+
             Settings.Default.SoundersVolLevel = sVolSlider.Value;
             Settings.Default.ClipsVolLevel = cVolSlider.Value;
             Settings.Default.Save();
@@ -851,6 +920,12 @@ namespace NewsBuddy
             {
                 asioMixer.KillMixer();
             }
+            Trace.WriteLine("Window Closing, Program Closing.");
+            if (Settings.Default.PrintDebug)
+            {
+                PrintLog();
+            }
+
 
         }
 

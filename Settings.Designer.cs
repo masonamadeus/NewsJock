@@ -403,5 +403,17 @@ namespace NewsBuddy {
                 this["SoundersVolLevel"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool PrintDebug {
+            get {
+                return ((bool)(this["PrintDebug"]));
+            }
+            set {
+                this["PrintDebug"] = value;
+            }
+        }
     }
 }

@@ -13,7 +13,6 @@ using NAudio.Wave.SampleProviders;
 
 namespace NewsBuddy
 {
-
     public class NBfile // maybe derive from : EventArgs
     {
 
@@ -31,6 +30,27 @@ namespace NewsBuddy
 
         public NJFileReader NJF { get; set; }
 
+
+        public NBfile()
+        {
+
+        }
+
+        public NBfile(string path, bool sounder)
+        {
+            if (File.Exists(path))
+            {
+                NBPath = path;
+                NBName = System.IO.Path.GetFileNameWithoutExtension(path);
+                NBisSounder = sounder;
+                Trace.WriteLine("created NB file from path");
+            }
+            else
+            {
+                Trace.WriteLine("Tried to create NBfile, path did not exist");
+            }
+
+        }
 
         public void NBPlayNA(bool isSounder)
         {
@@ -86,10 +106,7 @@ namespace NewsBuddy
                 {
                     NBPlayNA(NBisSounder);
                 };
-                NBbutton.MouseDoubleClick += (sender, args) =>
-                {
-                    NBPlayNA(NBisSounder);
-                };
+
                 NBbutton.file = this;
 
                 return NBbutton;
