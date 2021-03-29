@@ -415,5 +415,17 @@ namespace NewsBuddy {
                 this["PrintDebug"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string APapiKey {
+            get {
+                return ((string)(this["APapiKey"]));
+            }
+            set {
+                this["APapiKey"] = value;
+            }
+        }
     }
 }

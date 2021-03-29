@@ -47,6 +47,8 @@ namespace NewsBuddy
 
         public ListenerLogger logger;
 
+        public APingestor ap;
+
         private Cursor nbDropCur = null;
 
 
@@ -128,8 +130,10 @@ namespace NewsBuddy
 
         void DebuggerFunction_Click(object sender, EventArgs e)
         {
-            ProblemWindow p = new ProblemWindow(new Exception(), true);
-            p.ShowDialog();
+            if (ap == null)
+            {
+                ap = new APingestor();
+            }
         }
 
         void ExceptionCatcher(Exception e, bool promptForShutdown)
