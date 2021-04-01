@@ -130,10 +130,8 @@ namespace NewsBuddy
 
         void DebuggerFunction_Click(object sender, EventArgs e)
         {
-            if (ap == null)
-            {
-                ap = new APingestor();
-            }
+            APReader aPReader = new APReader();
+            aPReader.Show();
         }
 
         void ExceptionCatcher(Exception e, bool promptForShutdown)

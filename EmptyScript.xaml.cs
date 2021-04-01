@@ -329,18 +329,22 @@ namespace NewsBuddy
         void RestoreNBXaml()
         {
             List<Inline> nbInlines = new List<Inline>();
+            List<Paragraph> paragraphs = new List<Paragraph>();
+
             foreach (var block in rtbScript.Document.Blocks)
             {
                 if (block is Paragraph)
                 {
                     Paragraph para = block as Paragraph;
+                    paragraphs.Add(para);
+                    /*
                     foreach (Inline inline in para.Inlines)
                     {
                         if (inline.Tag is NBfile)
                         {
                             nbInlines.Add(inline);
                         }
-                    }
+                    } */
                 }
 
                 if (block is List)
@@ -348,6 +352,26 @@ namespace NewsBuddy
                     List lol = block as List;
                     foreach (ListItem tip in lol.ListItems)
                     {
+                        foreach (var tipBit in tip.Blocks)
+                        {
+                            if (tipBit is Paragraph)
+                            {
+                                paragraphs.Add(tipBit as Paragraph);
+                            }
+                            else if (tipBit is List)
+                            {
+                                List tipList = tipBit as List;
+                                foreach (ListItem doubleTipBit in tipList.ListItems)
+                                {
+                                    foreach (var doubleTipBitBlock in doubleTipBit.Blocks)
+                                    if (doubleTipBitBlock is Paragraph)
+                                    {
+                                        paragraphs.Add(doubleTipBitBlock as Paragraph);
+                                    }
+                                }
+                            }
+                        }
+                        /*
                         foreach (Paragraph pl in tip.Blocks)
                         {
                             foreach (Inline inl in pl.Inlines)
@@ -357,7 +381,19 @@ namespace NewsBuddy
                                     nbInlines.Add(inl);
                                 }
                             }
-                        }
+                        } */
+                    }
+                }
+            }
+
+            for (int paragraphCount = 0; paragraphCount < paragraphs.Count; paragraphCount++)
+            {
+                Paragraph paragraphInQuestion = paragraphs[paragraphCount];
+                foreach (Inline foundLines in paragraphInQuestion.Inlines)
+                {
+                    if (foundLines.Tag is NBfile)
+                    {
+                        nbInlines.Add(foundLines);
                     }
                 }
             }

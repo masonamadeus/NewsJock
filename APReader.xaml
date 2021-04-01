@@ -5,8 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:NewsBuddy"
         mc:Ignorable="d"
-        Title="APReader" Height="450" Width="800">
+        Title="APReader"
+        SizeToContent="WidthAndHeight">
     <Grid>
-        
+        <ListBox x:Name="list_APStories" MaxHeight="500" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
     </Grid>
+    <Window.Resources>
+    <DataTemplate DataType="{x:Type local:APObject}">
+        <TextBlock Text="{Binding headline}" ToolTip="{Binding uri}"/>
+    </DataTemplate>
+    </Window.Resources>
 </Window>

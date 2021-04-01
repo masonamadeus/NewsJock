@@ -28,6 +28,7 @@ namespace NewsBuddy
     {
         public string apiKey = "apusnkr7cnj9qfjuuhpwii1spe";
         private const string feedReqUrl = "https://api.ap.org/media/v/content/feed";
+        private HttpClient client;
 
         public List<APObject> apFeedItems = new List<APObject>();
         public APingestor()
@@ -53,11 +54,11 @@ namespace NewsBuddy
 
 
             Trace.WriteLine("Getting Feed");
-            HttpClient client = new HttpClient();
+            client = new HttpClient();
             client.BaseAddress = new Uri(feedReqUrl);
             client.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
-            HttpResponseMessage response = client.GetAsync("feed?apikey="+apiKey+"&in_my_plan=true").Result;
+            HttpResponseMessage response = client.GetAsync("feed?apikey="+apiKey+"&in_my_plan=true&versions=latest&text_links=plain").Result;
             if (response.IsSuccessStatusCode)
             {
                 string reply = response.Content.ReadAsStringAsync().Result;
@@ -142,6 +143,15 @@ namespace NewsBuddy
 
             
 
+        }
+
+
+        void Dispose()
+        {
+            if (client != null)
+            {
+                client.Dispose();
+            }
         }
 
     }
