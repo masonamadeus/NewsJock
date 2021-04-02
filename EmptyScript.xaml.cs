@@ -364,9 +364,11 @@ namespace NewsBuddy
                                 foreach (ListItem doubleTipBit in tipList.ListItems)
                                 {
                                     foreach (var doubleTipBitBlock in doubleTipBit.Blocks)
-                                    if (doubleTipBitBlock is Paragraph)
                                     {
-                                        paragraphs.Add(doubleTipBitBlock as Paragraph);
+                                        if (doubleTipBitBlock is Paragraph)
+                                        {
+                                            paragraphs.Add(doubleTipBitBlock as Paragraph);
+                                        }
                                     }
                                 }
                             }
@@ -435,20 +437,24 @@ namespace NewsBuddy
                     List lol = block as List;
                     foreach (ListItem tip in lol.ListItems)
                     {
-                        foreach (Paragraph par in tip.Blocks)
+                        foreach (var par in tip.Blocks)
                         {
-                            foreach (Inline il in par.Inlines)
+                            if (par is Paragraph)
                             {
-                                if (il.Tag is NBfile)
+                                foreach (Inline il in ((Paragraph)par).Inlines)
                                 {
-                                    NBfile nbb = il.Tag as NBfile;
-                                    if (nbb.NBPath == e.OldFullPath)
+                                    if (il.Tag is NBfile)
                                     {
-                                        nbb.NBPath = e.FullPath;
-                                        nbb.NBName = System.IO.Path.GetFileNameWithoutExtension(e.FullPath);
+                                        NBfile nbb = il.Tag as NBfile;
+                                        if (nbb.NBPath == e.OldFullPath)
+                                        {
+                                            nbb.NBPath = e.FullPath;
+                                            nbb.NBName = System.IO.Path.GetFileNameWithoutExtension(e.FullPath);
+                                        }
                                     }
                                 }
                             }
+                            
                         }
                     }
                 }
@@ -483,19 +489,23 @@ namespace NewsBuddy
                     List liii = block as List;
                     foreach (ListItem liit in liii.ListItems)
                     {
-                        foreach (Paragraph liip in liit.Blocks)
+                        foreach (var liip in liit.Blocks)
                         {
-                            foreach (Inline liin in liip.Inlines)
+                            if (liip is Paragraph)
                             {
-                                if (liin.Tag is NBfile)
+                                foreach (Inline liin in ((Paragraph)liip).Inlines)
                                 {
-                                    NBfile liinb = liin.Tag as NBfile;
-                                    if (liinb.NBPath == e.FullPath)
+                                    if (liin.Tag is NBfile)
                                     {
-                                        deletedNBs.Add(liin);
+                                        NBfile liinb = liin.Tag as NBfile;
+                                        if (liinb.NBPath == e.FullPath)
+                                        {
+                                            deletedNBs.Add(liin);
+                                        }
                                     }
                                 }
                             }
+                            
                         }
                     }
                 }
@@ -519,9 +529,13 @@ namespace NewsBuddy
                         List lool = block as List;
                         foreach (ListItem lit in lool.ListItems)
                         {
-                            foreach (Paragraph pp in lit.Blocks)
+                            foreach (var pp in lit.Blocks)
                             {
-                                blocks.Add(pp);
+                                if (pp is Paragraph)
+                                {
+                                    blocks.Add((Paragraph)pp);
+                                }
+
                             }
                         }
                     }
@@ -771,20 +785,24 @@ namespace NewsBuddy
                     List list = block as List;
                     foreach (ListItem li in list.ListItems)
                     {
-                        foreach (Paragraph p in li.Blocks)
+                        foreach (var p in li.Blocks)
                         {
-                            foreach (Inline line in p.Inlines)
+                            if (p is Paragraph)
                             {
-                                if (line is InlineUIContainer && line.Tag is NBfile)
+                                foreach (Inline line in ((Paragraph)p).Inlines)
                                 {
-                                    InlineUIContainer butt = line as InlineUIContainer;
-                                    if (rtbScript.Selection.Contains(butt.ContentStart))
+                                    if (line is InlineUIContainer && line.Tag is NBfile)
                                     {
-                                        Trace.WriteLine("Foudn a bean");
-                                        foundNBfiles.Add((NBfile)butt.Tag);
+                                        InlineUIContainer butt = line as InlineUIContainer;
+                                        if (rtbScript.Selection.Contains(butt.ContentStart))
+                                        {
+                                            Trace.WriteLine("Foudn a bean");
+                                            foundNBfiles.Add((NBfile)butt.Tag);
+                                        }
                                     }
                                 }
                             }
+                            
                         }
                     }
                 }
@@ -819,6 +837,31 @@ namespace NewsBuddy
                 isChanged = true;
             }
         }
+
+
+        private List<Inline> DetectNBs(BlockCollection blocks)
+        {
+            List<Inline> inlines = new List<Inline>();
+            foreach (var block in blocks)
+            {
+                if (block is Paragraph)
+                {
+                    foreach (Inline inl in ((Paragraph)block).Inlines)
+                    {
+                        inlines.Add(inl);
+                    }
+                }
+                if (block is List)
+                {
+                    foreach (ListItem listItems in ((List)block).ListItems)
+                    {
+                        inlines.AddRange(DetectNBs(listItems.Blocks));
+                    }
+                }
+            }
+            return inlines;
+        }
+
     }
 
 }
