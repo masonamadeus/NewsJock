@@ -326,77 +326,17 @@ namespace NewsBuddy
             ToggleLoading(false);
         }
 
-        void RestoreNBXaml()
+        public void RestoreNBXaml()
         {
             List<Inline> nbInlines = new List<Inline>();
-            List<Paragraph> paragraphs = new List<Paragraph>();
+            List<Inline> foundLines = DetectNBs(rtbScript.Document.Blocks);
 
-            foreach (var block in rtbScript.Document.Blocks)
+            for (int line = 0; line < foundLines.Count; line++)
             {
-                if (block is Paragraph)
+                Inline examine = foundLines[line];
+                if (examine.Tag is NBfile)
                 {
-                    Paragraph para = block as Paragraph;
-                    paragraphs.Add(para);
-                    /*
-                    foreach (Inline inline in para.Inlines)
-                    {
-                        if (inline.Tag is NBfile)
-                        {
-                            nbInlines.Add(inline);
-                        }
-                    } */
-                }
-
-                if (block is List)
-                {
-                    List lol = block as List;
-                    foreach (ListItem tip in lol.ListItems)
-                    {
-                        foreach (var tipBit in tip.Blocks)
-                        {
-                            if (tipBit is Paragraph)
-                            {
-                                paragraphs.Add(tipBit as Paragraph);
-                            }
-                            else if (tipBit is List)
-                            {
-                                List tipList = tipBit as List;
-                                foreach (ListItem doubleTipBit in tipList.ListItems)
-                                {
-                                    foreach (var doubleTipBitBlock in doubleTipBit.Blocks)
-                                    {
-                                        if (doubleTipBitBlock is Paragraph)
-                                        {
-                                            paragraphs.Add(doubleTipBitBlock as Paragraph);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        /*
-                        foreach (Paragraph pl in tip.Blocks)
-                        {
-                            foreach (Inline inl in pl.Inlines)
-                            {
-                                if (inl.Tag is NBfile)
-                                {
-                                    nbInlines.Add(inl);
-                                }
-                            }
-                        } */
-                    }
-                }
-            }
-
-            for (int paragraphCount = 0; paragraphCount < paragraphs.Count; paragraphCount++)
-            {
-                Paragraph paragraphInQuestion = paragraphs[paragraphCount];
-                foreach (Inline foundLines in paragraphInQuestion.Inlines)
-                {
-                    if (foundLines.Tag is NBfile)
-                    {
-                        nbInlines.Add(foundLines);
-                    }
+                    nbInlines.Add(examine);
                 }
             }
 
@@ -413,134 +353,48 @@ namespace NewsBuddy
 
         public void NBrenamed2(object sender, RenamedEventArgs e)
         {
-            foreach (var block in rtbScript.Document.Blocks)
+            List<Inline> foundInlines = DetectNBs(rtbScript.Document.Blocks);
+
+            for (int line = 0; line < foundInlines.Count; line++)
             {
-                if (block is Paragraph)
+                Inline examine = foundInlines[line];
+                if (examine.Tag is NBfile)
                 {
-                    Paragraph para = block as Paragraph;
-                    foreach (Inline inline in para.Inlines)
+                    NBfile nb = examine.Tag as NBfile;
+                    if (nb.NBPath == e.OldFullPath)
                     {
-                        if (inline.Tag is NBfile)
-                        {
-                            NBfile nb = inline.Tag as NBfile;
-                            if (nb.NBPath == e.OldFullPath)
-                            {
-                                nb.NBPath = e.FullPath;
-                                nb.NBName = System.IO.Path.GetFileNameWithoutExtension(e.FullPath);
-                            }
-                        }
+                        nb.NBPath = e.FullPath;
+                        nb.NBName = System.IO.Path.GetFileNameWithoutExtension(e.FullPath);
                     }
                 }
-
-                if (block is List)
-                {
-                    List lol = block as List;
-                    foreach (ListItem tip in lol.ListItems)
-                    {
-                        foreach (var par in tip.Blocks)
-                        {
-                            if (par is Paragraph)
-                            {
-                                foreach (Inline il in ((Paragraph)par).Inlines)
-                                {
-                                    if (il.Tag is NBfile)
-                                    {
-                                        NBfile nbb = il.Tag as NBfile;
-                                        if (nbb.NBPath == e.OldFullPath)
-                                        {
-                                            nbb.NBPath = e.FullPath;
-                                            nbb.NBName = System.IO.Path.GetFileNameWithoutExtension(e.FullPath);
-                                        }
-                                    }
-                                }
-                            }
-                            
-                        }
-                    }
-                }
-
             }
+            
         }
 
         public void NBdeleted2(object sender, FileSystemEventArgs e)
         {
             List<Inline> deletedNBs = new List<Inline>();
+            List<Inline> foundInlines = DetectNBs(rtbScript.Document.Blocks);
 
 
-            foreach (var block in rtbScript.Document.Blocks)
+            for (int line = 0; line < foundInlines.Count; line++)
             {
-                if (block is Paragraph)
+                Inline examine = foundInlines[line];
+                if (examine.Tag is NBfile)
                 {
-                    Paragraph para = block as Paragraph;
-                    foreach (Inline inline in para.Inlines)
+                    NBfile nb = examine.Tag as NBfile;
+                    if (nb.NBPath == e.FullPath)
                     {
-                        if (inline.Tag is NBfile)
-                        {
-                            NBfile nb = inline.Tag as NBfile;
-                            if (nb.NBPath == e.FullPath)
-                            {
-                                deletedNBs.Add(inline);
-                            }
-                        }
+                        deletedNBs.Add(examine);
                     }
                 }
-                if (block is List)
-                {
-                    List liii = block as List;
-                    foreach (ListItem liit in liii.ListItems)
-                    {
-                        foreach (var liip in liit.Blocks)
-                        {
-                            if (liip is Paragraph)
-                            {
-                                foreach (Inline liin in ((Paragraph)liip).Inlines)
-                                {
-                                    if (liin.Tag is NBfile)
-                                    {
-                                        NBfile liinb = liin.Tag as NBfile;
-                                        if (liinb.NBPath == e.FullPath)
-                                        {
-                                            deletedNBs.Add(liin);
-                                        }
-                                    }
-                                }
-                            }
-                            
-                        }
-                    }
-                }
-
             }
 
             for (int d = 0; d < deletedNBs.Count; d++)
             {
                 Inline del = deletedNBs[d];
 
-                List<Paragraph> blocks = new List<Paragraph>();
-                foreach (var block in rtbScript.Document.Blocks)
-                {
-                    if (block is Paragraph)
-                    {
-                        Paragraph par = block as Paragraph;
-                        blocks.Add(par);
-                    }
-                    if (block is List)
-                    {
-                        List lool = block as List;
-                        foreach (ListItem lit in lool.ListItems)
-                        {
-                            foreach (var pp in lit.Blocks)
-                            {
-                                if (pp is Paragraph)
-                                {
-                                    blocks.Add((Paragraph)pp);
-                                }
-
-                            }
-                        }
-                    }
-
-                }
+                List<Paragraph> blocks = DetectParagraphs(rtbScript.Document.Blocks);
 
                 for (int dd = 0; dd < blocks.Count; dd++)
                 {
@@ -760,53 +614,17 @@ namespace NewsBuddy
         private void rtbScript_Copying(object sender, DataObjectCopyingEventArgs e)
         {
             List<NBfile> foundNBfiles = new List<NBfile>();
+            List<Inline> foundInlines = DetectNBs(rtbScript.Document.Blocks);
             
-            foreach (var block in rtbScript.Document.Blocks)
+            for (int line = 0; line < foundInlines.Count; line++)
             {
-                if (block is Paragraph)
+                Inline examine = foundInlines[line];
+                if (examine.Tag is NBfile)
                 {
-                    Paragraph para = block as Paragraph;
-                    foreach(Inline inl in para.Inlines)
-                    {
-                        if (inl is InlineUIContainer && inl.Tag is NBfile)
-                        {
-                            InlineUIContainer butto = inl as InlineUIContainer;
-                            if (rtbScript.Selection.Contains(butto.ContentStart))
-                            {
-                                Trace.WriteLine("Found a beeean");
-                                foundNBfiles.Add((NBfile)inl.Tag);
-
-                            }
-                        }
-                    }
-                }
-                if (block is List)
-                {
-                    List list = block as List;
-                    foreach (ListItem li in list.ListItems)
-                    {
-                        foreach (var p in li.Blocks)
-                        {
-                            if (p is Paragraph)
-                            {
-                                foreach (Inline line in ((Paragraph)p).Inlines)
-                                {
-                                    if (line is InlineUIContainer && line.Tag is NBfile)
-                                    {
-                                        InlineUIContainer butt = line as InlineUIContainer;
-                                        if (rtbScript.Selection.Contains(butt.ContentStart))
-                                        {
-                                            Trace.WriteLine("Foudn a bean");
-                                            foundNBfiles.Add((NBfile)butt.Tag);
-                                        }
-                                    }
-                                }
-                            }
-                            
-                        }
-                    }
+                    foundNBfiles.Add((NBfile)examine.Tag);
                 }
             }
+
             e.DataObject.SetData("NBcount", foundNBfiles.Count);
             for (int ix = 0; ix < foundNBfiles.Count; ix++)
             {
@@ -838,14 +656,41 @@ namespace NewsBuddy
             }
         }
 
+        private List<Paragraph> DetectParagraphs(BlockCollection blocks)
+        {
+            Trace.WriteLine("[2]Detect Paragraph Loop Started");
+            List<Paragraph> paragraphs = new List<Paragraph>();
+            foreach (var block in blocks)
+            {
+                if (block is Paragraph)
+                {
+                    Trace.WriteLine("[2]Found Paragraph");
+                    paragraphs.Add((Paragraph)block);
+                }
+                if (block is List)
+                {
+                    Trace.WriteLine("[2]Found List");
+                    foreach (ListItem listItems in ((List)block).ListItems)
+                    {
+                        Trace.WriteLine("[2]Starting loop for list item");
+                        paragraphs.AddRange(DetectParagraphs(listItems.Blocks));
+                    }
+                }
+            }
+            return paragraphs;
+
+        }
+
 
         private List<Inline> DetectNBs(BlockCollection blocks)
         {
+            Trace.WriteLine("DetectNBs Loop Started");
             List<Inline> inlines = new List<Inline>();
             foreach (var block in blocks)
             {
                 if (block is Paragraph)
                 {
+                    Trace.WriteLine("Found Paragraph");
                     foreach (Inline inl in ((Paragraph)block).Inlines)
                     {
                         inlines.Add(inl);
@@ -853,8 +698,10 @@ namespace NewsBuddy
                 }
                 if (block is List)
                 {
+                    Trace.WriteLine("Found List");
                     foreach (ListItem listItems in ((List)block).ListItems)
                     {
+                        Trace.WriteLine("Starting loop for list item");
                         inlines.AddRange(DetectNBs(listItems.Blocks));
                     }
                 }

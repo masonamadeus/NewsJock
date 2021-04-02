@@ -693,7 +693,7 @@ namespace NewsBuddy
                 if (_tabItems.Count < 3)
                 {
                     TabItem selectedTab = DynamicTabs.SelectedItem as TabItem;
-                    if ((((Frame)selectedTab.Content).Content as Page1).isChanged)
+                    if (selectedTab != null && (((Frame)selectedTab.Content).Content as Page1).isChanged)
                     {
                         if (MessageBox.Show(string.Format("'{0}' has not been saved.\nClose without saving?", tab.Header.ToString()),
                   "Close Tab", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
@@ -711,6 +711,21 @@ namespace NewsBuddy
 
                             DynamicTabs.DataContext = _tabItems;
                         }
+                    }
+                    else if (selectedTab != null)
+                    {
+                        DynamicTabs.DataContext = null;
+                        _tabItems.Remove(tab);
+                        AddTabItem(true);
+
+                        if (selectedTab == null || selectedTab.Equals(tab))
+                        {
+                            DynamicTabs.SelectedItem = _tabItems[0];
+                        }
+
+                        
+
+                        DynamicTabs.DataContext = _tabItems;
                     }
 
                 }
