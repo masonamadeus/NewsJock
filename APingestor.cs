@@ -16,11 +16,12 @@ namespace NewsBuddy
         public string headline { get; set; }
         public string uri { get; set; }
         public object item { get; set; }
-
+        
         public APObject(object obj)
         {
             this.item = obj;
         }
+
     }
 
 
@@ -31,17 +32,13 @@ namespace NewsBuddy
         private HttpClient client;
 
         public List<APObject> apFeedItems = new List<APObject>();
+
         public APingestor()
         {
             GetFeed();
             // call up feed and start it for all entitlements
         }
-        public APingestor(string key, string search)
-        {
-            this.apiKey = @"apikey=" + key;
-            // call up feed and start it for search term. "feed?q=search&apikey={apikey}"
-        }
-
+        
         public List<APObject> GetItems()
         {
             return apFeedItems;
@@ -49,9 +46,7 @@ namespace NewsBuddy
 
         public void GetFeed()
         {
-
             apFeedItems.Clear();
-
 
             Trace.WriteLine("Getting Feed");
             client = new HttpClient();

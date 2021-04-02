@@ -87,6 +87,7 @@
                      DataObject.Copying="rtbScript_Copying"
                      AcceptsTab="True"
                      TextChanged="rtbScript_TextChanged"
+                     Loaded="rtbScript_Loaded"
                      >
 
             <FlowDocument>

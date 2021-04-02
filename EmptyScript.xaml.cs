@@ -328,17 +328,7 @@ namespace NewsBuddy
 
         public void RestoreNBXaml()
         {
-            List<Inline> nbInlines = new List<Inline>();
-            List<Inline> foundLines = DetectNBs(rtbScript.Document.Blocks);
-
-            for (int line = 0; line < foundLines.Count; line++)
-            {
-                Inline examine = foundLines[line];
-                if (examine.Tag is NBfile)
-                {
-                    nbInlines.Add(examine);
-                }
-            }
+            List<Inline> nbInlines = DetectNBs(rtbScript.Document.Blocks);
 
             for (int i = 0; i < nbInlines.Count; i++)
             {
@@ -347,8 +337,7 @@ namespace NewsBuddy
                 NBfile nb = inl.Tag as NBfile;
                 nbi.Child = nb.NBbutton();
             }
-
-            ((MainWindow)Application.Current.MainWindow).ChangeTabName(scriptUri);
+            Trace.WriteLine("Restoring NBs");
         }
 
         public void NBrenamed2(object sender, RenamedEventArgs e)
@@ -358,17 +347,16 @@ namespace NewsBuddy
             for (int line = 0; line < foundInlines.Count; line++)
             {
                 Inline examine = foundInlines[line];
-                if (examine.Tag is NBfile)
+
+                NBfile nb = examine.Tag as NBfile;
+                if (nb.NBPath == e.OldFullPath)
                 {
-                    NBfile nb = examine.Tag as NBfile;
-                    if (nb.NBPath == e.OldFullPath)
-                    {
-                        nb.NBPath = e.FullPath;
-                        nb.NBName = System.IO.Path.GetFileNameWithoutExtension(e.FullPath);
-                    }
+                    nb.NBPath = e.FullPath;
+                    nb.NBName = System.IO.Path.GetFileNameWithoutExtension(e.FullPath);
                 }
+
             }
-            
+
         }
 
         public void NBdeleted2(object sender, FileSystemEventArgs e)
@@ -380,14 +368,13 @@ namespace NewsBuddy
             for (int line = 0; line < foundInlines.Count; line++)
             {
                 Inline examine = foundInlines[line];
-                if (examine.Tag is NBfile)
+
+                NBfile nb = examine.Tag as NBfile;
+                if (nb.NBPath == e.FullPath)
                 {
-                    NBfile nb = examine.Tag as NBfile;
-                    if (nb.NBPath == e.FullPath)
-                    {
-                        deletedNBs.Add(examine);
-                    }
+                    deletedNBs.Add(examine);
                 }
+
             }
 
             for (int d = 0; d < deletedNBs.Count; d++)
@@ -556,6 +543,7 @@ namespace NewsBuddy
 
         private void rtbScript_Pasting(object sender, DataObjectPastingEventArgs e)
         {
+            
             if (e.FormatToApply == "Bitmap")
             {
                 try
@@ -572,8 +560,9 @@ namespace NewsBuddy
             {
                 e.FormatToApply = "Text";
                 Trace.WriteLine("Pasting as text");
-            }
+            } 
 
+            // Can remove later
             if (e.DataObject.GetDataPresent("NBcount"))
             {
                 int count = (int)e.DataObject.GetData("NBcount");
@@ -613,25 +602,33 @@ namespace NewsBuddy
 
         private void rtbScript_Copying(object sender, DataObjectCopyingEventArgs e)
         {
-            List<NBfile> foundNBfiles = new List<NBfile>();
-            List<Inline> foundInlines = DetectNBs(rtbScript.Document.Blocks);
             
-            for (int line = 0; line < foundInlines.Count; line++)
+            List<NBfile> foundNBfiles = new List<NBfile>();
+
+            List<Inline> found = DetectNBs(rtbScript.Document.Blocks);
+
+            for (int xy = 0; xy < found.Count; xy++)
             {
-                Inline examine = foundInlines[line];
-                if (examine.Tag is NBfile)
+                TextPointer examine = found[xy].ContentStart;
+                if (rtbScript.Selection.Contains(examine))
                 {
-                    foundNBfiles.Add((NBfile)examine.Tag);
+                    Trace.WriteLine("Found NB in selection");
+                    foundNBfiles.Add((NBfile)found[xy].Tag);
+
                 }
             }
 
-            e.DataObject.SetData("NBcount", foundNBfiles.Count);
-            for (int ix = 0; ix < foundNBfiles.Count; ix++)
+            if (foundNBfiles.Count > 0)
             {
-                NBfile tempNB = foundNBfiles[ix];
-                e.DataObject.SetData(String.Format("NB{0}", ix), tempNB.NBPath);
+                e.DataObject.SetData("NBcount", foundNBfiles.Count);
+                for (int ix = 0; ix < foundNBfiles.Count; ix++)
+                {
+                    NBfile tempNB = foundNBfiles[ix];
+                    e.DataObject.SetData(String.Format("NB{0}", ix), tempNB.NBPath);
+                }
             }
-     
+            
+
         }
 
         void DarkMode_Toggle(object sender, RoutedEventArgs e)
@@ -656,6 +653,7 @@ namespace NewsBuddy
             }
         }
 
+        // Returns a list of every paragraph chunk of text, recursively searching through lists.
         private List<Paragraph> DetectParagraphs(BlockCollection blocks)
         {
             Trace.WriteLine("[2]Detect Paragraph Loop Started");
@@ -681,27 +679,32 @@ namespace NewsBuddy
 
         }
 
-
+        // Returns a list of every inline containing an NB file. Recursively searches lists.
         private List<Inline> DetectNBs(BlockCollection blocks)
         {
-            Trace.WriteLine("DetectNBs Loop Started");
+            Trace.WriteLine("[1]DetectNBs Loop Started");
             List<Inline> inlines = new List<Inline>();
             foreach (var block in blocks)
             {
                 if (block is Paragraph)
                 {
-                    Trace.WriteLine("Found Paragraph");
+                    Trace.WriteLine("[1]Found Paragraph");
                     foreach (Inline inl in ((Paragraph)block).Inlines)
                     {
-                        inlines.Add(inl);
+                        if (inl.Tag is NBfile)
+                        {
+                            Trace.WriteLine("[1]Found NB File");
+                            inlines.Add(inl);
+                        }
+                        
                     }
                 }
                 if (block is List)
                 {
-                    Trace.WriteLine("Found List");
+                    Trace.WriteLine("[1]Found List");
                     foreach (ListItem listItems in ((List)block).ListItems)
                     {
-                        Trace.WriteLine("Starting loop for list item");
+                        Trace.WriteLine("[1]Starting loop for list item");
                         inlines.AddRange(DetectNBs(listItems.Blocks));
                     }
                 }
@@ -709,6 +712,13 @@ namespace NewsBuddy
             return inlines;
         }
 
+        private void rtbScript_Loaded(object sender, RoutedEventArgs e)
+        {
+            Trace.WriteLine("Script Reloaded.");
+            this.Dispatcher.Invoke(() => {
+                RestoreNBXaml();
+            });
+        }
     }
 
 }
