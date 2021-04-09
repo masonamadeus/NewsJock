@@ -6,13 +6,38 @@
         xmlns:local="clr-namespace:NewsBuddy"
         mc:Ignorable="d"
         Title="APReader"
-        SizeToContent="WidthAndHeight">
+        SizeToContent="WidthAndHeight"
+        Closing="Window_Closing"
+        WindowStartupLocation="CenterOwner">
     <Grid>
-        <ListBox x:Name="list_APStories" MaxHeight="500" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Button x:Name="btn_RefreshAP" Click="btn_RefreshAP_Click" Content="Refresh AP Headlines" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="0"/>
+        <ListBox x:Name="list_APStories" MaxHeight="500" MaxWidth="250"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 Grid.Column="0" Grid.Row="1"
+                 SelectionChanged="list_APStories_SelectionChanged"
+                 >
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel Orientation="Vertical" IsItemsHost="True"/>
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+        </ListBox>
+
+
+        <TextBox x:Name="text_CurrentStory" MaxHeight="500" MaxWidth="400" TextWrapping="Wrap" ScrollViewer.VerticalScrollBarVisibility="Auto" Grid.Column="1" Grid.Row="1"/>
     </Grid>
     <Window.Resources>
-    <DataTemplate DataType="{x:Type local:APObject}">
-        <TextBlock Text="{Binding headline}" ToolTip="{Binding uri}"/>
-    </DataTemplate>
+        <DataTemplate DataType="{x:Type local:APObject}">
+            <TextBlock Text="{Binding headline}" ToolTip="{Binding uri}" TextWrapping="Wrap"/>
+        </DataTemplate>
     </Window.Resources>
 </Window>

@@ -15,7 +15,7 @@
     <Grid Margin="15">
     <DockPanel>
             <StackPanel DockPanel.Dock="Top">
-                <TextBlock HorizontalAlignment="Center" Margin="0,10,0,5" Padding="3" Background="LightGray">Select the locations where you will store your Sounders, Clips, and Scripts.</TextBlock>
+                <TextBlock HorizontalAlignment="Center" Margin="0,10,0,5" Padding="3" Background="LightGray">Configure directories and preferences for News Jock</TextBlock>
                 <Separator Margin="30,8,30,8"></Separator>
                 <Label>Personal Sounders folder:</Label>
                 <WrapPanel>
@@ -40,6 +40,10 @@
                     <TextBox x:Name="selDirScript" Margin="10,0,10,0"  TextWrapping="NoWrap" AcceptsReturn="False" Width="300" />
                     <Button x:Name="srchScript" Click="srchScript_Click">Select Folder</Button>
                 </WrapPanel>
+
+                <Label>AP Media API Key:</Label>
+                <TextBox x:Name="selAPApiKey" Margin="10,0,10,0"  TextWrapping="NoWrap" AcceptsReturn="False" Width="300" Text="{Binding Source={x:Static local:Settings.Default}, Path=APapiKey, Mode=TwoWay}" />
+                    
 
                 <CheckBox Name="btnSpell" HorizontalAlignment="Left" Margin="10,12,0,0" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=SpellCheck, Mode=TwoWay}">Script Spell Check</CheckBox>
                 

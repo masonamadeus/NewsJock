@@ -8,34 +8,27 @@ using System.Net.Http.Headers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
+using System.Xml;
 
 namespace NewsBuddy
 {
-    public class APObject
-    {
-        public string headline { get; set; }
-        public string uri { get; set; }
-        public object item { get; set; }
-        
-        public APObject(object obj)
-        {
-            this.item = obj;
-        }
 
-    }
 
 
     public class APingestor
     {
-        public string apiKey = "apusnkr7cnj9qfjuuhpwii1spe";
-        private const string feedReqUrl = "https://api.ap.org/media/v/content/feed";
+        public string apiKey { get; set; }
+        private const string reqUrl = "https://api.ap.org/media/v/content/";
         private HttpClient client;
+        public EntityTagHeaderValue previousETag { get; set; }
+        public EntityTagHeaderValue nextETag { get; set; }
+        public bool isAuthorized { get; set; }
 
         public List<APObject> apFeedItems = new List<APObject>();
 
         public APingestor()
         {
-            GetFeed();
+            apiKey = Settings.Default.APapiKey;
             // call up feed and start it for all entitlements
         }
         
@@ -44,29 +37,132 @@ namespace NewsBuddy
             return apFeedItems;
         }
 
-        public void GetFeed()
-        {
-            apFeedItems.Clear();
 
-            Trace.WriteLine("Getting Feed");
-            client = new HttpClient();
-            client.BaseAddress = new Uri(feedReqUrl);
-            client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
-            HttpResponseMessage response = client.GetAsync("feed?apikey="+apiKey+"&in_my_plan=true&versions=latest&text_links=plain").Result;
+
+        public XmlDocument GetItem(string itemID)
+        {
+            Trace.WriteLine("getting ap item");
+            if (client == null)
+            {
+                client = new HttpClient();
+                client.BaseAddress = new Uri(reqUrl);
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            }
+            
+            HttpResponseMessage response = client.GetAsync(String.Format("{0}?apikey={1}&in_my_plan=true", itemID, apiKey)).Result;
             if (response.IsSuccessStatusCode)
             {
                 string reply = response.Content.ReadAsStringAsync().Result;
-                ProcessFeed(reply);
+                Trace.WriteLine(reply);
+                XmlDocument story = DownloadStory(reply);
+                return story == null ? null : story;
             }
             else
             {
-                Trace.WriteLine(response.StatusCode.ToString());
+                return null;
+            }
+            
+        }
+
+        private XmlDocument DownloadStory(string json)
+        {
+            dynamic js = JsonConvert.DeserializeObject(json);
+            if (js.error != null)
+            {
+                Trace.WriteLine(js.error);
+                return null;
+            }
+
+            var downloadUrl = js.data.item.renditions.nitf.href;
+            if (downloadUrl == null)
+            {
+                Trace.WriteLine("Download URL was null");
+                return null;
+            }
+            else
+            {
+                HttpResponseMessage response = client.GetAsync(downloadUrl.ToString() + "&apikey=" + apiKey).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    string rawXml =
+                    response.Content.ReadAsStringAsync().Result;
+                    XmlDocument story = new XmlDocument();
+                    story.LoadXml(rawXml);
+                    return story;
+                }
+                else
+                {
+                    Trace.WriteLine("HttpRequest was unsuccessful - downloadStory()");
+                    return null;
+                }
+            }
+
+        }
+
+        public void GetFeed()
+        {
+            Trace.WriteLine("Getting Feed");
+            if (client == null)
+            {
+                client = new HttpClient();
+                client.BaseAddress = new Uri(reqUrl);
+                client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+            }
+
+            var request = new HttpRequestMessage()
+            {
+                RequestUri = new Uri(client.BaseAddress + "feed?apikey=" + apiKey + "&in_my_plan=true&versions=latest&text_links=plain",UriKind.Absolute),
+                Method = HttpMethod.Get
+            };
+
+            request.Headers.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            if (nextETag != null)
+            {
+                request.Headers.IfNoneMatch.Add(nextETag);
+            }
+
+            Trace.WriteLine(request.Headers.ToString());
+
+            HttpResponseMessage response = client.SendAsync(request).Result;
+            if (response.IsSuccessStatusCode)
+            {
+                apFeedItems.Clear();
+                isAuthorized = true;
+                string reply = response.Content.ReadAsStringAsync().Result;
+                ProcessFeed(reply);
+                if (nextETag != null)
+                {
+                    previousETag = new EntityTagHeaderValue(nextETag.ToString());
+
+                }
+                nextETag = new EntityTagHeaderValue(response.Headers.ETag.ToString());
+
+                if (Debugger.IsAttached)
+                {
+                    Trace.WriteLine("Next ETag is: " + nextETag.ToString());
+                    Trace.WriteLine(response.Headers.ETag.ToString());
+                    Trace.WriteLine(response.StatusCode.ToString());
+                }
+            }
+            else if (response.StatusCode == HttpStatusCode.NotModified)
+            {
+                Trace.WriteLine("Not Modified. Same ETag");
+                return;
+            }
+            else
+            {
+                isAuthorized = false;
+                
                 Trace.WriteLine(response.RequestMessage.ToString());
+
+                Trace.WriteLine(response.StatusCode.ToString());
             }
         }
 
-        void ProcessFeed(string body)
+        private void ProcessFeed(string body)
         {
             dynamic js = JsonConvert.DeserializeObject(body);
 
@@ -85,20 +181,16 @@ namespace NewsBuddy
             var itemsBlock = dataBlock.items;
             var itemsCount = (itemsBlock != null && itemsBlock.Count != null) ? itemsBlock.Count : 0;
 
-            for (int entry = 0; entry < itemsBlock.Count; entry++)
+            for (int entry = 0; entry < itemsCount; entry++)
             {
                 ProcessEntry(itemsBlock[entry], entry);
             }
 
-            foreach (APObject a in apFeedItems)
-            {
-                Trace.WriteLine(a.headline);
-                Trace.WriteLine("________NEXT_ITEM________");
-            }
+            
 
         }
 
-        void ProcessEntry ( dynamic Item, int index)
+        private void ProcessEntry ( dynamic Item, int index)
         {
             /*
             
@@ -118,22 +210,44 @@ namespace NewsBuddy
                 foreach (dynamic ac in item.associations)
                 {
                     dynamic assoc = ac.Value;
-                    apFeedItems.Add(new APObject(assoc)
+                    if (string.Equals(assoc.type.ToString(), "text") )
                     {
-                        headline = assoc.headline != null ? assoc.headline.ToString() : "",
-                        uri = assoc.uri != null ? assoc.uri.ToString() : ""
-                    });
+                        if (assoc.headline == null || string.Equals(assoc.headline.ToString(),""))
+                        {
+                            // ignore it
+                        }
+                        else
+                        {
+                            apFeedItems.Add(new APObject(assoc)
+                            {
+                                headline = assoc.headline != null ? assoc.headline.ToString() : "",
+                                uri = assoc.uri != null ? assoc.uri.ToString() : "",
+                                altID = assoc.altids.itemid != null ? assoc.altids.itemid.ToString() : ""
+                            });
+                        }
+                        
+                    }
+                        
                 }
             }
             else 
             {
-                apFeedItems.Add(new APObject(Item.item)
+                if (item.headline == null || string.Equals(item.headline.ToString(),""))
                 {
+                    // ignore that sucker
+                }
+                else
+                {
+                    apFeedItems.Add(new APObject(Item.item)
+                    {
 
-                    headline = item.headline != null ? (string)item.headline : "",
-                    uri = item.uri != null ? (string)item.uri : ""
+                        headline = item.headline != null ? (string)item.headline : "",
+                        uri = item.uri != null ? (string)item.uri : "",
+                        altID = item.altids.itemid != null ? item.altids.itemid.ToString() : ""
 
-                });
+                    });
+                }
+                
             }
 
             
@@ -141,11 +255,13 @@ namespace NewsBuddy
         }
 
 
-        void Dispose()
+        public void Dispose()
         {
             if (client != null)
             {
                 client.Dispose();
+                Trace.WriteLine("Disposing feed client");
+                client = null;
             }
         }
 

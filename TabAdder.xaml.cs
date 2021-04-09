@@ -27,7 +27,7 @@ namespace NewsBuddy
         {
             InitializeComponent();
             PopulateList();
-            //MonitorDirectory();
+            MonitorDirectory();
         }
 
         public string chosenFile;
@@ -54,11 +54,32 @@ namespace NewsBuddy
         {
             TemplatesList.Items.Clear();
             string[] templates = Directory.GetFiles(Settings.Default.TemplatesDirectory);
+            TemplatesList.Items.Add(new ListBoxItem()
+            {
+                Content = "Add Script:",
+                IsEnabled = false,
+                HorizontalContentAlignment = HorizontalAlignment.Center
+                
+            }) ;
+
             ListBoxItem blank = new ListBoxItem();
             blank.Content = "Blank Script";
             blank.Tag = "/EmptyScript.xaml";
             TemplatesList.Items.Add(blank);
+
+            ListBoxItem open = new ListBoxItem();
+            open.Content = "Open Existing Script...";
+            open.Name = "Opener";
+            TemplatesList.Items.Add(open);
+
             TemplatesList.Items.Add(new Separator());
+
+            TemplatesList.Items.Add(new ListBoxItem()
+            {
+                Content = "Create From Template:",
+                IsEnabled = false,
+                HorizontalContentAlignment = HorizontalAlignment.Center
+            }) ;
             foreach (string file in templates)
             {
                 ListBoxItem item = new ListBoxItem();
@@ -66,11 +87,7 @@ namespace NewsBuddy
                 item.Tag = file;
                 TemplatesList.Items.Add(item);
             }
-            TemplatesList.Items.Add(new Separator());
-            ListBoxItem open = new ListBoxItem();
-            open.Content = "Open a Script...";
-            open.Name = "Opener";
-            TemplatesList.Items.Add(open);
+            
         }
 
         private void TemplatesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -116,7 +133,7 @@ namespace NewsBuddy
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            Trace.WriteLine("reloaded with page_loaded");
+            Trace.WriteLine("reloaded with page_loaded - tabadder");
             this.Dispatcher.Invoke(() =>
             {
                 PopulateList();

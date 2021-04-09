@@ -10,7 +10,6 @@
       Loaded="Page_Loaded">
 
     <StackPanel>
-        <Label>Select a Template:</Label>
         <ListBox Name="TemplatesList" SelectionChanged="TemplatesList_SelectionChanged" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
 
         </ListBox>

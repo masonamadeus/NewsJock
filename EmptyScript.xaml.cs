@@ -188,9 +188,10 @@ namespace NewsBuddy
                 XamlWriter.Save(rtbScript.Document, fs);
                 fs.Close();
                 ((MainWindow)Application.Current.MainWindow).ChangeTabName(scriptUri);
+                isChanged = false;
 
             }
-            isChanged = false;
+            
             ToggleLoading(false);
         }
 
@@ -220,8 +221,9 @@ namespace NewsBuddy
                 fs.Close();
                 ((MainWindow)Application.Current.MainWindow).ChangeTabName(scriptUri);
 
+                isChanged = false;
+
             }
-            isChanged = false;
             ToggleLoading(false);
         }
 
@@ -244,6 +246,7 @@ namespace NewsBuddy
                 fs = new FileStream(fileName, FileMode.Create);
                 XamlWriter.Save(rtbScript.Document, fs);
                 fs.Close();
+                isChanged = false;
 
             }
             else
@@ -272,10 +275,10 @@ namespace NewsBuddy
                     XamlWriter.Save(rtbScript.Document, fs);
                     fs.Close();
                     ((MainWindow)Application.Current.MainWindow).ChangeTabName(scriptUri);
+                    isChanged = false;
 
                 }
             }
-            isChanged = false;
             ToggleLoading(false);
         }
 
@@ -300,6 +303,7 @@ namespace NewsBuddy
                     scriptUri = opn.FileName;
                     rtbScript.Document = loaded;
                     RestoreNBXaml();
+                    isChanged = false;
                 }
             }
 
@@ -319,6 +323,7 @@ namespace NewsBuddy
                 rtbScript.Document = loaded;
                 scriptUri = uri;
                 RestoreNBXaml();
+                isChanged = false;
 
             }
             else { MessageBox.Show("This file is busted. Sorry!"); }
