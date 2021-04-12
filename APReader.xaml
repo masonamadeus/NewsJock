@@ -5,25 +5,29 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:NewsBuddy"
         mc:Ignorable="d"
-        Title="APReader"
-        SizeToContent="WidthAndHeight"
+        Title="AP Feed - NewsJock"
+        Width="900"
+        Height="600"
         Closing="Window_Closing"
-        WindowStartupLocation="CenterOwner">
+        WindowStartupLocation="CenterOwner"
+        >
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="350"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Button x:Name="btn_RefreshAP" Click="btn_RefreshAP_Click" Content="Refresh AP Headlines" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="0"/>
-        <ListBox x:Name="list_APStories" MaxHeight="500" MaxWidth="250"
+        <Button x:Name="btn_RefreshAP" Click="RefreshAP" Content="Refresh AP Headlines" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="0"/>
+        <ListBox x:Name="list_APStories" MaxWidth="350"
                  ScrollViewer.VerticalScrollBarVisibility="Auto"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                  Grid.Column="0" Grid.Row="1"
                  SelectionChanged="list_APStories_SelectionChanged"
+                 FontWeight="Bold"
+                 FontSize="14"
                  >
             <ListBox.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -32,8 +36,11 @@
             </ListBox.ItemsPanel>
         </ListBox>
 
+        <ScrollViewer x:Name="scrl_Story" Grid.Column="1" Grid.Row="1" MaxWidth="800" Margin="10,0,10,5" CanContentScroll="False">
+            <Frame x:Name="frame_Story" NavigationUIVisibility="Hidden"/>
 
-        <TextBox x:Name="text_CurrentStory" MaxHeight="500" MaxWidth="400" TextWrapping="Wrap" ScrollViewer.VerticalScrollBarVisibility="Auto" Grid.Column="1" Grid.Row="1"/>
+        </ScrollViewer>
+
     </Grid>
     <Window.Resources>
         <DataTemplate DataType="{x:Type local:APObject}">

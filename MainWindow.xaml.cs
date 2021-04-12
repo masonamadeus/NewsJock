@@ -128,11 +128,21 @@ namespace NewsBuddy
             Trace.WriteLine("Started Running");
         }
 
+        // THE DFB
+        // FOR YOU AND ME
+        // THE DFB FOREVER AND ALWAYS
+
         void DebuggerFunction_Click(object sender, EventArgs e)
         {
             APReader aPReader = new APReader();
+            aPReader.Owner = this;
             aPReader.Show();
+            aPReader.Owner = null;
         }
+
+        // YOU ARE NOW LEAVING THE DFB
+        // WE HOPE YOU ENJOYED YOUR STAY
+        // THE DFB WILL ALWAYS BE HERE
 
         void ExceptionCatcher(Exception e, bool promptForShutdown)
         {
@@ -631,6 +641,7 @@ namespace NewsBuddy
             }
             return builder.ToString();
         }
+
         private TabItem AddTabItem(bool isDefault, string uri = "/EmptyScript.xaml")
         {
             int count = _tabItems.Count;

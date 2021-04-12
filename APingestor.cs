@@ -29,15 +29,12 @@ namespace NewsBuddy
         public APingestor()
         {
             apiKey = Settings.Default.APapiKey;
-            // call up feed and start it for all entitlements
         }
         
         public List<APObject> GetItems()
         {
             return apFeedItems;
         }
-
-
 
         public XmlDocument GetItem(string itemID)
         {
@@ -190,23 +187,15 @@ namespace NewsBuddy
 
         }
 
-        private void ProcessEntry ( dynamic Item, int index)
+        private void ProcessEntry (dynamic v_item, int index)
         {
-            /*
-            
-            string iid = item.altids != null ? (string)item.altids.itemid : "";
-            string etag = item.altids != null ? (string)item.altids.etag : "";
-            string uri = item.uri != null ? (string)item.uri : "";
-            var version = (int)item.version;
-            var type = (string)item.type;
-            var headline = item.headline != null ? item.headline.ToString() : "";
-            */
-
-            var item = Item.item;
+            var item = v_item.item;
             var associations_len = item.associations != null ? ((JContainer)item.associations).Count : 0;
 
             if (associations_len != 0)
             {
+                //APObject assocParent = new APObject(item, this);
+
                 foreach (dynamic ac in item.associations)
                 {
                     dynamic assoc = ac.Value;
@@ -218,7 +207,7 @@ namespace NewsBuddy
                         }
                         else
                         {
-                            apFeedItems.Add(new APObject(assoc)
+                            apFeedItems.Add(new APObject(assoc, this)
                             {
                                 headline = assoc.headline != null ? assoc.headline.ToString() : "",
                                 uri = assoc.uri != null ? assoc.uri.ToString() : "",
@@ -238,7 +227,7 @@ namespace NewsBuddy
                 }
                 else
                 {
-                    apFeedItems.Add(new APObject(Item.item)
+                    apFeedItems.Add(new APObject(v_item.item, this)
                     {
 
                         headline = item.headline != null ? (string)item.headline : "",

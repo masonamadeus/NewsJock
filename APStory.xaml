@@ -1,0 +1,37 @@
+﻿<Page x:Class="NewsBuddy.APStory"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:NewsBuddy"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Height="Auto"
+      Width="Auto"
+      Title="APStory">
+
+    <StackPanel Orientation="Vertical" CanVerticallyScroll="True">
+        
+
+        <TextBlock x:Name="txt_Headline" FontSize="22" FontWeight="Bold" Text="Headline"
+                   TextWrapping="Wrap"
+                 Height="Auto"
+                   TextAlignment="Center"/>
+        <TextBlock x:Name="txt_Author" FontSize="11" FontStyle="Italic" Text="Author"
+                   TextWrapping="Wrap" Foreground="Black"
+                 Height="Auto"
+                   TextAlignment="Center"/>
+        <TextBlock x:Name="txt_Location" FontSize="12" FontWeight="DemiBold" Text="Location"
+                   TextWrapping="Wrap" Foreground="Black"
+                   Height="Auto"
+                   TextAlignment="Center"/>
+        <Separator/>
+        <TextBlock x:Name="txt_Story" FontSize="16" Text="Story story story story"
+                   TextWrapping="Wrap" Foreground="Black"
+                 Height="Auto"/>
+
+
+
+       
+    </StackPanel>
+</Page>

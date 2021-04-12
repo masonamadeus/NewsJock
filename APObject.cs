@@ -12,23 +12,27 @@ namespace NewsBuddy
         public string altID { get; set; }
         public string uri { get; set; }
         public object item { get; set; }
-        public XmlDocument story { get; set; }
+        public APStory story { get; set; }
         public bool hasStory { get; set; }
+        private APingestor ingestor { get; set; }
+        public List<APObject> associations { get; set; }
 
-        public APObject(object obj)
+        public APObject(object obj, APingestor _ingestor)
         {
             this.item = obj;
+            this.ingestor = _ingestor;
             hasStory = false;
         }
 
-        public bool GetStory(APingestor ingestor)
+        public bool GetStory()
         {
             if (!hasStory)
             {
                 Trace.WriteLine("Fetching Story for " + headline);
-                this.story = ingestor.GetItem(altID);
-                if (story != null)
+                XmlDocument check = ingestor.GetItem(altID);
+                if (check != null)
                 {
+                    this.story = new APStory(check);
                     hasStory = true;
                     return true;
                 }
@@ -43,6 +47,8 @@ namespace NewsBuddy
             }
             
         }
+
+
 
     }
 }

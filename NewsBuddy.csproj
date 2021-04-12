@@ -24,7 +24,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <OutputPath>C:\Users\Mason\Desktop\NewsJock\Build1\</OutputPath>
+    <OutputPath>C:\Users\Mason\Desktop\NewsJock\DebugBuild\</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>

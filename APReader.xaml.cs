@@ -20,30 +20,15 @@ namespace NewsBuddy
     public partial class APReader : Window
     {
         public APingestor ingest;
-        private List<APObject> stories;
+       // private List<APObject> stories;
         private bool isLoaded = false;
         public APReader()
         {
             InitializeComponent();
             ingest = new APingestor();
-            ingest.GetFeed();
-            if (ingest.isAuthorized)
-            {
-                foreach (APObject obj in ingest.GetItems())
-                {
-                    list_APStories.Items.Add(obj);
-                    list_APStories.Items.Add(new Separator());
-                }
-            }
-            else
-            {
-                list_APStories.Items.Add(new TextBlock()
-                {
-                    Text = "Unauthorized. Check your API Key in NewsJock Settings."
-                });
-            }
-            this.Owner = Application.Current.MainWindow;
+            RefreshAP(new object(), new RoutedEventArgs());
             isLoaded = true;
+            list_APStories.SelectedItem = list_APStories.Items[0];
 
         }
 
@@ -54,16 +39,11 @@ namespace NewsBuddy
                 APObject selected = list_APStories.SelectedItem as APObject;
                 if (selected != null)
                 {
-                    StringBuilder builder = new StringBuilder();
-                    if (selected.GetStory(ingest))
+                    if (selected.GetStory())
                     {
-                        foreach (XmlNode node in selected.story.ChildNodes)
-                        {
-                            builder.AppendLine(node.InnerText);
-                        }
-                        text_CurrentStory.Text = builder.ToString();
+                        frame_Story.Content=selected.story;
+                        scrl_Story.ScrollToVerticalOffset(0);
                     }
-
                 }
             }
            
@@ -74,7 +54,7 @@ namespace NewsBuddy
             ingest.Dispose();
         }
 
-        private void btn_RefreshAP_Click(object sender, RoutedEventArgs e)
+        private void RefreshAP(object sender, RoutedEventArgs e)
         {
             ingest.GetFeed();
             list_APStories.Items.Clear();
@@ -92,7 +72,13 @@ namespace NewsBuddy
                 {
                     Text = "Unauthorized. Check your API Key in NewsJock Settings."
                 });
+                frame_Story.Content = new TextBlock()
+                {
+                    Text = "API Unauthorized. Check your API key settings in NewsJock Settings. \nIf you need help: contact your supervisor.\nIf you ARE the supervisor, contact AP and get an API key."
+                };
             }
         }
+
+      
     }
 }
