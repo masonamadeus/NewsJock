@@ -16,15 +16,19 @@
         <TextBlock x:Name="txt_Headline" FontSize="22" FontWeight="Bold" Text="Headline"
                    TextWrapping="Wrap"
                  Height="Auto"
-                   TextAlignment="Center"/>
+                   TextAlignment="Center"
+                   Margin="5,10,5,1"/>
         <TextBlock x:Name="txt_Author" FontSize="11" FontStyle="Italic" Text="Author"
                    TextWrapping="Wrap" Foreground="Black"
                  Height="Auto"
-                   TextAlignment="Center"/>
+                   TextAlignment="Center"
+                   Margin="0,2,0,2"/>
+        <Separator/>
         <TextBlock x:Name="txt_Location" FontSize="12" FontWeight="DemiBold" Text="Location"
                    TextWrapping="Wrap" Foreground="Black"
                    Height="Auto"
-                   TextAlignment="Center"/>
+                   TextAlignment="Center"
+                   Margin="0,2,0,2"/>
         <Separator/>
         <TextBlock x:Name="txt_Story" FontSize="16" Text="Story story story story"
                    TextWrapping="Wrap" Foreground="Black"

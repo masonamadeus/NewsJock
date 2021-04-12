@@ -28,18 +28,17 @@ namespace NewsBuddy
             ingest = new APingestor();
             RefreshAP(new object(), new RoutedEventArgs());
             isLoaded = true;
-            list_APStories.SelectedItem = list_APStories.Items[0];
 
         }
 
-        private void list_APStories_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void list_APStories_SelectionChanged()
         {
             if (isLoaded)
             {
                 APObject selected = list_APStories.SelectedItem as APObject;
                 if (selected != null)
                 {
-                    if (selected.GetStory())
+                    if (selected.HasStory)
                     {
                         frame_Story.Content=selected.story;
                         scrl_Story.ScrollToVerticalOffset(0);
@@ -56,14 +55,30 @@ namespace NewsBuddy
 
         private void RefreshAP(object sender, RoutedEventArgs e)
         {
-            ingest.GetFeed();
             list_APStories.Items.Clear();
+            ingest.GetFeed();
             if (ingest.isAuthorized)
             {
                 foreach (APObject obj in ingest.GetItems())
                 {
-                    list_APStories.Items.Add(obj);
-                    list_APStories.Items.Add(new Separator());
+                    if (obj.isAssocParent)
+                    {
+                        TreeViewItem assocParent = new TreeViewItem()
+                        {
+                            Header = obj.headline
+                        };
+                        foreach (APObject assoc in obj.associations)
+                        {
+                            assocParent.Items.Add(assoc);
+                        }
+
+                        list_APStories.Items.Add(assocParent);
+                        
+                    }
+                    else
+                    {
+                        list_APStories.Items.Add(obj);
+                    }
                 }
             }
             else
@@ -79,6 +94,14 @@ namespace NewsBuddy
             }
         }
 
-      
+        private void list_APStories_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            this.Dispatcher.Invoke(() => 
+            {
+                list_APStories_SelectionChanged();
+            });
+        }
+
+    
     }
 }

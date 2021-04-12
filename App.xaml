@@ -32,6 +32,8 @@
             </Setter>
         </Style>
 
+      
+
         <Style x:Key="btnNBc" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="FontSize" Value="24"/>
