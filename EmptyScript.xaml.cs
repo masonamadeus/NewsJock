@@ -19,6 +19,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Ookii.Dialogs.Wpf;
+using System.Linq;
 
 namespace NewsBuddy
 {
@@ -46,6 +47,27 @@ namespace NewsBuddy
             }
 
             isChanged = false;
+
+            MonitorDirectories(Settings.Default.ClipsDirectory);
+            MonitorDirectories(Settings.Default.SoundersDirectory);
+        }
+
+        public Page1(List<APChunk> chunks)
+        {
+            InitializeComponent();
+
+            rtbScript.AddHandler(RichTextBox.DragOverEvent, new DragEventHandler(Script_DragOver), true);
+            rtbScript.AddHandler(RichTextBox.DropEvent, new DragEventHandler(Script_Drop), true);
+            rtbScript.IsDocumentEnabled = true;
+            selFontSize.ItemsSource = new List<Double>() { 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 50, 60, 72 };
+            selFontSize.Focusable = false;
+            TextRange doc = new TextRange(rtbScript.Document.ContentStart, rtbScript.Document.ContentEnd);
+            doc.Text = "";
+            rtbScript.CaretPosition = rtbScript.Document.ContentStart.DocumentStart;
+
+            isChanged = false;
+
+            InsertChunksFromIngestor(chunks);
 
             MonitorDirectories(Settings.Default.ClipsDirectory);
             MonitorDirectories(Settings.Default.SoundersDirectory);
@@ -124,7 +146,7 @@ namespace NewsBuddy
                 temp = rtbScript.Selection.GetPropertyValue(Inline.FontSizeProperty);
                 Paragraph startPara = rtbScript.Selection.Start.Paragraph;
                 Paragraph endPara = rtbScript.Selection.End.Paragraph;
-                if (startPara != null && (startPara.Parent is ListItem) && (endPara.Parent is ListItem) && object.ReferenceEquals(((ListItem)startPara.Parent).List, ((ListItem)endPara.Parent).List))
+                if (startPara != null && endPara != null && (startPara.Parent is ListItem) && (endPara.Parent is ListItem) && object.ReferenceEquals(((ListItem)startPara.Parent).List, ((ListItem)endPara.Parent).List))
                 {
                     TextMarkerStyle markerStyle = ((ListItem)startPara.Parent).List.MarkerStyle;
                     if (markerStyle == TextMarkerStyle.Disc)
@@ -159,6 +181,56 @@ namespace NewsBuddy
             {
                 return;
             }
+
+        }
+
+        public void InsertChunksFromIngestor(List<APChunk> chunks)
+        {
+            List<Paragraph> newParas = new List<Paragraph>();
+            for (int x = 0; x < chunks.Count; x++)
+            {
+                APChunk chunk = chunks[x];
+                Paragraph text = new Paragraph();
+                if (chunk.chunk_fontWeight == FontWeights.Bold || chunk.chunk_fontStyle == FontStyles.Italic)
+                {
+                    text.Inlines.Add(chunk.chunk_text);
+                }
+                else
+                { 
+                    text.Inlines.Add("     "+chunk.chunk_text); 
+                }
+                text.FontStyle = chunk.chunk_fontStyle;
+                text.FontWeight = chunk.chunk_fontWeight;
+                text.FontSize = chunk.chunk_fontSize;
+                text.TextAlignment = chunk.chunk_textAlignment;
+                newParas.Add(text);
+            }
+
+            if (rtbScript.CaretPosition != rtbScript.Document.ContentStart.DocumentStart)
+            {
+                rtbScript.CaretPosition = rtbScript.CaretPosition.InsertParagraphBreak();
+            }
+
+            for (int i = 0; i < newParas.Count; i++)
+            {
+               if (rtbScript.CaretPosition.Paragraph.Parent is ListItem)
+                {
+                    Trace.WriteLine("It's a list bro");
+                    MessageBox.Show("Cannot insert into list");
+                    return;
+                }
+                else
+                {
+                    rtbScript.Document.Blocks.InsertBefore(rtbScript.CaretPosition.Paragraph, newParas[i]);
+                }
+
+
+            }
+
+        }
+
+        public void InsertStringFromIngestor(string words)
+        {
 
         }
 

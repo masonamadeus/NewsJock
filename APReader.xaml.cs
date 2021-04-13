@@ -22,9 +22,12 @@ namespace NewsBuddy
         public APingestor ingest;
        // private List<APObject> stories;
         private bool isLoaded = false;
+        public MainWindow mainWindow { get; set; }
         public APReader()
         {
             InitializeComponent();
+            editorGrid.Visibility = Visibility.Collapsed;
+            mainWindow = Application.Current.Windows[0] as MainWindow;
             ingest = new APingestor();
             RefreshAP(new object(), new RoutedEventArgs());
             isLoaded = true;
@@ -40,8 +43,21 @@ namespace NewsBuddy
                 {
                     if (selected.HasStory)
                     {
+                        if (selected.story.isEditMode)
+                        {
+                            btn_ToggleMode.Content = "Revert to Original Story";
+                        }
+                        else
+                        {
+                            btn_ToggleMode.Content = "Switch to Story Editor Mode";
+                        }
                         frame_Story.Content=selected.story;
+                        editorGrid.Visibility = Visibility.Visible;
                         scrl_Story.ScrollToVerticalOffset(0);
+                    }
+                    else
+                    {
+                        editorGrid.Visibility = Visibility.Collapsed;
                     }
                 }
             }
@@ -102,6 +118,36 @@ namespace NewsBuddy
             });
         }
 
-    
+        private void btn_ToggleMode_Click(object sender, RoutedEventArgs e)
+        {
+            Button btn = (Button)sender;
+            APStory story = frame_Story.Content as APStory;
+            story.ToggleModes();
+            if (story.isEditMode)
+            {
+                btn.Visibility = Visibility.Visible;
+                btn.Content = "Revert to Original Story";
+            }
+            else
+            {
+                btn.Visibility = Visibility.Visible;
+                btn.Content = "Switch to Story Editor Mode";
+            }
+
+        }
+
+        private void btn_SendToScript_Click(object sender, RoutedEventArgs e)
+        {
+            APStory story = frame_Story.Content as APStory;
+            mainWindow.currentScript.InsertChunksFromIngestor(story.GetChunks());
+        }
+
+        private void btn_SendToNewScript_Click(object sender, RoutedEventArgs e)
+        {
+            
+            APStory story = frame_Story.Content as APStory;
+            mainWindow.AddNewTabFromChunks(story.GetChunks());
+
+        }
     }
 }

@@ -144,7 +144,7 @@
 
         
 
-        <TabControl Name="DynamicTabs" ItemsSource="{Binding}" Margin="1,0,5,5">
+        <TabControl Name="DynamicTabs" ItemsSource="{Binding}" Margin="1,0,5,5" Selector.SelectionChanged="DynamicTabs_SelectionChanged">
             <TabControl.Resources>
                 <DataTemplate x:Key="TabHeader" DataType="TabItem">
                     <DockPanel>

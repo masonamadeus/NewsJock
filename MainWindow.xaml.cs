@@ -39,6 +39,8 @@ namespace NewsBuddy
         public string dirTemplatesPath = Settings.Default.TemplatesDirectory;
         public string[] audioExtensions = new[] { ".mp3", ".wav", ".wma", ".m4a", ".flac" };
         public string scriptExtension = ".xaml";
+        public TabItem currentTab { get; set; }
+        public Page1 currentScript { get { return (((Frame)currentTab.Content).Content as Page1) != null ? (((Frame)currentTab.Content).Content as Page1) : null; } }
 
         public NJAudioPlayer SoundersPlayerNA;
         public NJAudioPlayer ClipsPlayerNA;
@@ -642,6 +644,13 @@ namespace NewsBuddy
             return builder.ToString();
         }
 
+
+        /// <summary>
+        /// Adds a tab item based on either the URI of an existing file, or the default blank script.
+        /// </summary>
+        /// <param name="isDefault"></param>
+        /// <param name="uri"></param>
+        /// <returns></returns>
         private TabItem AddTabItem(bool isDefault, string uri = "/EmptyScript.xaml")
         {
             int count = _tabItems.Count;
@@ -682,12 +691,49 @@ namespace NewsBuddy
             return tab;
         }
 
+        /// <summary>
+        /// Add a new tab item from APChunks, which you get from the ingestor module.
+        /// </summary>
+        /// <param name="chunks"></param>
+        /// <returns></returns>
+        private TabItem AddTabItem(List<APChunk> chunks)
+        {
+            int count = _tabItems.Count;
+            string tabName = String.Format("Script {0}", _tabItems.Count);
 
-        public void AddNewTabFromFrame(string uri)
+            TabItem tab = new TabItem();
+
+            tab.Header = tabName;
+
+            tab.Name = RandomID() + _tabItems.Count.ToString();
+            tab.HeaderTemplate = DynamicTabs.FindResource("TabHeader") as DataTemplate;
+
+            Frame newContent = new Frame();
+
+            newContent.NavigationService.Navigate(new Page1(chunks));
+            
+            tab.Content = newContent;
+
+            _tabItems.Insert(count - 1, tab);
+
+            return tab;
+        }
+
+        public void AddNewTabFromChunks(List<APChunk> chunks)
         {
             DynamicTabs.DataContext = null;
-            TabItem newTab = this.AddTabItem(false, uri);
+            TabItem newTab = this.AddTabItem(chunks);
             DynamicTabs.SelectedItem = newTab;
+            currentTab = newTab;
+            DynamicTabs.DataContext = _tabItems;
+        }
+
+        public void AddNewTabFromFrame(string uri, bool isBlank = false)
+        {
+            DynamicTabs.DataContext = null;
+            TabItem newTab = this.AddTabItem(isBlank, uri);
+            DynamicTabs.SelectedItem = newTab;
+            currentTab = newTab;
             DynamicTabs.DataContext = _tabItems;
         }
 
@@ -716,6 +762,7 @@ namespace NewsBuddy
                             if (selectedTab == null || selectedTab.Equals(tab))
                             {
                                 DynamicTabs.SelectedItem = _tabItems[0];
+                                currentTab = _tabItems[0];
                             }
 
                             AddTabItem(true);
@@ -732,15 +779,16 @@ namespace NewsBuddy
                         if (selectedTab == null || selectedTab.Equals(tab))
                         {
                             DynamicTabs.SelectedItem = _tabItems[0];
+                            currentTab = _tabItems[0];
                         }
 
-                        
+
 
                         DynamicTabs.DataContext = _tabItems;
                     }
 
                 }
-                else if ( (((Frame)tab.Content).Content as Page1).isChanged)
+                else if ((((Frame)tab.Content).Content as Page1).isChanged)
                 {
                     if (MessageBox.Show(string.Format("'{0}' has not been saved.\nClose without saving?", tab.Header.ToString()),
                   "Close Tab", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
@@ -753,6 +801,7 @@ namespace NewsBuddy
                         if (selectedTab == null || selectedTab.Equals(tab))
                         {
                             DynamicTabs.SelectedItem = _tabItems[0];
+                            currentTab = _tabItems[0];
                         }
 
                         DynamicTabs.DataContext = _tabItems;
@@ -770,6 +819,7 @@ namespace NewsBuddy
                     if (selectedTab == null || selectedTab.Equals(tab))
                     {
                         DynamicTabs.SelectedItem = _tabItems[0];
+                        currentTab = _tabItems[0];
                     }
 
                     DynamicTabs.DataContext = _tabItems;
@@ -796,6 +846,7 @@ namespace NewsBuddy
                 catch
                 {
                     DynamicTabs.SelectedItem = _tabItems[0];
+                    currentTab = _tabItems[0];
                 }
             }
 
@@ -953,6 +1004,8 @@ namespace NewsBuddy
             {
                 PrintLog();
             }
+
+            Application.Current.Shutdown();
 
 
         }
@@ -1294,12 +1347,19 @@ namespace NewsBuddy
             }
             DynamicTabs.DataContext = _tabItems;
             DynamicTabs.SelectedItem = _tabItems[0];
+            currentTab = _tabItems[0];
 
         }
 
         private void MenuItem_Click(object sender, RoutedEventArgs e)
         {
 
+        }
+
+        private void DynamicTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            TabControl tabs = (TabControl)sender;
+            currentTab = tabs.SelectedItem as TabItem;
         }
     }
 

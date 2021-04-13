@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Xml;
+using System.Windows.Input;
 
 namespace NewsBuddy
 {
@@ -102,6 +103,7 @@ namespace NewsBuddy
 
         public void GetFeed()
         {
+            Mouse.OverrideCursor = Cursors.Wait;
             Trace.WriteLine("Getting Feed");
             if (client == null)
             {
@@ -141,6 +143,8 @@ namespace NewsBuddy
                 }
                 nextETag = new EntityTagHeaderValue(response.Headers.ETag.ToString());
 
+                SortList();
+
                 if (Debugger.IsAttached)
                 {
                     Trace.WriteLine("Next ETag is: " + nextETag.ToString());
@@ -161,6 +165,7 @@ namespace NewsBuddy
 
                 Trace.WriteLine(response.StatusCode.ToString());
             }
+            Mouse.OverrideCursor = null;
         }
 
         private void ProcessFeed(string body)
@@ -240,6 +245,26 @@ namespace NewsBuddy
 
                 });
             }
+        }
+
+        private void SortList()
+        {
+            List<APObject> assocParents = new List<APObject>();
+            for (int o = 0; o < apFeedItems.Count; o++)
+            {
+                APObject item = apFeedItems[o];
+                if (item.isAssocParent)
+                {
+                    assocParents.Add(item);
+                }
+            }
+
+            foreach (APObject parent in assocParents)
+            {
+                apFeedItems.Remove(parent);
+                apFeedItems.Insert(0, parent);
+            }
+
         }
 
         public void Dispose()

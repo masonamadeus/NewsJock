@@ -17,10 +17,10 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="30"/>
+            <RowDefinition Height="50"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Button x:Name="btn_RefreshAP" Click="RefreshAP" Content="Refresh AP Headlines" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="0"/>
+        <Button x:Name="btn_RefreshAP" Padding="8" FontWeight="Bold" Click="RefreshAP" Content="Refresh AP Headlines" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="0"/>
         <TreeView x:Name="list_APStories" MaxWidth="350"
                  ScrollViewer.VerticalScrollBarVisibility="Auto"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -47,7 +47,7 @@
                         <Setter.Value>
                             <ControlTemplate TargetType="{x:Type ToggleButton}">
                                 <Border Background="Transparent" Height="16" Padding="5,5,5,5" Width="16">
-                                    <Path x:Name="ExpandPath" Data="{StaticResource TreeArrow}" Fill="{StaticResource TreeViewItem.TreeArrow.Static.Fill}" Stroke="{StaticResource TreeViewItem.TreeArrow.Static.Stroke}">
+                                    <Path x:Name="ExpandPath" Data="{StaticResource TreeArrow}" Fill="{StaticResource TreeViewItem.TreeArrow.Static.Checked.Fill}" Stroke="{StaticResource TreeViewItem.TreeArrow.Static.Checked.Stroke}">
                                         <Path.RenderTransform>
                                             <RotateTransform Angle="135" CenterY="3" CenterX="3"/>
                                         </Path.RenderTransform>
@@ -156,7 +156,20 @@
                 </Style>
             </TreeView.Resources>
         </TreeView>
-
+        <Grid x:Name="editorGrid" Grid.Column="2" Grid.Row="0" VerticalAlignment="Center">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+        <Button x:Name="btn_ToggleMode" Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="1" Click="btn_ToggleMode_Click" Content="Switch to Story Editor Mode" Padding="2"/>
+        <Button x:Name="btn_SendToScript" Grid.Column="0" Grid.Row="0" Click="btn_SendToScript_Click" Content="Insert in Current Script" FontWeight="Bold" Padding="2" Margin="2"/>
+        <Button x:Name="btn_SendToNewScript" Grid.Column="2" Grid.Row="0" Click="btn_SendToNewScript_Click" Content="Send to New Script" FontWeight="Bold" Padding="2" Margin="2"/>
+        </Grid>
         <ScrollViewer x:Name="scrl_Story" Grid.Column="1" Grid.Row="1" MaxWidth="800" Margin="10,0,10,5" CanContentScroll="False">
             <Frame x:Name="frame_Story" NavigationUIVisibility="Hidden"/>
 
