@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Xml;
+using System.Windows.Input;
 
 namespace NewsBuddy
 {
@@ -38,6 +39,10 @@ namespace NewsBuddy
 
         public XmlDocument GetItem(string itemID)
         {
+            if (itemID == null || itemID == "")
+            {
+                return null;
+            }
             Trace.WriteLine("getting ap item");
             if (client == null)
             {
@@ -69,7 +74,7 @@ namespace NewsBuddy
                 Trace.WriteLine(js.error);
                 return null;
             }
-
+           
             var downloadUrl = js.data.item.renditions.nitf.href;
             if (downloadUrl == null)
             {
@@ -98,6 +103,7 @@ namespace NewsBuddy
 
         public void GetFeed()
         {
+            Mouse.OverrideCursor = Cursors.Wait;
             Trace.WriteLine("Getting Feed");
             if (client == null)
             {
@@ -137,6 +143,8 @@ namespace NewsBuddy
                 }
                 nextETag = new EntityTagHeaderValue(response.Headers.ETag.ToString());
 
+                SortList();
+
                 if (Debugger.IsAttached)
                 {
                     Trace.WriteLine("Next ETag is: " + nextETag.ToString());
@@ -157,6 +165,7 @@ namespace NewsBuddy
 
                 Trace.WriteLine(response.StatusCode.ToString());
             }
+            Mouse.OverrideCursor = null;
         }
 
         private void ProcessFeed(string body)
@@ -165,7 +174,7 @@ namespace NewsBuddy
 
             if (js.error != null)
             {
-                Trace.WriteLine(js.error);
+                Trace.WriteLine(js.error.ToString());
                 return;
             }
 
@@ -183,66 +192,80 @@ namespace NewsBuddy
                 ProcessEntry(itemsBlock[entry], entry);
             }
 
-            
-
         }
 
-        private void ProcessEntry (dynamic v_item, int index)
+        private void ProcessEntry(dynamic d_item, int index)
         {
-            var item = v_item.item;
+            List<APObject> textAssociations = new List<APObject>();
+            var item = d_item.item;
             var associations_len = item.associations != null ? ((JContainer)item.associations).Count : 0;
 
+            // if there are associations at all, check them to see if they are text.
             if (associations_len != 0)
             {
-                //APObject assocParent = new APObject(item, this);
-
-                foreach (dynamic ac in item.associations)
+                foreach (dynamic association in item.associations)
                 {
-                    dynamic assoc = ac.Value;
-                    if (string.Equals(assoc.type.ToString(), "text") )
+                    if (String.Equals(association.Value.type.ToString(), "text"))
                     {
-                        if (assoc.headline == null || string.Equals(assoc.headline.ToString(),""))
+                        // if it is text, add it to the list of text associations
+                        dynamic currentAssoc = association.Value;
+                        textAssociations.Add(new APObject(currentAssoc, this)
                         {
-                            // ignore it
-                        }
-                        else
-                        {
-                            apFeedItems.Add(new APObject(assoc, this)
-                            {
-                                headline = assoc.headline != null ? assoc.headline.ToString() : "",
-                                uri = assoc.uri != null ? assoc.uri.ToString() : "",
-                                altID = assoc.altids.itemid != null ? assoc.altids.itemid.ToString() : ""
-                            });
-                        }
-                        
+                            headline = currentAssoc.headline != null ? currentAssoc.headline.ToString() : "",
+                            altID = currentAssoc.altids.itemid != null ? currentAssoc.altids.itemid.ToString() : "",
+                            uri = currentAssoc.uri != null ? item.uri.ToString() : ""
+                        });
                     }
-                        
                 }
             }
-            else 
+
+            // if there ARE text associations, make a parent container with them in it.
+            if (textAssociations.Count > 0)
             {
-                if (item.headline == null || string.Equals(item.headline.ToString(),""))
+                APObject assocParent = new APObject(item, this, true)
                 {
-                    // ignore that sucker
-                }
-                else
+                    headline = item.headline != null ? item.headline.ToString() : "",
+                    uri = null,
+                    altID = null
+                };
+
+                foreach (APObject textAssociation in textAssociations)
                 {
-                    apFeedItems.Add(new APObject(v_item.item, this)
-                    {
-
-                        headline = item.headline != null ? (string)item.headline : "",
-                        uri = item.uri != null ? (string)item.uri : "",
-                        altID = item.altids.itemid != null ? item.altids.itemid.ToString() : ""
-
-                    });
+                    assocParent.associations.Add(textAssociation);
                 }
-                
+                apFeedItems.Add(assocParent);
             }
+            else // if there are not text associations, make a new story and strip out the associations.
+            {
+                apFeedItems.Add(new APObject(item, this)
+                {
+                    headline = item.headline != null ? item.headline.ToString() : "",
+                    uri = item.uri != null ? item.uri.ToString() : "",
+                    altID = item.altids.itemid != null ? item.altids.itemid.ToString() : ""
 
-            
-
+                });
+            }
         }
 
+        private void SortList()
+        {
+            List<APObject> assocParents = new List<APObject>();
+            for (int o = 0; o < apFeedItems.Count; o++)
+            {
+                APObject item = apFeedItems[o];
+                if (item.isAssocParent)
+                {
+                    assocParents.Add(item);
+                }
+            }
+
+            foreach (APObject parent in assocParents)
+            {
+                apFeedItems.Remove(parent);
+                apFeedItems.Insert(0, parent);
+            }
+
+        }
 
         public void Dispose()
         {

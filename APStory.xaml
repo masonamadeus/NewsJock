@@ -9,29 +9,70 @@
       Height="Auto"
       Width="Auto"
       Title="APStory">
+    <DockPanel>
+        <Grid DockPanel.Dock="Top" x:Name="editorControls">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <TextBlock HorizontalAlignment="Center" Grid.Row="0" Text="Any changes will be lost if you switch back to Reader mode." TextWrapping="Wrap" FontWeight="Bold" FontStyle="Italic"/>
+            <Button x:Name="btn_DeleteUnchecked" Grid.Row="1" Click="DeleteUnChecked" Content=" Delete UN-Checked " HorizontalAlignment="Right" Margin="0,0,10,0" Padding="5" FontWeight="Bold"/>
+            
+            <Button x:Name="btn_DeleteChecked" Grid.Row="1" Click="DeleteChecked" Content=" Delete CHECKED " HorizontalAlignment="Left" Margin="10,0,0,0" Padding="5" FontWeight="Bold"/>
 
-    <StackPanel Orientation="Vertical" CanVerticallyScroll="True">
-        
+        </Grid>
+        <StackPanel Orientation="Vertical" CanVerticallyScroll="True" DockPanel.Dock="Bottom">
+
 
         <TextBlock x:Name="txt_Headline" FontSize="22" FontWeight="Bold" Text="Headline"
                    TextWrapping="Wrap"
                  Height="Auto"
-                   TextAlignment="Center"/>
+                   TextAlignment="Center"
+                   Margin="5,10,5,1"/>
         <TextBlock x:Name="txt_Author" FontSize="11" FontStyle="Italic" Text="Author"
                    TextWrapping="Wrap" Foreground="Black"
                  Height="Auto"
-                   TextAlignment="Center"/>
+                   TextAlignment="Center"
+                   Margin="0,2,0,2"/>
+        <Separator/>
+        <TextBlock x:Name="lbl_Edit" FontSize="14" FontWeight="Bold" Text="EDIT MODE:" Visibility="Collapsed"/>
         <TextBlock x:Name="txt_Location" FontSize="12" FontWeight="DemiBold" Text="Location"
-                   TextWrapping="Wrap" Foreground="Black"
+                   TextWrapping="Wrap"
                    Height="Auto"
-                   TextAlignment="Center"/>
+                   TextAlignment="Center"
+                   Margin="0,2,0,2"/>
         <Separator/>
         <TextBlock x:Name="txt_Story" FontSize="16" Text="Story story story story"
-                   TextWrapping="Wrap" Foreground="Black"
+                   TextWrapping="Wrap"
                  Height="Auto"/>
+        <ListBox x:Name="edit_Story" ItemsSource="{Binding m_chunks}" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 PreviewMouseWheel="HandlePreviewMouseWheel">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <CheckBox x:Name="edit_CheckBox" Grid.Column="0" VerticalAlignment="Center" Checked="edit_CheckBox_Checked" Tag="{Binding ElementName=edit_TextBox}" Unchecked="edit_CheckBox_Unchecked"/>
+                        <TextBox x:Name="edit_TextBox" Grid.Column="1" 
+                                 Text="{Binding chunk_text}" 
+                                 TextWrapping="Wrap" 
+                                 HorizontalScrollBarVisibility="Disabled" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 FontSize="{Binding chunk_fontSize}"
+                                 FontWeight="{Binding chunk_fontWeight}"
+                                 Margin="{Binding chunk_margin}"
+                                 FontStyle="{Binding chunk_fontStyle}"
+                                 TextAlignment="{Binding chunk_textAlignment}"
+                                 Tag="{Binding chunk}"/>
+                    </Grid>
+
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
 
 
-
-       
+        
     </StackPanel>
+    </DockPanel>
 </Page>

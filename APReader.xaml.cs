@@ -22,27 +22,42 @@ namespace NewsBuddy
         public APingestor ingest;
        // private List<APObject> stories;
         private bool isLoaded = false;
+        public MainWindow mainWindow { get; set; }
         public APReader()
         {
             InitializeComponent();
+            editorGrid.Visibility = Visibility.Collapsed;
+            mainWindow = Application.Current.Windows[0] as MainWindow;
             ingest = new APingestor();
             RefreshAP(new object(), new RoutedEventArgs());
             isLoaded = true;
-            list_APStories.SelectedItem = list_APStories.Items[0];
 
         }
 
-        private void list_APStories_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void list_APStories_SelectionChanged()
         {
             if (isLoaded)
             {
                 APObject selected = list_APStories.SelectedItem as APObject;
                 if (selected != null)
                 {
-                    if (selected.GetStory())
+                    if (selected.HasStory)
                     {
+                        if (selected.story.isEditMode)
+                        {
+                            btn_ToggleMode.Content = "Revert to Original Story";
+                        }
+                        else
+                        {
+                            btn_ToggleMode.Content = "Switch to Story Editor Mode";
+                        }
                         frame_Story.Content=selected.story;
+                        editorGrid.Visibility = Visibility.Visible;
                         scrl_Story.ScrollToVerticalOffset(0);
+                    }
+                    else
+                    {
+                        editorGrid.Visibility = Visibility.Collapsed;
                     }
                 }
             }
@@ -56,14 +71,30 @@ namespace NewsBuddy
 
         private void RefreshAP(object sender, RoutedEventArgs e)
         {
-            ingest.GetFeed();
             list_APStories.Items.Clear();
+            ingest.GetFeed();
             if (ingest.isAuthorized)
             {
                 foreach (APObject obj in ingest.GetItems())
                 {
-                    list_APStories.Items.Add(obj);
-                    list_APStories.Items.Add(new Separator());
+                    if (obj.isAssocParent)
+                    {
+                        TreeViewItem assocParent = new TreeViewItem()
+                        {
+                            Header = obj.headline
+                        };
+                        foreach (APObject assoc in obj.associations)
+                        {
+                            assocParent.Items.Add(assoc);
+                        }
+
+                        list_APStories.Items.Add(assocParent);
+                        
+                    }
+                    else
+                    {
+                        list_APStories.Items.Add(obj);
+                    }
                 }
             }
             else
@@ -79,6 +110,44 @@ namespace NewsBuddy
             }
         }
 
-      
+        private void list_APStories_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            this.Dispatcher.Invoke(() => 
+            {
+                list_APStories_SelectionChanged();
+            });
+        }
+
+        private void btn_ToggleMode_Click(object sender, RoutedEventArgs e)
+        {
+            Button btn = (Button)sender;
+            APStory story = frame_Story.Content as APStory;
+            story.ToggleModes();
+            if (story.isEditMode)
+            {
+                btn.Visibility = Visibility.Visible;
+                btn.Content = "Revert to Original Story";
+            }
+            else
+            {
+                btn.Visibility = Visibility.Visible;
+                btn.Content = "Switch to Story Editor Mode";
+            }
+
+        }
+
+        private void btn_SendToScript_Click(object sender, RoutedEventArgs e)
+        {
+            APStory story = frame_Story.Content as APStory;
+            mainWindow.currentScript.InsertChunksFromIngestor(story.GetChunks());
+        }
+
+        private void btn_SendToNewScript_Click(object sender, RoutedEventArgs e)
+        {
+            
+            APStory story = frame_Story.Content as APStory;
+            mainWindow.AddNewTabFromChunks(story.GetChunks());
+
+        }
     }
 }
