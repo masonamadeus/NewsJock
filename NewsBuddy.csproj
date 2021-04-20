@@ -51,7 +51,7 @@
     <None Remove="resources\fonts\OpenSans-Regular.ttf" />
     <None Remove="resources\fonts\OpenSans-SemiBold.ttf" />
     <None Remove="resources\fonts\OpenSans-SemiBoldItalic.ttf" />
-    <None Remove="resources\newsjock splash.png" />
+    <None Remove="resources\NewsJockSplashv2.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -107,7 +107,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <SplashScreen Include="resources\newsjock splash.png">
+    <SplashScreen Include="resources\NewsJockSplashv2.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </SplashScreen>
   </ItemGroup>
@@ -122,6 +122,9 @@
 
   <ItemGroup>
     <None Update="resources\Loading.mp3">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Update="resources\newsjock splash.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Update="Settings.settings">

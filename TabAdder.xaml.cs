@@ -35,6 +35,10 @@ namespace NewsBuddy
 
         private void MonitorDirectory()
         {
+            if (fs1 != null)
+            {
+                fs1.Dispose();
+            }
             fs1 = new FileSystemWatcher();
             fs1.Path = Settings.Default.ScriptsDirectory;
             fs1.IncludeSubdirectories = true;

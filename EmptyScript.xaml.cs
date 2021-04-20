@@ -213,24 +213,22 @@ namespace NewsBuddy
 
             for (int i = 0; i < newParas.Count; i++)
             {
-               if (rtbScript.CaretPosition.Paragraph.Parent is ListItem)
+                if (rtbScript.CaretPosition.Paragraph.Parent is ListItem)
                 {
-                    Trace.WriteLine("It's a list bro");
-                    MessageBox.Show("Cannot insert into list");
-                    return;
+                    foreach (Inline inl in newParas[i].Inlines)
+                    {
+                        TextRange text = new TextRange(inl.ContentStart, inl.ContentEnd);
+                        rtbScript.CaretPosition.InsertTextInRun(text.Text);
+                        rtbScript.CaretPosition = rtbScript.CaretPosition.InsertParagraphBreak();
+                    }
                 }
                 else
                 {
                     rtbScript.Document.Blocks.InsertBefore(rtbScript.CaretPosition.Paragraph, newParas[i]);
+
                 }
 
-
             }
-
-        }
-
-        public void InsertStringFromIngestor(string words)
-        {
 
         }
 
@@ -731,24 +729,24 @@ namespace NewsBuddy
         }
 
         // Returns a list of every paragraph chunk of text, recursively searching through lists.
-        private List<Paragraph> DetectParagraphs(BlockCollection blocks)
+        private List<Paragraph> DetectParagraphs(BlockCollection blocks, int depth = 0)
         {
-            Trace.WriteLine("[2]Detect Paragraph Loop Started");
+            Trace.WriteLine(String.Format("[{0}]Detect Paragraph Loop Started",depth));
             List<Paragraph> paragraphs = new List<Paragraph>();
             foreach (var block in blocks)
             {
                 if (block is Paragraph)
                 {
-                    Trace.WriteLine("[2]Found Paragraph");
+                    Trace.WriteLine(String.Format("[{0}]Found Paragraph",depth));
                     paragraphs.Add((Paragraph)block);
                 }
                 if (block is List)
                 {
-                    Trace.WriteLine("[2]Found List");
+                    Trace.WriteLine(String.Format("[{0}]Found List",depth));
                     foreach (ListItem listItems in ((List)block).ListItems)
                     {
-                        Trace.WriteLine("[2]Starting loop for list item");
-                        paragraphs.AddRange(DetectParagraphs(listItems.Blocks));
+                        Trace.WriteLine(String.Format("[{0}]Starting loop for list item",depth));
+                        paragraphs.AddRange(DetectParagraphs(listItems.Blocks,depth+1));
                     }
                 }
             }
@@ -757,20 +755,20 @@ namespace NewsBuddy
         }
 
         // Returns a list of every inline containing an NB file. Recursively searches lists.
-        private List<Inline> DetectNBs(BlockCollection blocks)
+        private List<Inline> DetectNBs(BlockCollection blocks, int depth = 0)
         {
-            Trace.WriteLine("[1]DetectNBs Loop Started");
+            Trace.WriteLine(String.Format("[{0}]DetectNBs Loop Started",depth));
             List<Inline> inlines = new List<Inline>();
             foreach (var block in blocks)
             {
                 if (block is Paragraph)
                 {
-                    Trace.WriteLine("[1]Found Paragraph");
+                    Trace.WriteLine(String.Format("[{0}]Found Paragraph",depth));
                     foreach (Inline inl in ((Paragraph)block).Inlines)
                     {
                         if (inl.Tag is NBfile)
                         {
-                            Trace.WriteLine("[1]Found NB File");
+                            Trace.WriteLine(String.Format("[{0}]Found NB File",depth));
                             inlines.Add(inl);
                         }
                         
@@ -778,11 +776,11 @@ namespace NewsBuddy
                 }
                 if (block is List)
                 {
-                    Trace.WriteLine("[1]Found List");
+                    Trace.WriteLine(String.Format("[{0}]Found List",depth));
                     foreach (ListItem listItems in ((List)block).ListItems)
                     {
-                        Trace.WriteLine("[1]Starting loop for list item");
-                        inlines.AddRange(DetectNBs(listItems.Blocks));
+                        Trace.WriteLine(String.Format("[{0}]Starting loop for list item",depth));
+                        inlines.AddRange(DetectNBs(listItems.Blocks,depth+1));
                     }
                 }
             }
@@ -796,6 +794,7 @@ namespace NewsBuddy
                 RestoreNBXaml();
             });
         }
+
     }
 
 }

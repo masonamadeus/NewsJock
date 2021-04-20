@@ -26,11 +26,12 @@ namespace NewsBuddy
         public APReader()
         {
             InitializeComponent();
-            editorGrid.Visibility = Visibility.Collapsed;
+            // editorGrid.Visibility = Visibility.Collapsed;
             mainWindow = Application.Current.Windows[0] as MainWindow;
             ingest = new APingestor();
             RefreshAP(new object(), new RoutedEventArgs());
             isLoaded = true;
+            frame_Story.Content = new APReaderDocs();
 
         }
 
@@ -57,7 +58,8 @@ namespace NewsBuddy
                     }
                     else
                     {
-                        editorGrid.Visibility = Visibility.Collapsed;
+                        frame_Story.Content = new APReaderDocs();
+                        //editorGrid.Visibility = Visibility.Collapsed;
                     }
                 }
             }
@@ -101,12 +103,9 @@ namespace NewsBuddy
             {
                 list_APStories.Items.Add(new TextBlock()
                 {
-                    Text = "Unauthorized. Check your API Key in NewsJock Settings."
+                    Text = "Unauthorized. Check your API Key\nin NewsJock Settings."
                 });
-                frame_Story.Content = new TextBlock()
-                {
-                    Text = "API Unauthorized. Check your API key settings in NewsJock Settings. \nIf you need help: contact your supervisor.\nIf you ARE the supervisor, contact AP and get an API key."
-                };
+                frame_Story.Content = "If you do not have an AP API Key, contact your administrator.";
             }
         }
 

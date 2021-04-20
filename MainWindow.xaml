@@ -31,22 +31,33 @@
               >
             <Menu.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <DockPanel HorizontalAlignment="Stretch"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+
+                            </Grid.ColumnDefinitions>
+                        </Grid>
                 </ItemsPanelTemplate>
             </Menu.ItemsPanel>
-            <MenuItem Header="Refresh Audio List" HorizontalAlignment="Left" Name="mnRefresh" Click="mnRefresh_Click">
+            <MenuItem Header="Refresh Audio List" HorizontalAlignment="Left" Grid.Column="0" Name="mnRefresh" Click="mnRefresh_Click">
                 <MenuItem.Icon>
                     <TextBlock FontFamily="{StaticResource FA}" FontSize="15"></TextBlock>
                 </MenuItem.Icon>
             </MenuItem>
-                <MenuItem x:Name="DFB" Header="The DFB" Click="DebuggerFunction_Click" Background="DarkOrange" Visibility="Collapsed"/>
+                <MenuItem Header="AP News Ingestor" HorizontalAlignment="Center" Grid.Column="1" Name="btnAP" Click="btnAP_Click">
+                    <MenuItem.Icon>
+                        <TextBlock FontFamily="{StaticResource FA}" FontSize="15"></TextBlock>
+                    </MenuItem.Icon>
+                </MenuItem>
 
                 <!--   <MenuItem HorizontalAlignment="Center" Margin="100,0,0,0" Name="Browser" Header="Browser" Click="Browser_Click">
                 <MenuItem.Icon>
                     <TextBlock FontFamily="{StaticResource FA}"></TextBlock>
                 </MenuItem.Icon>
             </MenuItem> -->
-            <MenuItem HorizontalAlignment="Right" Header="Settings">
+                <MenuItem HorizontalAlignment="Right" Grid.Column="2" Header="Settings">
                 <MenuItem.Icon>
                     <TextBlock FontFamily="{StaticResource FA}"></TextBlock>
                 </MenuItem.Icon>
@@ -72,7 +83,9 @@
                             <GradientStop Color="#FF5E7CA0" Offset="0.617"/>
                         </LinearGradientBrush>
                     </StackPanel.Background>
-                    <Label Name="lblSounders" HorizontalAlignment="Center" FontSize="20" FontStyle="Italic" FontWeight="Bold" ToolTip="Double-click this to open your Sounders folder." MouseDoubleClick="lblSounders_MouseDoubleClick">Sounders</Label>
+                        <Button x:Name="DFB" Click="DebuggerFunction_Click" Visibility="Collapsed" Background="Orange"  Content="The DFB" DockPanel.Dock="Bottom"/>
+
+                        <Label Name="lblSounders" HorizontalAlignment="Center" FontSize="20" FontStyle="Italic" FontWeight="Bold" ToolTip="Double-click this to open your Sounders folder." MouseDoubleClick="lblSounders_MouseDoubleClick">Sounders</Label>
                     <WrapPanel Name="SoundersControl" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <Button Name="btnStopSounders" FontFamily="{StaticResource FA}" Click="btnStopSounders_Click" Style="{StaticResource ResourceKey=btnStopper}" Margin="0,0,8,0" Content=""/>
                         <TextBlock x:Name="sndrTimeLeft" HorizontalAlignment="Center" FontWeight="Bold" FontSize="16">0:00</TextBlock>
@@ -162,6 +175,7 @@
                 </DataTemplate>
             </TabControl.Resources>
         </TabControl>
+
 
         </DockPanel>
 

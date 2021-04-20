@@ -29,8 +29,11 @@ namespace NewsBuddy
     public partial class MainWindow : Window
     {
 
-        FileSystemWatcher fs;
-        NJWebBrowser browser;
+        FileSystemWatcher fs_scripts;
+        FileSystemWatcher fs_sounders;
+        FileSystemWatcher fs_clips;
+        FileSystemWatcher fs_sharedSounders;
+
 
         public string dirClipsPath = Settings.Default.ClipsDirectory;
         public string dirSoundersPath = Settings.Default.SoundersDirectory;
@@ -251,10 +254,10 @@ namespace NewsBuddy
                 {
 
                     DisplayDirectories();
-                    MonitorDirectory(dirClipsPath);
-                    MonitorDirectory(dirSoundersPath);
-                    MonitorDirectory(dirScriptsPath);
-                    MonitorDirectory(dirSharePath);
+                    MonitorDirectory(dirClipsPath, fs_clips);
+                    MonitorDirectory(dirSoundersPath, fs_sounders);
+                    MonitorDirectory(dirScriptsPath, fs_scripts);
+                    MonitorDirectory(dirSharePath, fs_sharedSounders);
 
                 }
                 else
@@ -269,10 +272,10 @@ namespace NewsBuddy
             else
             {
                 DisplayDirectories();
-                MonitorDirectory(dirClipsPath);
-                MonitorDirectory(dirSoundersPath);
-                MonitorDirectory(dirScriptsPath);
-                MonitorDirectory(dirSharePath);
+                MonitorDirectory(dirClipsPath, fs_clips);
+                MonitorDirectory(dirSoundersPath, fs_sounders);
+                MonitorDirectory(dirScriptsPath, fs_scripts);
+                MonitorDirectory(dirSharePath, fs_sharedSounders);
             }
         }
 
@@ -366,18 +369,22 @@ namespace NewsBuddy
             }
         }
 
-        void MonitorDirectory(string dirPath)
+
+        void MonitorDirectory(string dirPath, FileSystemWatcher fs_var)
         {
             Trace.WriteLine("Monitoring Started for " + dirPath);
-            fs = new FileSystemWatcher(dirPath, "*.*");
+            if (fs_var != null)
+            {
+                fs_var.Dispose();
+                Trace.WriteLine("Disposed of FileSystemWatcher - Main Window");
+            }
+            fs_var = new FileSystemWatcher(dirPath, "*.*");
 
-            fs.EnableRaisingEvents = true;
-            fs.IncludeSubdirectories = true;
+            fs_var.EnableRaisingEvents = true;
+            fs_var.IncludeSubdirectories = true;
 
-            //fs.Created += new FileSystemEventHandler(ReloadDir);
-            fs.Changed += new FileSystemEventHandler(ReloadDir);
-            fs.Renamed += new RenamedEventHandler(ReloadDir);
-            //fs.Deleted += new FileSystemEventHandler(ReloadDir);
+            fs_var.Changed += new FileSystemEventHandler(ReloadDir);
+            fs_var.Renamed += new RenamedEventHandler(ReloadDir);
         }
 
         void ReloadDir(Object sender, FileSystemEventArgs e)
@@ -385,9 +392,8 @@ namespace NewsBuddy
             this.Dispatcher.Invoke(() =>
             {
                 DisplayDirectories();
-
-
             });
+
             Trace.WriteLine("Reload called. Change detected");
 
         }
@@ -739,6 +745,11 @@ namespace NewsBuddy
 
         private void btnDelTab_Click(object sender, RoutedEventArgs e)
         {
+            if (sender == null)
+            {
+                Trace.WriteLine("btnDelTab clicked, sender was null");
+                return;
+            }
             string tabName = (sender as Button).CommandParameter.ToString();
 
             var item = DynamicTabs.Items.Cast<TabItem>().Where(i => i.Name.Equals(tabName)).SingleOrDefault();
@@ -1010,26 +1021,7 @@ namespace NewsBuddy
 
         }
 
-        private void Browser_Click(object sender, RoutedEventArgs e)
-        {
-            if (browser != null)
-            {
-                try
-                {
-                    browser.Focus();
-                }
-                catch
-                {
-                    MessageBox.Show("Browser Unresponsive");
-                }
-            }
-            else
-            {
-                browser = new NJWebBrowser();
-                browser.Show();
-            }
 
-        }
         private void HandlePreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
             if (!e.Handled)
@@ -1360,6 +1352,14 @@ namespace NewsBuddy
         {
             TabControl tabs = (TabControl)sender;
             currentTab = tabs.SelectedItem as TabItem;
+        }
+
+        private void btnAP_Click(object sender, RoutedEventArgs e)
+        {
+            APReader aPReader = new APReader();
+            aPReader.Owner = this;
+            aPReader.Show();
+            aPReader.Owner = null;
         }
     }
 

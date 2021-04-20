@@ -166,7 +166,7 @@
                 <RowDefinition/>
                 <RowDefinition/>
             </Grid.RowDefinitions>
-        <Button x:Name="btn_ToggleMode" Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="1" Click="btn_ToggleMode_Click" Content="Switch to Story Editor Mode" Padding="2"/>
+        <Button x:Name="btn_ToggleMode" Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="1" Click="btn_ToggleMode_Click" Content="Switch to Story Editor Mode" Padding="2" FontWeight="Bold"/>
         <Button x:Name="btn_SendToScript" Grid.Column="0" Grid.Row="0" Click="btn_SendToScript_Click" Content="Insert in Current Script" FontWeight="Bold" Padding="2" Margin="2"/>
         <Button x:Name="btn_SendToNewScript" Grid.Column="2" Grid.Row="0" Click="btn_SendToNewScript_Click" Content="Send to New Script" FontWeight="Bold" Padding="2" Margin="2"/>
         </Grid>

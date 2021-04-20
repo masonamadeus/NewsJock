@@ -4,9 +4,11 @@
              xmlns:local="clr-namespace:NewsBuddy"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
+        
         <FontFamily x:Key="OpenSans">pack://application:,,,/resources/fonts/#Open Sans</FontFamily>
         <FontFamily x:Key="FA">pack://application:,,,/resources/fonts/fontawesome/#Font Awesome 5 Free Regular</FontFamily>
         <FontFamily x:Key="FAS">pack://application:,,,/resources/fonts/fontawesome/#Font Awesome 5 Free Solid</FontFamily>
+        
         <Style x:Key="btnNBs" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="FontSize" Value="24"/>
