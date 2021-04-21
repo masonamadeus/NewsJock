@@ -137,5 +137,8 @@
         <local:IndexToCollapse
             x:Key="IndexToCollapse"
             />
+
+        <SolidColorBrush x:Key="NJBlue">#92bdf2</SolidColorBrush>
+        <SolidColorBrush x:Key="NJGreen">#addd8d</SolidColorBrush>
     </Application.Resources>
 </Application>

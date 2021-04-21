@@ -9,25 +9,36 @@
         Width="900"
         Height="600"
         Closing="Window_Closing"
-        WindowStartupLocation="CenterOwner"
+        WindowStartupLocation="CenterOwner" Background="#FFBBBABA" FontFamily="Open Sans" WindowStyle="SingleBorderWindow" Margin="5,0,5,5"
         >
-    <Grid>
+    <Grid Name="MainGrid" Margin="3">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="350"/>
+            <ColumnDefinition Width="14.054"/>
+            <ColumnDefinition Width="335.946"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="50"/>
+            <RowDefinition Height="50"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Button x:Name="btn_RefreshAP" Padding="8" FontWeight="Bold" Click="RefreshAP" Content="Refresh AP Headlines" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="0"/>
+        <Button x:Name="btn_RefreshAP" Padding="8" FontWeight="Bold" Click="RefreshAP" Content="&#xF021; Get Latest Stories" VerticalAlignment="Center" HorizontalAlignment="Stretch" Grid.Column="1" FontFamily="Font Awesome 5 Free Regular" Margin="0,0,10,0" RenderTransformOrigin="0.5,0.5">
+            <Button.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform/>
+                    <SkewTransform/>
+                    <RotateTransform/>
+                    <TranslateTransform X="0"/>
+                </TransformGroup>
+            </Button.RenderTransform>
+        </Button>
         <TreeView x:Name="list_APStories" MaxWidth="350"
                  ScrollViewer.VerticalScrollBarVisibility="Auto"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                 Grid.Column="0" Grid.Row="1"
+                 Grid.Column="0" Grid.Row="1" Grid.RowSpan="2"
                  SelectedItemChanged="list_APStories_SelectedItemChanged"
                  FontWeight="Bold"
-                 FontSize="14"
+                 FontSize="14" Grid.ColumnSpan="2" Background="#FFD8D8D8" Margin="3,0,3,5"
                  >
             <TreeView.Resources>
                 <SolidColorBrush x:Key="TreeViewItem.TreeArrow.Static.Stroke" Color="#FF818181"/>
@@ -156,7 +167,7 @@
                 </Style>
             </TreeView.Resources>
         </TreeView>
-        <Grid x:Name="editorGrid" Grid.Column="2" Grid.Row="0" VerticalAlignment="Center">
+        <Grid x:Name="editorGrid" Grid.Column="2" Grid.Row="0" Grid.RowSpan="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
@@ -165,25 +176,36 @@
             <Grid.RowDefinitions>
                 <RowDefinition/>
                 <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
             </Grid.RowDefinitions>
-        <Button x:Name="btn_ToggleMode" Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="1" Click="btn_ToggleMode_Click" Content="Switch to Story Editor Mode" Padding="2" FontWeight="Bold"/>
-        <Button x:Name="btn_SendToScript" Grid.Column="0" Grid.Row="0" Click="btn_SendToScript_Click" Content="Insert in Current Script" FontWeight="Bold" Padding="2" Margin="2"/>
-        <Button x:Name="btn_SendToNewScript" Grid.Column="2" Grid.Row="0" Click="btn_SendToNewScript_Click" Content="Send to New Script" FontWeight="Bold" Padding="2" Margin="2"/>
+            <Button x:Name="btn_ToggleMode" Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="2" Grid.RowSpan="2" Click="btn_ToggleMode_Click" Content="Switch to Story Editor Mode" Padding="2" FontWeight="Bold" Margin="5,2,5,0" VerticalAlignment="Stretch"/>
+            <Button x:Name="btn_SendToScript" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Click="btn_SendToScript_Click" Content="Insert in Current Script" FontWeight="Bold" Padding="2" Margin="5,2,2,2" Background="{DynamicResource NJBlue}"/>
+            <Button x:Name="btn_SendToNewScript" Grid.Column="2" Grid.Row="0" Grid.RowSpan="2" Click="btn_SendToNewScript_Click" Content="Send to New Script" FontWeight="Bold" Padding="2" Margin="2,2,5,2" Background="{DynamicResource NJGreen}"/>
+
+            <TextBlock x:Name="lbl_EditorDisclaimer" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
+                       Text="Any changes will be lost if you switch back to Original Story."
+                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                       FontSize="12" FontWeight="Bold" FontStyle="Italic"/>
+            <Button x:Name="btn_DeleteChecked" Grid.Column="0" Grid.Row="3" FontWeight="Bold" Content="Delete Selected" Click="btn_DeleteChecked_Click" Padding="2" Background="#FFF7A5A5" Margin="5,2,2,2"/>
+            <Button x:Name="btn_DeleteUnChecked" Grid.Column="3" Grid.Row="3" FontWeight="Bold" Content="Delete Non-Selected" Click="btn_DeleteUnChecked_Click" Padding="2" Background="#FFF7A5A5" Margin="2,2,5,2"/>
+
+
         </Grid>
-        <ScrollViewer x:Name="scrl_Story" Grid.Column="1" Grid.Row="1" MaxWidth="800" Margin="10,0,10,5" CanContentScroll="False">
-            <Frame x:Name="frame_Story" NavigationUIVisibility="Hidden"/>
+        <ScrollViewer x:Name="scrl_Story" Grid.Column="2" Grid.Row="1" Grid.RowSpan="2" MaxWidth="800" Margin="5,5,5,5" CanContentScroll="False">
+            <Frame x:Name="frame_Story" NavigationUIVisibility="Hidden" Margin="0,0,3,0"/>
 
         </ScrollViewer>
 
     </Grid>
-    
-    
+
+
     <Window.Resources>
         <DataTemplate DataType="{x:Type local:APObject}">
             <TextBlock Text="{Binding headline}" ToolTip="{Binding uri}" TextWrapping="Wrap"/>
         </DataTemplate>
-        
-        
-    
+
+
+
     </Window.Resources>
 </Window>

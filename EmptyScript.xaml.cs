@@ -206,21 +206,26 @@ namespace NewsBuddy
                 newParas.Add(text);
             }
 
-            if (rtbScript.CaretPosition != rtbScript.Document.ContentStart.DocumentStart)
+            if (!rtbScript.Selection.IsEmpty)
             {
-                rtbScript.CaretPosition = rtbScript.CaretPosition.InsertParagraphBreak();
+                rtbScript.Selection.Text = "";
+            }
+
+            if (rtbScript.CaretPosition == null)
+            {
+                rtbScript.CaretPosition = rtbScript.Document.ContentStart;
             }
 
             for (int i = 0; i < newParas.Count; i++)
             {
+                if (rtbScript.CaretPosition.Paragraph == null)
+                {
+                    rtbScript.Document.Blocks.Add(new Paragraph());
+                }
                 if (rtbScript.CaretPosition.Paragraph.Parent is ListItem)
                 {
-                    foreach (Inline inl in newParas[i].Inlines)
-                    {
-                        TextRange text = new TextRange(inl.ContentStart, inl.ContentEnd);
-                        rtbScript.CaretPosition.InsertTextInRun(text.Text);
-                        rtbScript.CaretPosition = rtbScript.CaretPosition.InsertParagraphBreak();
-                    }
+                    ListItem nextItem = rtbScript.CaretPosition.Paragraph.Parent as ListItem;
+                    nextItem.Blocks.InsertBefore(rtbScript.CaretPosition.Paragraph, newParas[i]);  
                 }
                 else
                 {

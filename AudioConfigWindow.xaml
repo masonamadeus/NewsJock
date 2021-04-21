@@ -10,7 +10,8 @@
         SizeToContent="WidthAndHeight"
         WindowStartupLocation="CenterOwner"
         Background="LightGray"
-        FontFamily="{StaticResource OpenSans}">
+        FontFamily="{StaticResource OpenSans}"
+        Topmost="True">
     <Grid HorizontalAlignment="Center" Margin="20">
         <StackPanel Margin="0,0,0,0" HorizontalAlignment="Center">
             <WrapPanel>

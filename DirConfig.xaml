@@ -5,13 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:NewsBuddy"
         mc:Ignorable="d"
-        ShowInTaskbar="False"
+        ShowInTaskbar="True"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
         Background="#FF8B8A8A"     
         Title="NewsJock Settings"
         SizeToContent="WidthAndHeight"
-        FontFamily="{StaticResource OpenSans}">
+        FontFamily="{StaticResource OpenSans}"
+        Topmost="True">
     <Grid Margin="15">
     <DockPanel>
             <StackPanel DockPanel.Dock="Top">

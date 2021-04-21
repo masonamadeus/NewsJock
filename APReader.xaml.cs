@@ -26,12 +26,27 @@ namespace NewsBuddy
         public APReader()
         {
             InitializeComponent();
-            // editorGrid.Visibility = Visibility.Collapsed;
+
+            lbl_EditorDisclaimer.Visibility = Visibility.Collapsed;
+            btn_DeleteChecked.Visibility = Visibility.Collapsed;
+            btn_DeleteUnChecked.Visibility = Visibility.Collapsed;
+
+            foreach (var btn in editorGrid.Children)
+            {
+                if (btn is Button)
+                {
+                    ((Button)btn).IsEnabled = false;
+                }
+            }
+
             mainWindow = Application.Current.Windows[0] as MainWindow;
             ingest = new APingestor();
+
             RefreshAP(new object(), new RoutedEventArgs());
-            isLoaded = true;
+
             frame_Story.Content = new APReaderDocs();
+
+            isLoaded = true;
 
         }
 
@@ -44,6 +59,7 @@ namespace NewsBuddy
                 {
                     if (selected.HasStory)
                     {
+                        SetControls(selected.story.isEditMode);
                         if (selected.story.isEditMode)
                         {
                             btn_ToggleMode.Content = "Revert to Original Story";
@@ -53,11 +69,25 @@ namespace NewsBuddy
                             btn_ToggleMode.Content = "Switch to Story Editor Mode";
                         }
                         frame_Story.Content=selected.story;
+                        foreach (var btn in editorGrid.Children)
+                        {
+                            if (btn is Button)
+                            {
+                                ((Button)btn).IsEnabled = true;
+                            }
+                        }
                         editorGrid.Visibility = Visibility.Visible;
                         scrl_Story.ScrollToVerticalOffset(0);
                     }
                     else
                     {
+                        foreach (var btn in editorGrid.Children)
+                        {
+                            if (btn is Button)
+                            {
+                                ((Button)btn).IsEnabled = false;
+                            }
+                        }
                         frame_Story.Content = new APReaderDocs();
                         //editorGrid.Visibility = Visibility.Collapsed;
                     }
@@ -122,6 +152,7 @@ namespace NewsBuddy
             Button btn = (Button)sender;
             APStory story = frame_Story.Content as APStory;
             story.ToggleModes();
+            SetControls(story.isEditMode);
             if (story.isEditMode)
             {
                 btn.Visibility = Visibility.Visible;
@@ -133,6 +164,40 @@ namespace NewsBuddy
                 btn.Content = "Switch to Story Editor Mode";
             }
 
+        }
+
+        private void SetControls(bool editMode)
+        {
+            if (editMode)
+            {
+                Grid.SetRow(scrl_Story, 2);
+                Grid.SetRowSpan(scrl_Story, 1);
+                Grid.SetRowSpan(editorGrid, 2);
+
+                Grid.SetRow(btn_ToggleMode, 1);
+                Grid.SetRowSpan(btn_ToggleMode, 1);
+                Grid.SetRowSpan(btn_SendToNewScript, 1);
+                Grid.SetRowSpan(btn_SendToScript, 1);
+
+                lbl_EditorDisclaimer.Visibility = Visibility.Visible;
+                btn_DeleteChecked.Visibility = Visibility.Visible;
+                btn_DeleteUnChecked.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                Grid.SetRow(scrl_Story, 1);
+                Grid.SetRowSpan(scrl_Story, 2);
+                Grid.SetRowSpan(editorGrid, 1);
+
+                Grid.SetRow(btn_ToggleMode, 2);
+                Grid.SetRowSpan(btn_ToggleMode, 2);
+                Grid.SetRowSpan(btn_SendToNewScript, 2);
+                Grid.SetRowSpan(btn_SendToScript, 2);
+
+                lbl_EditorDisclaimer.Visibility = Visibility.Collapsed;
+                btn_DeleteChecked.Visibility = Visibility.Collapsed;
+                btn_DeleteUnChecked.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void btn_SendToScript_Click(object sender, RoutedEventArgs e)
@@ -147,6 +212,18 @@ namespace NewsBuddy
             APStory story = frame_Story.Content as APStory;
             mainWindow.AddNewTabFromChunks(story.GetChunks());
 
+        }
+
+        private void btn_DeleteChecked_Click(object sender, RoutedEventArgs e)
+        {
+            APStory story = frame_Story.Content as APStory;
+            story.DeleteChecked();
+        }
+
+        private void btn_DeleteUnChecked_Click(object sender, RoutedEventArgs e)
+        {
+            APStory story = frame_Story.Content as APStory;
+            story.DeleteUnChecked();
         }
     }
 }

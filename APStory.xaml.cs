@@ -26,7 +26,7 @@ namespace NewsBuddy
         public FontStyle chunk_fontStyle { get; set; }
         public TextAlignment chunk_textAlignment { get; set; }
         public TextBox chunk_textBox { get; set; }
-        public APChunk chunk {get;set;}
+        public APChunk chunk { get; set; }
         public int chunk_index { get; set; }
 
         // use multiple constructors you idiot
@@ -71,12 +71,22 @@ namespace NewsBuddy
             InitializeComponent();
             ParseStory();
 
+
         }
 
         public void ParseStory()
         {
+            // Remove the "Associated Press" from the author field. It's just cluttery.
+            XmlElement el = (XmlElement)m_story.SelectSingleNode("/nitf/body/body.head/byline/byttl");
+            if (el != null)
+            {
+                el.ParentNode.RemoveChild(el);
+            }
+
+
             m_headline = m_story.GetElementsByTagName("hedline");
             m_author = m_story.GetElementsByTagName("byline");
+
             m_paragraphs = m_story.GetElementsByTagName("p");
             m_location = m_story.GetElementsByTagName("location");
             ToggleModes();
@@ -85,21 +95,30 @@ namespace NewsBuddy
         public void PrepareReaderMode()
         {
             edit_Story.Visibility = Visibility.Collapsed;
-            lbl_Edit.Visibility = Visibility.Collapsed;
-            editorControls.Visibility = Visibility.Collapsed;
-            
+
+            if (m_chunks != null)
+            {
+                m_chunks.Clear();
+            }
+            if (checkedChunks != null)
+            {
+                checkedChunks.Clear();
+            }
+
             txt_Headline.Text = m_headline[0] != null ? m_headline[0].InnerText : "Error Retrieving Headline";
             txt_Author.Text = m_author[0] != null ? m_author[0].InnerText : "By The Associated Press";
 
-            if (m_location[0] == null)
+            if (m_location[0] == null || String.Equals(m_location[0].InnerText, ""))
             {
                 txt_Location.Text = "";
                 txt_Location.Visibility = Visibility.Collapsed;
+                sep2.Visibility = Visibility.Collapsed;
             }
             else
             {
                 txt_Location.Visibility = Visibility.Visible;
                 txt_Location.Text = m_location[0].InnerText;
+                sep2.Visibility = Visibility.Visible;
             }
 
             if (Story == String.Empty && m_paragraphs != null)
@@ -108,7 +127,11 @@ namespace NewsBuddy
 
                 for (int i = 0; i < m_paragraphs.Count; i++)
                 {
+
+
                     builder.AppendLine("\t" + m_paragraphs[i].InnerText.ToString());
+
+
                 }
                 Story = builder.ToString();
                 txt_Story.Text = Story;
@@ -122,6 +145,7 @@ namespace NewsBuddy
                 txt_Story.Text = "Error Retrieving Story";
             }
 
+            sep1.Visibility = Visibility.Visible;
             txt_Headline.Visibility = Visibility.Visible;
             txt_Story.Visibility = Visibility.Visible;
             txt_Author.Visibility = Visibility.Visible;
@@ -135,8 +159,10 @@ namespace NewsBuddy
             txt_Headline.Visibility = Visibility.Collapsed;
             txt_Author.Visibility = Visibility.Collapsed;
             txt_Location.Visibility = Visibility.Collapsed;
+            sep2.Visibility = Visibility.Collapsed;
+            sep1.Visibility = Visibility.Collapsed;
 
-            
+
 
             if (m_chunks != null)
             {
@@ -156,7 +182,7 @@ namespace NewsBuddy
                 checkedChunks = new List<TextBox>();
             }
 
-            
+
             if (m_author[0] != null)
             {
                 if (m_headline[0] != null)
@@ -165,13 +191,13 @@ namespace NewsBuddy
                     {
                         chunk_fontWeight = FontWeights.Bold,
                         chunk_textAlignment = TextAlignment.Center,
-                        chunk_margin = new Thickness(0,0,0,3)
+                        chunk_margin = new Thickness(0, 0, 0, 3)
                     });
                 }
-                m_chunks.Add(new APChunk(m_author[0].InnerText, 11) 
+                m_chunks.Add(new APChunk(m_author[0].InnerText, 11)
                 {
                     chunk_fontStyle = FontStyles.Italic,
-                    chunk_margin = new Thickness(0,0,0,7),
+                    chunk_margin = new Thickness(0, 0, 0, 7),
                     chunk_textAlignment = TextAlignment.Center
                 });
             }
@@ -183,7 +209,7 @@ namespace NewsBuddy
                     {
                         chunk_fontWeight = FontWeights.Bold,
                         chunk_textAlignment = TextAlignment.Center,
-                        chunk_margin = new Thickness(0,0,0,10)
+                        chunk_margin = new Thickness(0, 0, 0, 10)
                     });
                 }
             }
@@ -192,13 +218,12 @@ namespace NewsBuddy
             for (int e = 0; e < m_paragraphs.Count; e++)
             {
                 m_chunks.Add(new APChunk(m_paragraphs[e].InnerText));
+
             }
 
             this.DataContext = this;
 
             edit_Story.Visibility = Visibility.Visible;
-            editorControls.Visibility = Visibility.Visible;
-            lbl_Edit.Visibility = Visibility.Visible;
 
         }
 
@@ -206,11 +231,13 @@ namespace NewsBuddy
         {
             if (!m_isEditMode)
             {
+                Trace.WriteLine("Story Preparing Reader Mode");
                 PrepareReaderMode();
                 m_isEditMode = true;
             }
             else
             {
+                Trace.WriteLine("Story Preparing EDIT Mode");
                 PrepareEditMode();
                 m_isEditMode = false;
             }
@@ -233,7 +260,7 @@ namespace NewsBuddy
 
         private void btn_ToggleModes_Click(object sender, RoutedEventArgs e)
         {
-            this.Dispatcher.Invoke(() => 
+            this.Dispatcher.Invoke(() =>
             {
                 ToggleModes();
             });
@@ -252,11 +279,10 @@ namespace NewsBuddy
             }
         }
 
-        private void DeleteUnChecked(object sender, RoutedEventArgs e)
+        public void DeleteUnChecked()
         {
-            StringBuilder builder = new StringBuilder();
             List<APChunk> keepers = new List<APChunk>();
-            foreach(TextBox box in checkedChunks)
+            foreach (TextBox box in checkedChunks)
             {
                 APChunk chunk = box.Tag as APChunk;
                 chunk.chunk_index = m_chunks.IndexOf(chunk);
@@ -267,7 +293,7 @@ namespace NewsBuddy
 
             keepers = keepers.OrderBy(o => o.chunk_index).ToList();
 
-            for (int l = 0; l<keepers.Count; l++)
+            for (int l = 0; l < keepers.Count; l++)
             {
                 APChunk obj = keepers[l];
                 obj.chunk_index = l;
@@ -279,7 +305,7 @@ namespace NewsBuddy
             checkedChunks.Clear();
         }
 
-        private void DeleteChecked(object sender, RoutedEventArgs e)
+        public void DeleteChecked()
         {
             foreach (TextBox box in checkedChunks)
             {
@@ -302,11 +328,28 @@ namespace NewsBuddy
         public List<APChunk> GetChunks()
         {
             bool hadToSwapModes = false;
+            bool autoDeleted = false;
+
+            if (this.isEditMode && checkedChunks.Count != 0 && checkedChunks != null && m_chunks != null && m_chunks.Count > 0)
+            {
+                Trace.WriteLine("Deleting UNchecked from GetChunks method");
+                DeleteUnChecked();
+                autoDeleted = true;
+            }
+
             if (m_chunks == null)
             {
+                Trace.WriteLine("Asked for Story Chunks, Chunks were NULL");
                 PrepareEditMode();
                 hadToSwapModes = true;
             }
+            if (m_chunks.Count <= 0)
+            {
+                Trace.WriteLine("Asked for Story Chunks, Chunks were ZERO");
+                PrepareEditMode();
+                hadToSwapModes = true;
+            }
+
             List<APChunk> sendlist = new List<APChunk>();
             foreach (APChunk chunk in m_chunks)
             {
@@ -317,6 +360,11 @@ namespace NewsBuddy
             if (hadToSwapModes)
             {
                 PrepareReaderMode();
+            }
+            if (autoDeleted)
+            {
+                PrepareReaderMode();
+                PrepareEditMode();
             }
             return sendlist;
         }

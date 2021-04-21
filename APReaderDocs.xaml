@@ -12,10 +12,16 @@
     <StackPanel Margin="10">
         
         <TextBlock TextAlignment="Center" FontSize="20" FontWeight="Bold" TextWrapping="Wrap">Select a story from the feed on the left and it will appear here.</TextBlock>
-        <TextBlock TextAlignment="Center" FontSize="20" TextWrapping="Wrap">Use the buttons above to trim/edit the story and send it to a script.</TextBlock>
         <TextBlock TextAlignment="Center" FontSize="20" TextWrapping="Wrap" Margin="0,10,0,0">"Insert in Current Script" will place the visible story in your currently open script, inserting it at the last place your typing cursor was. </TextBlock>
         <TextBlock TextAlignment="Center" FontSize="20" TextWrapping="Wrap" Margin="0,10,0,0">"Send to New Script" will create a new script tab and place the visible story inside of it.</TextBlock>
-        <TextBlock TextAlignment="Center" FontSize="20" TextWrapping="Wrap" Margin="0,10,0,0">In "Story Editor Mode" you can quickly cut down a story by selecting the paragraphs you want to use, editing their text if needed, and then selecting "Delete Un-Checked". When in story editor mode, whatever is VISIBLE will be sent to a script when you choose "Send to New Script" or "Insert in Current Script".</TextBlock>
+        <TextBlock TextAlignment="Center" FontSize="20" TextWrapping="Wrap" Margin="0,10,0,0">
+            In "Story Editor Mode" you can quickly cut down a story by selecting the paragraphs you want to use,
+            editing their text if needed, and then selecting "Delete Un-Checked".
+            When in story editor mode, what you see will be sent to a script when you choose "Send to New Script" or "Insert in Current Script".
+            Alternatively, if you just select certain paragraphs and then insert/send them to a script, only the selected paragraphs will be sent
+            .</TextBlock>
+        <TextBlock TextAlignment="Center" FontSize="20" TextWrapping="Wrap" Margin="0,10,0,0">If you revert back to the original story from story editor mode, your changes will be lost the next time you switch to Story Editor mode.</TextBlock>
+
         <TextBlock TextAlignment="Center" FontSize="20" TextWrapping="Wrap" FontStyle="Italic" Margin="0,15,0,0">This feature is a work in progress, there may be bugs. Also, I would love feedback on how to make this more streamlined or useful to you.</TextBlock>
 
     </StackPanel>

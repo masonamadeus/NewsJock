@@ -89,6 +89,12 @@ namespace NewsBuddy
                     string rawXml =
                     response.Content.ReadAsStringAsync().Result;
                     XmlDocument story = new XmlDocument();
+
+                    if (Debugger.IsAttached)
+                    {
+                        Trace.WriteLine(rawXml);
+                    }
+
                     story.LoadXml(rawXml);
                     return story;
                 }
@@ -104,7 +110,10 @@ namespace NewsBuddy
         public void GetFeed()
         {
             Mouse.OverrideCursor = Cursors.Wait;
+
             Trace.WriteLine("Getting Feed");
+
+            // Make a new httpclient if you need one
             if (client == null)
             {
                 client = new HttpClient();
@@ -113,22 +122,29 @@ namespace NewsBuddy
                 new MediaTypeWithQualityHeaderValue("application/json"));
             }
 
+            // set up the request message to the proper address, insert the API Key, and the other variables.
             var request = new HttpRequestMessage()
             {
                 RequestUri = new Uri(client.BaseAddress + "feed?apikey=" + apiKey + "&in_my_plan=true&versions=latest&text_links=plain",UriKind.Absolute),
                 Method = HttpMethod.Get
             };
 
+            // Add the application/json header so that it gets accepted
             request.Headers.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
 
+            // if this isn't the first request, send along the ET tag
             if (nextETag != null)
             {
                 request.Headers.IfNoneMatch.Add(nextETag);
             }
 
-            Trace.WriteLine(request.Headers.ToString());
+            if (Debugger.IsAttached)
+            {
+                Trace.WriteLine(request.Headers.ToString());
+            }
 
+            // send the API request out and get a response.
             HttpResponseMessage response = client.SendAsync(request).Result;
             if (response.IsSuccessStatusCode)
             {
@@ -259,8 +275,9 @@ namespace NewsBuddy
                 }
             }
 
-            foreach (APObject parent in assocParents)
+            for (int pp = assocParents.Count -1 ; pp >= 0; pp--)
             {
+                APObject parent = assocParents[pp];
                 apFeedItems.Remove(parent);
                 apFeedItems.Insert(0, parent);
             }
