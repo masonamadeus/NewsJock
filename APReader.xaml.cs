@@ -107,7 +107,7 @@ namespace NewsBuddy
             ingest.GetFeed();
             if (ingest.isAuthorized)
             {
-                foreach (APObject obj in ingest.GetItems())
+                foreach (APObject obj in ingest.Items)
                 {
                     if (obj.isAssocParent)
                     {
