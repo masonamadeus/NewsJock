@@ -427,5 +427,39 @@ namespace NewsBuddy {
                 this["APapiKey"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::System.Collections.Generic.List<NewsBuddy.APTopic> APfollowedTopics {
+            get {
+                return ((global::System.Collections.Generic.List<NewsBuddy.APTopic>)(this["APfollowedTopics"]));
+            }
+            set {
+                this["APfollowedTopics"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool APShowTopics {
+            get {
+                return ((bool)(this["APShowTopics"]));
+            }
+            set {
+                this["APShowTopics"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::System.Collections.Generic.List<NewsBuddy.APTopic> APunfollowedTopics {
+            get {
+                return ((global::System.Collections.Generic.List<NewsBuddy.APTopic>)(this["APunfollowedTopics"]));
+            }
+            set {
+                this["APunfollowedTopics"] = value;
+            }
+        }
     }
 }

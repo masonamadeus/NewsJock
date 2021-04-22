@@ -171,7 +171,7 @@ namespace NewsBuddy
             if (editMode)
             {
                 Grid.SetRow(scrl_Story, 2);
-                Grid.SetRowSpan(scrl_Story, 1);
+                Grid.SetRowSpan(scrl_Story, 2);
                 Grid.SetRowSpan(editorGrid, 2);
 
                 Grid.SetRow(btn_ToggleMode, 1);
@@ -186,7 +186,7 @@ namespace NewsBuddy
             else
             {
                 Grid.SetRow(scrl_Story, 1);
-                Grid.SetRowSpan(scrl_Story, 2);
+                Grid.SetRowSpan(scrl_Story, 3);
                 Grid.SetRowSpan(editorGrid, 1);
 
                 Grid.SetRow(btn_ToggleMode, 2);
@@ -224,6 +224,18 @@ namespace NewsBuddy
         {
             APStory story = frame_Story.Content as APStory;
             story.DeleteUnChecked();
+        }
+
+        private void btnTopicsSettings_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (var btn in editorGrid.Children)
+            {
+                if (btn is Button)
+                {
+                    ((Button)btn).IsEnabled = false;
+                }
+            }
+            frame_Story.Content = new APTopicSettings();
         }
     }
 }

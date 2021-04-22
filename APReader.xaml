@@ -9,11 +9,11 @@
         Width="900"
         Height="600"
         Closing="Window_Closing"
-        WindowStartupLocation="CenterOwner" Background="#FFBBBABA" FontFamily="Open Sans" WindowStyle="SingleBorderWindow" Margin="5,0,5,5"
+        WindowStartupLocation="CenterOwner" Background="#FFBBBABA" WindowStyle="SingleBorderWindow" Margin="5,0,5,5"
+        FontFamily="{StaticResource OpenSans}"
         >
     <Grid Name="MainGrid" Margin="3">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="14.054"/>
             <ColumnDefinition Width="335.946"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
@@ -21,16 +21,10 @@
             <RowDefinition Height="50"/>
             <RowDefinition Height="50"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="50"/>
         </Grid.RowDefinitions>
-        <Button x:Name="btn_RefreshAP" Padding="8" FontWeight="Bold" Click="RefreshAP" Content="&#xF021; Get Latest Stories" VerticalAlignment="Center" HorizontalAlignment="Stretch" Grid.Column="1" FontFamily="Font Awesome 5 Free Regular" Margin="0,0,10,0" RenderTransformOrigin="0.5,0.5">
-            <Button.RenderTransform>
-                <TransformGroup>
-                    <ScaleTransform/>
-                    <SkewTransform/>
-                    <RotateTransform/>
-                    <TranslateTransform X="0"/>
-                </TransformGroup>
-            </Button.RenderTransform>
+        <Button x:Name="btn_RefreshAP" Padding="8" FontWeight="Bold" Click="RefreshAP" Content="&#xF021; Get Latest Stories" VerticalAlignment="Center" HorizontalAlignment="Stretch" Grid.Column="0" FontFamily="Font Awesome 5 Free Regular" Margin="10,0,10,0" RenderTransformOrigin="0.5,0.5">
+            
         </Button>
         <TreeView x:Name="list_APStories" MaxWidth="350"
                  ScrollViewer.VerticalScrollBarVisibility="Auto"
@@ -38,7 +32,7 @@
                  Grid.Column="0" Grid.Row="1" Grid.RowSpan="2"
                  SelectedItemChanged="list_APStories_SelectedItemChanged"
                  FontWeight="Bold"
-                 FontSize="14" Grid.ColumnSpan="2" Background="#FFD8D8D8" Margin="3,0,3,5"
+                 FontSize="14" Grid.ColumnSpan="1" Background="#FFD8D8D8" Margin="3,0,3,5"
                  >
             <TreeView.Resources>
                 <SolidColorBrush x:Key="TreeViewItem.TreeArrow.Static.Stroke" Color="#FF818181"/>
@@ -167,7 +161,7 @@
                 </Style>
             </TreeView.Resources>
         </TreeView>
-        <Grid x:Name="editorGrid" Grid.Column="2" Grid.Row="0" Grid.RowSpan="1">
+        <Grid x:Name="editorGrid" Grid.Column="1" Grid.Row="0" Grid.RowSpan="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
@@ -192,10 +186,17 @@
 
 
         </Grid>
-        <ScrollViewer x:Name="scrl_Story" Grid.Column="2" Grid.Row="1" Grid.RowSpan="2" MaxWidth="800" Margin="5,5,5,5" CanContentScroll="False">
+        <ScrollViewer x:Name="scrl_Story" Grid.Column="2" Grid.Row="1" Grid.RowSpan="3" MaxWidth="800" Margin="5,5,5,5" CanContentScroll="False">
             <Frame x:Name="frame_Story" NavigationUIVisibility="Hidden" Margin="0,0,3,0"/>
 
         </ScrollViewer>
+
+        <Button x:Name="btnTopicsSettings" Content=" Manage Topics" FontFamily="{StaticResource FA}"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Padding="15"
+                Click="btnTopicsSettings_Click"
+                Grid.Row="3" Grid.Column="0"/>
 
     </Grid>
 

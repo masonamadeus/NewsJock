@@ -104,5 +104,14 @@
     <Setting Name="APapiKey" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="APfollowedTopics" Type="System.Collections.Generic.List&lt;NewsBuddy.APTopic&gt;" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="APShowTopics" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="APunfollowedTopics" Type="System.Collections.Generic.List&lt;NewsBuddy.APTopic&gt;" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
   </Settings>
 </SettingsFile>

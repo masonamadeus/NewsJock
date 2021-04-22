@@ -19,17 +19,21 @@ namespace NewsBuddy
     public class APingestor
     {
         public string apiKey { get; set; }
-        private const string reqUrl = "https://api.ap.org/media/v/content/";
-        private HttpClient client;
         public EntityTagHeaderValue previousETag { get; set; }
         public EntityTagHeaderValue nextETag { get; set; }
         public bool isAuthorized { get; set; }
+
+        private const string reqUrl = "https://api.ap.org/media/v/content/";
+        private HttpClient client;
+
+        private List<APTopic> activeTopics = new List<APTopic>();
 
         public List<APObject> apFeedItems = new List<APObject>();
 
         public APingestor()
         {
             apiKey = Settings.Default.APapiKey;
+
         }
         
         public List<APObject> GetItems()
@@ -55,7 +59,6 @@ namespace NewsBuddy
             if (response.IsSuccessStatusCode)
             {
                 string reply = response.Content.ReadAsStringAsync().Result;
-                Trace.WriteLine(reply);
                 XmlDocument story = DownloadStory(reply);
                 return story == null ? null : story;
             }
@@ -107,12 +110,61 @@ namespace NewsBuddy
 
         }
 
+        public void GetTopicFeed(APTopic topic)
+        {
+            Trace.WriteLine("getting followed topic: " + topic.topicName);
+
+            if (client == null)
+            {
+                client = new HttpClient();
+                client.BaseAddress = new Uri(reqUrl);
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            }
+
+            if (activeTopics.Contains(topic))
+            {
+                HttpResponseMessage response = client.GetAsync("/"+topic.nextPageLink+"&apikey="+apiKey).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    topic.APIresponse = response.Content.ReadAsStringAsync().Result;
+                    ProcessFeed(topic);
+                    Trace.WriteLine(topic.APIresponse);
+                    Trace.WriteLine(topic.nextPageLink);
+                }
+                else
+                {
+                    Trace.WriteLine(response.RequestMessage + "    " + response.ReasonPhrase);
+                    activeTopics.Remove(topic);
+                }
+            }
+            else
+            {
+                HttpResponseMessage response = client.GetAsync(String.Format("feed?q=followedtopicid:{0}&apikey={1}&in_my_plan=true&versions=latest&text_links=plain", topic.topicID, apiKey)).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    topic.APIresponse = response.Content.ReadAsStringAsync().Result;
+                    ProcessFeed(topic);
+                    Trace.WriteLine(topic.APIresponse);
+                    activeTopics.Add(topic);
+                }
+                else
+                {
+                    Trace.WriteLine(response.RequestMessage + "    " + response.ReasonPhrase);
+                }
+            }
+           
+        }
+
+
         public void GetFeed()
         {
             Mouse.OverrideCursor = Cursors.Wait;
 
             Trace.WriteLine("Getting Feed");
-
+            if (activeTopics.Count > 0 && !Settings.Default.APShowTopics)
+            {
+                activeTopics.Clear();
+            }
             // Make a new httpclient if you need one
             if (client == null)
             {
@@ -171,7 +223,6 @@ namespace NewsBuddy
             else if (response.StatusCode == HttpStatusCode.NotModified)
             {
                 Trace.WriteLine("Not Modified. Same ETag");
-                return;
             }
             else
             {
@@ -181,8 +232,106 @@ namespace NewsBuddy
 
                 Trace.WriteLine(response.StatusCode.ToString());
             }
+
+            // maybe enclose in try catch because you may have none?
+                if (Settings.Default.APShowTopics && Settings.Default.APfollowedTopics != null && Settings.Default.APfollowedTopics.Count > 0)
+                {
+                    foreach (APTopic topic in Settings.Default.APfollowedTopics)
+                    {
+                        GetTopicFeed(topic);
+                    }
+                }
+            
+            
+
             Mouse.OverrideCursor = null;
         }
+
+
+        private void ProcessFeed(APTopic topic)
+        {
+            dynamic js = JsonConvert.DeserializeObject(topic.APIresponse);
+
+            if (js.error != null)
+            {
+                Trace.WriteLine(js.error.ToString());
+                return;
+            }
+
+            var dataBlock = js.data;
+            if (dataBlock == null)
+            {
+                Trace.WriteLine("datablock was null on feed processing");
+                return;
+            }
+
+            string rawNextPageLink = dataBlock.next_page;
+            
+            topic.nextPageLink = rawNextPageLink.Replace(@"https://api.ap.org/", "");
+
+            var itemsBlock = dataBlock.items;
+            var itemsCount = (itemsBlock != null && itemsBlock.Count != null) ? itemsBlock.Count : 0;
+
+            for (int entry = 0; entry < itemsCount; entry++)
+            {
+                ProcessTopicEntry(itemsBlock[entry], entry);
+            }
+
+        }
+
+        private void ProcessTopicEntry(dynamic d_item, int index)
+        {
+            List<APObject> textAssociations = new List<APObject>();
+            var item = d_item.item;
+            var associations_len = item.associations != null ? ((JContainer)item.associations).Count : 0;
+
+            // if there are associations at all, check them to see if they are text.
+            if (associations_len != 0)
+            {
+                foreach (dynamic association in item.associations)
+                {
+                    if (String.Equals(association.Value.type.ToString(), "text"))
+                    {
+                        // if it is text, add it to the list of text associations
+                        dynamic currentAssoc = association.Value;
+                        textAssociations.Add(new APObject(currentAssoc, this)
+                        {
+                            headline = currentAssoc.headline != null ? currentAssoc.headline.ToString() : "",
+                            altID = currentAssoc.altids.itemid != null ? currentAssoc.altids.itemid.ToString() : "",
+                            uri = currentAssoc.uri != null ? item.uri.ToString() : ""
+                        });
+                    }
+                }
+            }
+
+            // if there ARE text associations, make a parent container with them in it.
+            if (textAssociations.Count > 0)
+            {
+                APObject assocParent = new APObject(item, this, true)
+                {
+                    headline = item.headline != null ? item.headline.ToString() : "",
+                    uri = null,
+                    altID = null
+                };
+
+                foreach (APObject textAssociation in textAssociations)
+                {
+                    assocParent.associations.Add(textAssociation);
+                }
+                apFeedItems.Add(assocParent);
+            }
+            else // if there are not text associations, make a new story and strip out the associations.
+            {
+                apFeedItems.Add(new APObject(item, this)
+                {
+                    headline = item.headline != null ? item.headline.ToString() : "",
+                    uri = item.uri != null ? item.uri.ToString() : "",
+                    altID = item.altids.itemid != null ? item.altids.itemid.ToString() : ""
+
+                });
+            }
+        }
+
 
         private void ProcessFeed(string body)
         {
@@ -198,6 +347,7 @@ namespace NewsBuddy
             if (dataBlock == null)
             {
                 Trace.WriteLine("datablock was null on feed processing");
+                return;
             }
 
             var itemsBlock = dataBlock.items;
