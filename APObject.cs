@@ -11,6 +11,7 @@ namespace NewsBuddy
         public string headline { get; set; }
         public string altID { get; set; }
         public string uri { get; set; }
+        public string updateDate { get; set; }
         public object item { get; set; }
         public APStory story { get; set; }
         private bool m_hasStory { get; set; }

@@ -52,8 +52,6 @@ namespace NewsBuddy
 
         public ListenerLogger logger;
 
-        public APingestor ap;
-
         private Cursor nbDropCur = null;
 
 

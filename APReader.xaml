@@ -23,9 +23,31 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="50"/>
         </Grid.RowDefinitions>
-        <Button x:Name="btn_RefreshAP" Padding="8" FontWeight="Bold" Click="RefreshAP" Content="&#xF021; Get Latest Stories" VerticalAlignment="Center" HorizontalAlignment="Stretch" Grid.Column="0" FontFamily="Font Awesome 5 Free Regular" Margin="10,0,10,0" RenderTransformOrigin="0.5,0.5">
+        <ProgressBar x:Name="progbar" IsIndeterminate="True" Grid.Column="0" Background="#FFBBBABA" Grid.RowSpan="4">
+            <ProgressBar.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform/>
+                    <SkewTransform/>
+                    <RotateTransform Angle="0"/>
+                    <TranslateTransform/>
+                </TransformGroup>
+            </ProgressBar.RenderTransform>
+            <ProgressBar.Foreground>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                    <GradientStop Color="#FFADDD8D" Offset="0.163"/>
+                    <GradientStop Color="#FFBBBABA" Offset="0"/>
+                    <GradientStop Color="#FFBBBABA" Offset="1"/>
+                    <GradientStop Color="#FF92BDF2" Offset="0.859"/>
+                    <GradientStop Color="#FFBBBABA" Offset="0.533"/>
+                </LinearGradientBrush>
+            </ProgressBar.Foreground>
+        </ProgressBar>
+        <Button x:Name="btn_RefreshAP" Padding="8" FontWeight="Bold" Click="RefreshAP" Content="&#xF021; Get Latest Stories"
+                VerticalAlignment="Center" HorizontalAlignment="Stretch" Grid.Column="0"
+                FontFamily="Font Awesome 5 Free Regular" Margin="10,0,10,0" RenderTransformOrigin="0.5,0.5">
             
         </Button>
+        <CheckBox Name="chk_AutoFeed" Grid.Column="0" VerticalAlignment="Center" Margin="20,0,0,0" Content="Live" Checked="chk_AutoFeed_Checked" Unchecked="chk_AutoFeed_Unchecked" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=APautoFeed, Mode=TwoWay}" HorizontalAlignment="Left"/>
         <TreeView x:Name="list_APStories" MaxWidth="350"
                  ScrollViewer.VerticalScrollBarVisibility="Auto"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -96,8 +118,6 @@
                 </Style>
                 <Style TargetType="{x:Type TreeViewItem}">
                     <Setter Property="Background" Value="Transparent"/>
-                    <Setter Property="HorizontalContentAlignment" Value="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"/>
-                    <Setter Property="VerticalContentAlignment" Value="{Binding VerticalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"/>
                     <Setter Property="Padding" Value="1,0,0,0"/>
                     <Setter Property="Margin" Value="2,5,5,5"/>
                     <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>

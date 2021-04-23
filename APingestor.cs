@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -9,22 +7,40 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Xml;
-using System.Windows.Input;
+using System.Linq;
+//using System.Windows.Input;
 
 namespace NewsBuddy
 {
-
-
+    
+    public static class DuplicateCheck
+    {
+        public static IEnumerable<TSource> DistinctBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
+        {
+            HashSet<TKey> seenKeys = new HashSet<TKey>();
+            foreach (TSource element in source)
+            {
+                if (seenKeys.Add(keySelector(element)))
+                {
+                    yield return element;
+                }
+            }
+        }
+    }
 
     public class APingestor
     {
+        
+
         public string apiKey { get; set; }
         public EntityTagHeaderValue previousETag { get; set; }
         public EntityTagHeaderValue nextETag { get; set; }
+
         public bool isAuthorized { get; set; }
         public List<APObject> Items { get { return apFeedItems; } }
 
         private const string reqUrl = "https://api.ap.org/media/v/content/";
+        private string feedNextPage = "null";
         private HttpClient client;
         private List<APTopic> activeTopics = new List<APTopic>();
         private List<APObject> apFeedItems = new List<APObject>();
@@ -33,7 +49,6 @@ namespace NewsBuddy
         {
             apiKey = Settings.Default.APapiKey;
         }
-
 
         public XmlDocument GetItem(string itemID)
         {
@@ -104,7 +119,7 @@ namespace NewsBuddy
 
         }
 
-        public void GetTopicFeed(APTopic topic)
+        public void GetTopicFeed(APTopic topic, bool isAuto = false)
         {
             Trace.WriteLine("getting followed topic: " + topic.topicName);
 
@@ -121,7 +136,7 @@ namespace NewsBuddy
                 if (response.IsSuccessStatusCode)
                 {
                     topic.APIresponse = response.Content.ReadAsStringAsync().Result;
-                    ProcessTopicFeed(topic);
+                    ProcessTopicFeed(topic,isAuto);
                     Trace.WriteLine(topic.APIresponse);
                     Trace.WriteLine(topic.nextPageLink);
                 }
@@ -137,7 +152,7 @@ namespace NewsBuddy
                 if (response.IsSuccessStatusCode)
                 {
                     topic.APIresponse = response.Content.ReadAsStringAsync().Result;
-                    ProcessTopicFeed(topic);
+                    ProcessTopicFeed(topic,isAuto);
                     Trace.WriteLine(topic.APIresponse);
                     activeTopics.Add(topic);
                 }
@@ -150,9 +165,8 @@ namespace NewsBuddy
         }
 
 
-        public void GetFeed()
+        public void GetFeed(bool isAuto = false)
         {
-            Mouse.OverrideCursor = Cursors.Wait;
 
 
             Trace.WriteLine("Getting Feed");
@@ -191,20 +205,39 @@ namespace NewsBuddy
                 Trace.WriteLine(request.Headers.ToString());
             }
 
+            HttpResponseMessage response;
             // send the API request out and get a response.
-            HttpResponseMessage response = client.SendAsync(request).Result;
+            if (isAuto && feedNextPage != "null")
+            {
+                Trace.WriteLine("Getting AUTO Feed");
+                response = client.GetAsync("/" + feedNextPage + "&apikey=" + apiKey).Result;
+            }
+            else
+            {
+                Trace.WriteLine("Getting CONDITIONAL Feed");
+                response = client.SendAsync(request).Result;
+            }
+
             if (response.IsSuccessStatusCode)
             {
-                apFeedItems.Clear();
+                if (!isAuto)
+                {
+                    apFeedItems.Clear();
+                }
                 isAuthorized = true;
                 string reply = response.Content.ReadAsStringAsync().Result;
                 ProcessFeed(reply);
-                if (nextETag != null)
+                if (nextETag != null & response.Headers.ETag != null)
                 {
                     previousETag = new EntityTagHeaderValue(nextETag.ToString());
-
                 }
-                nextETag = new EntityTagHeaderValue(response.Headers.ETag.ToString());
+                if (response.Headers.ETag != null)
+                {
+                    nextETag = new EntityTagHeaderValue(response.Headers.ETag.ToString());
+                    
+                }
+
+                
 
                 // Get followed topics too
                 // maybe enclose in try catch because you may have none?
@@ -212,7 +245,7 @@ namespace NewsBuddy
                 {
                     foreach (APTopic topic in Settings.Default.APfollowedTopics)
                     {
-                        GetTopicFeed(topic);
+                        GetTopicFeed(topic,isAuto);
                     }
                 }
 
@@ -220,8 +253,12 @@ namespace NewsBuddy
 
                 if (Debugger.IsAttached)
                 {
-                    Trace.WriteLine("Next ETag is: " + nextETag.ToString());
-                    Trace.WriteLine(response.Headers.ETag.ToString());
+                    if (nextETag != null && response.Headers.ETag != null)
+                    {
+                        Trace.WriteLine("Next ETag is: " + nextETag.ToString());
+                        Trace.WriteLine(response.Headers.ETag.ToString());
+                    }
+                    
                     Trace.WriteLine(response.StatusCode.ToString());
                 }
             }
@@ -238,11 +275,10 @@ namespace NewsBuddy
                 Trace.WriteLine(response.StatusCode.ToString());
             }
 
-            Mouse.OverrideCursor = null;
         }
 
 
-        private void ProcessTopicFeed(APTopic topic)
+        private void ProcessTopicFeed(APTopic topic, bool isAuto)
         {
             APObject topicParent = new APObject(topic.APIresponse, this, true)
             {
@@ -356,6 +392,10 @@ namespace NewsBuddy
                 return;
             }
 
+            string rawNextPageLink = dataBlock.next_page;
+
+            feedNextPage = rawNextPageLink.Replace(@"https://api.ap.org/", "");
+
             var itemsBlock = dataBlock.items;
             var itemsCount = (itemsBlock != null && itemsBlock.Count != null) ? itemsBlock.Count : 0;
 
@@ -421,6 +461,9 @@ namespace NewsBuddy
 
         private void SortList()
         {
+
+            //apFeedItems = apFeedItems.DistinctBy(p => p.headline).ToList();
+
             List<APObject> assocParents = new List<APObject>();
             for (int o = 0; o < apFeedItems.Count; o++)
             {
@@ -430,6 +473,13 @@ namespace NewsBuddy
                     assocParents.Add(item);
                 }
             }
+            
+            /*
+            for (int op = 0; op < assocParents.Count; op++)
+            {
+                assocParents[op].associations = assocParents[op].associations.DistinctBy(p => p.headline).ToList();
+            }
+            */
 
             for (int pp = assocParents.Count - 1; pp >= 0; pp--)
             {

@@ -35,6 +35,15 @@ namespace NewsBuddy
             }
             FillList();
 
+            if (Debugger.IsAttached)
+            {
+                foreach (APTopic i in Settings.Default.APunfollowedTopics)
+                {
+                    Trace.WriteLine(i.topicName);
+                }
+            }
+            
+
         }
 
         private bool nameClear = true;
@@ -54,11 +63,8 @@ namespace NewsBuddy
             //    lst_Topics.Items.Clear();
 
             // }
-            if (Settings.Default.APfollowedTopics == null || Settings.Default.APfollowedTopics.Count == 0)
-            {
-                lst_Topics.Items.Add(new TextBlock() { Text = "No Followed Topics", Tag = "NA" });
-                return;
-            }
+            
+
             if (lst_UnFollowed.Items.Count > 0)
             {
                 lst_UnFollowed.Items.Clear();
@@ -77,6 +83,11 @@ namespace NewsBuddy
             foreach (APTopic topic in Settings.Default.APfollowedTopics)
             {
                 lst_Topics.Items.Add(topic);
+            }
+
+            if (Settings.Default.APfollowedTopics.Count == 0)
+            {
+                lst_Topics.Items.Add(new TextBlock() { Text = "No Followed Topics", Tag = "NA" });
             }
         }
 
@@ -98,6 +109,7 @@ namespace NewsBuddy
             }
 
             Settings.Default.APunfollowedTopics.Clear();
+
             for (int y = 0; y < lst_UnFollowed.Items.Count; y++)
             {
                 var badTopic = lst_UnFollowed.Items[y];

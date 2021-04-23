@@ -11,6 +11,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Linq;
 using System.Xml;
+using System.ComponentModel;
+using System.Diagnostics;
 
 namespace NewsBuddy
 {
@@ -20,9 +22,26 @@ namespace NewsBuddy
     public partial class APReader : Window
     {
         public APingestor ingest;
-       // private List<APObject> stories;
+
         private bool isLoaded = false;
+
+        private bool autoFeed { get; set; }
+
+        private string[] updateMessages =
+        {
+            "Updating  Live",
+            "Updating  Live",
+            "Updating  Live",
+            "Updating  Live"
+
+        };
+
+        private int updateMessageNumber = 0;
+
         public MainWindow mainWindow { get; set; }
+
+        private readonly BackgroundWorker worker = new BackgroundWorker();
+
         public APReader()
         {
             InitializeComponent();
@@ -30,6 +49,10 @@ namespace NewsBuddy
             lbl_EditorDisclaimer.Visibility = Visibility.Collapsed;
             btn_DeleteChecked.Visibility = Visibility.Collapsed;
             btn_DeleteUnChecked.Visibility = Visibility.Collapsed;
+
+            worker.DoWork += WorkerFeedUpdate;
+            worker.RunWorkerCompleted += WorkerUpdateUI;
+            worker.WorkerSupportsCancellation = true;
 
             foreach (var btn in editorGrid.Children)
             {
@@ -39,6 +62,8 @@ namespace NewsBuddy
                 }
             }
 
+            autoFeed = Settings.Default.APautoFeed;
+
             mainWindow = Application.Current.Windows[0] as MainWindow;
             ingest = new APingestor();
 
@@ -47,6 +72,115 @@ namespace NewsBuddy
             frame_Story.Content = new APReaderDocs();
 
             isLoaded = true;
+
+        }
+
+        private void WorkerFeedUpdate(object sender, DoWorkEventArgs e)
+        {
+            try
+            {
+                List<object> treeItems = new List<object>();
+                if (autoFeed)
+                {
+                    ingest.GetFeed(true);
+                }
+                else
+                {
+                    ingest.GetFeed();
+                }
+                if (ingest.isAuthorized)
+                {
+                    foreach (APObject obj in ingest.Items)
+                    {
+                        treeItems.Add(obj);
+                    }
+                }
+                else
+                {
+                    treeItems.Add(new TextBlock()
+                    {
+                        Text = "Unauthorized. Check your API Key\nin NewsJock Settings."
+                    });
+                }
+                e.Result = treeItems;
+            }
+            catch
+            {
+                e.Result = null;
+            }
+
+        }
+
+        private void WorkerUpdateUI(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if (e.Cancelled)
+            {
+                btn_RefreshAP.Content = " Get Latest Stories";
+                btn_RefreshAP.IsEnabled = true;
+                progbar.Visibility = Visibility.Collapsed;
+                chk_AutoFeed.IsChecked = false;
+                autoFeed = false;
+                return;
+            }
+
+            if (e.Result == null)
+            {
+                Trace.WriteLine("BackgroundWorker Stopped Unexpectedly");
+                btn_RefreshAP.Content = " Get Latest Stories";
+                btn_RefreshAP.IsEnabled = true;
+                progbar.Visibility = Visibility.Collapsed;
+                autoFeed = false;
+                return;
+            }
+
+            list_APStories.Items.Clear();
+            foreach (object obj in (List<object>)e.Result)
+            {
+                if (obj is APObject)
+                {
+                    APObject APobj = obj as APObject;
+                    if (APobj.isAssocParent)
+                    {
+                        TreeViewItem assocParent = new TreeViewItem()
+                        {
+                            Header = APobj.headline
+                            
+                        };
+                        foreach (APObject assoc in APobj.associations)
+                        {
+                            assocParent.Items.Add(assoc);
+                        }
+
+                        list_APStories.Items.Add(assocParent);
+
+                    }
+                    else
+                    {
+                        list_APStories.Items.Add(obj);
+                    }
+                }
+
+            }
+
+            if (autoFeed)
+            {
+                worker.RunWorkerAsync();
+                if (updateMessageNumber > updateMessages.Length - 1)
+                {
+                    updateMessageNumber = 0;
+                }
+                btn_RefreshAP.Content = updateMessages[updateMessageNumber];
+
+                updateMessageNumber++;
+
+            }
+            else
+            {
+                btn_RefreshAP.Content = " Get Latest Stories";
+                btn_RefreshAP.IsEnabled = true;
+                progbar.Visibility = Visibility.Collapsed;
+            }
+
 
         }
 
@@ -68,7 +202,7 @@ namespace NewsBuddy
                         {
                             btn_ToggleMode.Content = "Switch to Story Editor Mode";
                         }
-                        frame_Story.Content=selected.story;
+                        frame_Story.Content = selected.story;
                         foreach (var btn in editorGrid.Children)
                         {
                             if (btn is Button)
@@ -93,55 +227,31 @@ namespace NewsBuddy
                     }
                 }
             }
-           
+
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            worker.CancelAsync();
+            worker.Dispose();
             ingest.Dispose();
         }
 
         private void RefreshAP(object sender, RoutedEventArgs e)
         {
-            list_APStories.Items.Clear();
-            ingest.GetFeed();
-            if (ingest.isAuthorized)
+            btn_RefreshAP.Content = "Getting Feed...";
+            if (chk_AutoFeed.IsChecked == true)
             {
-                foreach (APObject obj in ingest.Items)
-                {
-                    if (obj.isAssocParent)
-                    {
-                        TreeViewItem assocParent = new TreeViewItem()
-                        {
-                            Header = obj.headline
-                        };
-                        foreach (APObject assoc in obj.associations)
-                        {
-                            assocParent.Items.Add(assoc);
-                        }
-
-                        list_APStories.Items.Add(assocParent);
-                        
-                    }
-                    else
-                    {
-                        list_APStories.Items.Add(obj);
-                    }
-                }
+                autoFeed = true;
             }
-            else
-            {
-                list_APStories.Items.Add(new TextBlock()
-                {
-                    Text = "Unauthorized. Check your API Key\nin NewsJock Settings."
-                });
-                frame_Story.Content = "If you do not have an AP API Key, contact your administrator.";
-            }
+            worker.RunWorkerAsync(ingest);
+            btn_RefreshAP.IsEnabled = false;
+            progbar.Visibility = Visibility.Visible;
         }
 
         private void list_APStories_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
-            this.Dispatcher.Invoke(() => 
+            this.Dispatcher.Invoke(() =>
             {
                 list_APStories_SelectionChanged();
             });
@@ -208,7 +318,7 @@ namespace NewsBuddy
 
         private void btn_SendToNewScript_Click(object sender, RoutedEventArgs e)
         {
-            
+
             APStory story = frame_Story.Content as APStory;
             mainWindow.AddNewTabFromChunks(story.GetChunks());
 
@@ -235,7 +345,20 @@ namespace NewsBuddy
                     ((Button)btn).IsEnabled = false;
                 }
             }
+
             frame_Story.Content = new APTopicSettings();
+
+        }
+
+
+        private void chk_AutoFeed_Checked(object sender, RoutedEventArgs e)
+        {
+            autoFeed = true;
+        }
+
+        private void chk_AutoFeed_Unchecked(object sender, RoutedEventArgs e)
+        {
+            autoFeed = false;
         }
     }
 }
