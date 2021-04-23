@@ -11,6 +11,7 @@ namespace NewsBuddy
         public string APIresponse { get; set; }
         public int topicID { get; set; }
         public string topicName { get; set; }
+        public bool followed { get; set; }
 
     }
 }

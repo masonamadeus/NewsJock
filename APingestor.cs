@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -9,22 +7,40 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Xml;
-using System.Windows.Input;
+using System.Linq;
+//using System.Windows.Input;
 
 namespace NewsBuddy
 {
 
-
+    public static class DuplicateCheck
+    {
+        public static IEnumerable<TSource> DistinctBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
+        {
+            HashSet<TKey> seenKeys = new HashSet<TKey>();
+            foreach (TSource element in source)
+            {
+                if (seenKeys.Add(keySelector(element)))
+                {
+                    yield return element;
+                }
+            }
+        }
+    }
 
     public class APingestor
     {
+
+
         public string apiKey { get; set; }
         public EntityTagHeaderValue previousETag { get; set; }
         public EntityTagHeaderValue nextETag { get; set; }
+
         public bool isAuthorized { get; set; }
         public List<APObject> Items { get { return apFeedItems; } }
 
         private const string reqUrl = "https://api.ap.org/media/v/content/";
+        private string feedNextPage = "null";
         private HttpClient client;
         private List<APTopic> activeTopics = new List<APTopic>();
         private List<APObject> apFeedItems = new List<APObject>();
@@ -34,6 +50,55 @@ namespace NewsBuddy
             apiKey = Settings.Default.APapiKey;
         }
 
+        public List<APTopic> GetFollowedTopics()
+        {
+            List<APTopic> topics = new List<APTopic>();
+            if (client == null)
+            {
+                client = new HttpClient();
+                client.BaseAddress = new Uri(reqUrl);
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            }
+
+            HttpResponseMessage response = client.GetAsync("/media/v/account/followedtopics?apikey=" + apiKey).Result;
+            if (response.IsSuccessStatusCode)
+            {
+                string reply = response.Content.ReadAsStringAsync().Result;
+                dynamic js = JsonConvert.DeserializeObject(reply);
+
+                if (js.error != null)
+                {
+                    Trace.WriteLine(js.error.ToString());
+                    return null;
+                }
+
+                var dataBlock = js.data;
+                if (dataBlock == null)
+                {
+                    Trace.WriteLine("datablock was null on feed processing");
+                    return null;
+                }
+
+                var topicBlock = dataBlock.followedtopics;
+                var topicCount = (topicBlock != null && topicBlock.Count != null) ? topicBlock.Count : 0;
+                for (int i = 0; i < topicCount; i++)
+                {
+                    var topic = topicBlock[i];
+                    topics.Add(new APTopic()
+                    {
+                        topicID = Int32.Parse(topic.id.ToString()),
+                        topicName = topic.name.ToString()
+                    });
+                }
+                return topics;
+                Trace.WriteLine(reply);
+            }
+            else
+            {
+                Trace.WriteLine(response.RequestMessage + "    " + response.ReasonPhrase);
+                return null;
+            }
+        }
 
         public XmlDocument GetItem(string itemID)
         {
@@ -104,7 +169,7 @@ namespace NewsBuddy
 
         }
 
-        public void GetTopicFeed(APTopic topic)
+        public void GetTopicFeed(APTopic topic, bool isAuto = false)
         {
             Trace.WriteLine("getting followed topic: " + topic.topicName);
 
@@ -115,13 +180,13 @@ namespace NewsBuddy
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             }
 
-            if (activeTopics.Contains(topic))
+            if (activeTopics.Contains(topic) && isAuto)
             {
                 HttpResponseMessage response = client.GetAsync("/" + topic.nextPageLink + "&apikey=" + apiKey).Result;
                 if (response.IsSuccessStatusCode)
                 {
                     topic.APIresponse = response.Content.ReadAsStringAsync().Result;
-                    ProcessTopicFeed(topic);
+                    ProcessTopicFeed(topic, isAuto);
                     Trace.WriteLine(topic.APIresponse);
                     Trace.WriteLine(topic.nextPageLink);
                 }
@@ -137,7 +202,7 @@ namespace NewsBuddy
                 if (response.IsSuccessStatusCode)
                 {
                     topic.APIresponse = response.Content.ReadAsStringAsync().Result;
-                    ProcessTopicFeed(topic);
+                    ProcessTopicFeed(topic, isAuto);
                     Trace.WriteLine(topic.APIresponse);
                     activeTopics.Add(topic);
                 }
@@ -149,104 +214,12 @@ namespace NewsBuddy
 
         }
 
-
-        public void GetFeed()
-        {
-            Mouse.OverrideCursor = Cursors.Wait;
-
-
-            Trace.WriteLine("Getting Feed");
-            if (activeTopics.Count > 0 && !Settings.Default.APShowTopics)
-            {
-                activeTopics.Clear();
-            }
-            // Make a new httpclient if you need one
-            if (client == null)
-            {
-                client = new HttpClient();
-                client.BaseAddress = new Uri(reqUrl);
-                client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
-            }
-
-            // set up the request message to the proper address, insert the API Key, and the other variables.
-            var request = new HttpRequestMessage()
-            {
-                RequestUri = new Uri(client.BaseAddress + "feed?apikey=" + apiKey + "&in_my_plan=true&versions=latest&text_links=plain", UriKind.Absolute),
-                Method = HttpMethod.Get
-            };
-
-            // Add the application/json header so that it gets accepted
-            request.Headers.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
-
-            // if this isn't the first request, send along the ET tag
-            if (nextETag != null)
-            {
-                request.Headers.IfNoneMatch.Add(nextETag);
-            }
-
-            if (Debugger.IsAttached)
-            {
-                Trace.WriteLine(request.Headers.ToString());
-            }
-
-            // send the API request out and get a response.
-            HttpResponseMessage response = client.SendAsync(request).Result;
-            if (response.IsSuccessStatusCode)
-            {
-                apFeedItems.Clear();
-                isAuthorized = true;
-                string reply = response.Content.ReadAsStringAsync().Result;
-                ProcessFeed(reply);
-                if (nextETag != null)
-                {
-                    previousETag = new EntityTagHeaderValue(nextETag.ToString());
-
-                }
-                nextETag = new EntityTagHeaderValue(response.Headers.ETag.ToString());
-
-                // Get followed topics too
-                // maybe enclose in try catch because you may have none?
-                if (Settings.Default.APShowTopics && Settings.Default.APfollowedTopics != null && Settings.Default.APfollowedTopics.Count > 0)
-                {
-                    foreach (APTopic topic in Settings.Default.APfollowedTopics)
-                    {
-                        GetTopicFeed(topic);
-                    }
-                }
-
-                SortList();
-
-                if (Debugger.IsAttached)
-                {
-                    Trace.WriteLine("Next ETag is: " + nextETag.ToString());
-                    Trace.WriteLine(response.Headers.ETag.ToString());
-                    Trace.WriteLine(response.StatusCode.ToString());
-                }
-            }
-            else if (response.StatusCode == HttpStatusCode.NotModified)
-            {
-                Trace.WriteLine("Not Modified. Same ETag");
-            }
-            else
-            {
-                isAuthorized = false;
-
-                Trace.WriteLine(response.RequestMessage.ToString());
-
-                Trace.WriteLine(response.StatusCode.ToString());
-            }
-
-            Mouse.OverrideCursor = null;
-        }
-
-
-        private void ProcessTopicFeed(APTopic topic)
+        private void ProcessTopicFeed(APTopic topic, bool isAuto)
         {
             APObject topicParent = new APObject(topic.APIresponse, this, true)
             {
-                headline = topic.topicName
+                headline = topic.topicName,
+                isTopic = true
             };
 
             dynamic js = JsonConvert.DeserializeObject(topic.APIresponse);
@@ -305,7 +278,8 @@ namespace NewsBuddy
                         {
                             headline = currentAssoc.headline != null ? currentAssoc.headline.ToString() : "",
                             altID = currentAssoc.altids.itemid != null ? currentAssoc.altids.itemid.ToString() : "",
-                            uri = currentAssoc.uri != null ? item.uri.ToString() : ""
+                            uri = currentAssoc.uri != null ? item.uri.ToString() : "",
+                            version = currentAssoc.version != null ? Int32.Parse(currentAssoc.version.ToString()) : null
                         });
                     }
                 }
@@ -318,7 +292,8 @@ namespace NewsBuddy
                 {
                     headline = item.headline != null ? item.headline.ToString() : "",
                     uri = null,
-                    altID = null
+                    altID = item.altids.itemid != null ? item.altids.itemid.ToString() : "",
+                    version = item.version != null ? Int32.Parse(item.version.ToString()) : null
                 };
 
                 foreach (APObject textAssociation in textAssociations)
@@ -333,10 +308,121 @@ namespace NewsBuddy
                 {
                     headline = item.headline != null ? item.headline.ToString() : "",
                     uri = item.uri != null ? item.uri.ToString() : "",
-                    altID = item.altids.itemid != null ? item.altids.itemid.ToString() : ""
+                    altID = item.altids.itemid != null ? item.altids.itemid.ToString() : "",
+                    version = item.version != null ? Int32.Parse(item.version.ToString()) : null
 
                 };
             }
+        }
+
+        public void GetFeed(bool isAuto = false)
+        {
+
+
+            Trace.WriteLine("Getting Feed");
+            if (activeTopics.Count > 0 && !Settings.Default.APShowTopics)
+            {
+                activeTopics.Clear();
+            }
+            // Make a new httpclient if you need one
+            if (client == null)
+            {
+                client = new HttpClient();
+                client.BaseAddress = new Uri(reqUrl);
+                client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+            }
+
+            // set up the request message to the proper address, insert the API Key, and the other variables.
+            var request = new HttpRequestMessage()
+            {
+                RequestUri = new Uri(client.BaseAddress + "feed?apikey=" + apiKey + "&in_my_plan=true&versions=latest&text_links=plain", UriKind.Absolute),
+                Method = HttpMethod.Get
+            };
+
+            // Add the application/json header so that it gets accepted
+            request.Headers.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            // if this isn't the first request, send along the ET tag
+            if (nextETag != null)
+            {
+                request.Headers.IfNoneMatch.Add(nextETag);
+            }
+
+            if (Debugger.IsAttached)
+            {
+                Trace.WriteLine(request.Headers.ToString());
+            }
+
+            HttpResponseMessage response;
+            // send the API request out and get a response.
+            if (isAuto && feedNextPage != "null")
+            {
+                Trace.WriteLine("Getting AUTO Feed");
+                response = client.GetAsync("/" + feedNextPage + "&apikey=" + apiKey).Result;
+            }
+            else
+            {
+                Trace.WriteLine("Getting CONDITIONAL Feed");
+                response = client.SendAsync(request).Result;
+            }
+
+            if (response.IsSuccessStatusCode)
+            {
+
+                apFeedItems.Clear();
+
+
+                isAuthorized = true;
+
+                string reply = response.Content.ReadAsStringAsync().Result;
+
+                ProcessFeed(reply);
+
+                // Get followed topics too
+                if (Settings.Default.APShowTopics && Settings.Default.APfollowedTopics != null && Settings.Default.APfollowedTopics.Count > 0)
+                {
+                    foreach (APTopic topic in Settings.Default.APfollowedTopics)
+                    {
+                        GetTopicFeed(topic, isAuto);
+                    }
+                }
+
+                SortList();
+
+
+
+
+                // ETag Stuff, Don't worry about it.
+                if (nextETag != null & response.Headers.ETag != null)
+                {
+                    previousETag = new EntityTagHeaderValue(nextETag.ToString());
+                }
+                if (response.Headers.ETag != null)
+                {
+                    nextETag = new EntityTagHeaderValue(response.Headers.ETag.ToString());
+
+                }
+
+                if (Debugger.IsAttached)
+                {
+                    Trace.WriteLine(response.StatusCode.ToString());
+                }
+            }
+            else if (response.StatusCode == HttpStatusCode.NotModified)
+            {
+                Trace.WriteLine("Not Modified. Same ETag");
+            }
+            else
+            {
+                isAuthorized = false;
+
+                Trace.WriteLine(response.RequestMessage.ToString());
+
+                Trace.WriteLine(response.StatusCode.ToString());
+            }
+
         }
 
         private void ProcessFeed(string body)
@@ -355,6 +441,10 @@ namespace NewsBuddy
                 Trace.WriteLine("datablock was null on feed processing");
                 return;
             }
+
+            string rawNextPageLink = dataBlock.next_page;
+
+            feedNextPage = rawNextPageLink.Replace(@"https://api.ap.org/", "");
 
             var itemsBlock = dataBlock.items;
             var itemsCount = (itemsBlock != null && itemsBlock.Count != null) ? itemsBlock.Count : 0;
@@ -385,7 +475,8 @@ namespace NewsBuddy
                         {
                             headline = currentAssoc.headline != null ? currentAssoc.headline.ToString() : "",
                             altID = currentAssoc.altids.itemid != null ? currentAssoc.altids.itemid.ToString() : "",
-                            uri = currentAssoc.uri != null ? item.uri.ToString() : ""
+                            uri = currentAssoc.uri != null ? currentAssoc.uri.ToString() : "",
+                            version = currentAssoc.version != null ? Int32.Parse(currentAssoc.version.ToString()) : null
                         });
                     }
                 }
@@ -398,13 +489,15 @@ namespace NewsBuddy
                 {
                     headline = item.headline != null ? item.headline.ToString() : "",
                     uri = null,
-                    altID = null
+                    altID = item.altids.itemid.ToString() != null ? item.altids.itemid.ToString() : "",
+                    version = item.version != null ? Int32.Parse(item.version.ToString()) : null
                 };
 
                 foreach (APObject textAssociation in textAssociations)
                 {
                     assocParent.associations.Add(textAssociation);
                 }
+
                 apFeedItems.Add(assocParent);
             }
             else // if there are not text associations, make a new story and strip out the associations.
@@ -413,14 +506,17 @@ namespace NewsBuddy
                 {
                     headline = item.headline != null ? item.headline.ToString() : "",
                     uri = item.uri != null ? item.uri.ToString() : "",
-                    altID = item.altids.itemid != null ? item.altids.itemid.ToString() : ""
-
+                    altID = item.altids.itemid != null ? item.altids.itemid.ToString() : "",
+                    version = item.version != null ? Int32.Parse(item.version.ToString()) : null
                 });
             }
         }
 
         private void SortList()
         {
+
+            //apFeedItems = apFeedItems.DistinctBy(p => p.headline).ToList();
+
             List<APObject> assocParents = new List<APObject>();
             for (int o = 0; o < apFeedItems.Count; o++)
             {
@@ -430,6 +526,13 @@ namespace NewsBuddy
                     assocParents.Add(item);
                 }
             }
+
+            /*
+            for (int op = 0; op < assocParents.Count; op++)
+            {
+                assocParents[op].associations = assocParents[op].associations.DistinctBy(p => p.headline).ToList();
+            }
+            */
 
             for (int pp = assocParents.Count - 1; pp >= 0; pp--)
             {

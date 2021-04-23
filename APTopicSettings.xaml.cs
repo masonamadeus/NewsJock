@@ -12,6 +12,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
+using System.Linq;
 
 namespace NewsBuddy
 {
@@ -20,9 +21,10 @@ namespace NewsBuddy
     /// </summary>
     public partial class APTopicSettings : Page
     {
-        public APTopicSettings()
+        public APTopicSettings(APingestor _ingest)
         {
             InitializeComponent();
+            this.ingest = _ingest;
             if (Settings.Default.APfollowedTopics == null)
             {
                 Settings.Default.APfollowedTopics = new List<APTopic>();
@@ -35,8 +37,18 @@ namespace NewsBuddy
             }
             FillList();
 
+            if (Debugger.IsAttached)
+            {
+                foreach (APTopic i in Settings.Default.APunfollowedTopics)
+                {
+                    Trace.WriteLine(i.topicName);
+                }
+            }
+
+
         }
 
+        private APingestor ingest { get; set;}
         private bool nameClear = true;
         private bool idClear = true;
 
@@ -47,18 +59,48 @@ namespace NewsBuddy
             e.Handled = ex.IsMatch(e.Text);
         }
 
+        private void SyncTopics()
+        {
+            List<APTopic> allTopics = new List<APTopic>();
+            foreach(APTopic topic in lst_Topics.Items)
+            {
+                topic.followed = true;
+                allTopics.Add(topic);
+            }
+
+            foreach (APTopic topic2 in lst_UnFollowed.Items)
+            {
+                topic2.followed = false;
+                allTopics.Add(topic2);
+            }
+
+            foreach (APTopic topic3 in ingest.GetFollowedTopics())
+            {
+                topic3.followed = true;
+                allTopics.Add(topic3);
+            }
+
+            lst_Topics.Items.Clear();
+            lst_UnFollowed.Items.Clear();
+
+            allTopics = allTopics.DistinctBy(t => t.topicID).ToList();
+
+            foreach (APTopic topic in allTopics)
+            {
+                if (topic.followed)
+                {
+                    lst_Topics.Items.Add(topic);
+                }
+                else
+                {
+                    lst_UnFollowed.Items.Add(topic);
+                }
+            }
+            UpdateFollowedTopics();
+        }
+
         private void FillList()
         {
-            // if (lst_Topics.Items.Count > 0)
-            // {
-            //    lst_Topics.Items.Clear();
-
-            // }
-            if (Settings.Default.APfollowedTopics == null || Settings.Default.APfollowedTopics.Count == 0)
-            {
-                lst_Topics.Items.Add(new TextBlock() { Text = "No Followed Topics", Tag = "NA" });
-                return;
-            }
             if (lst_UnFollowed.Items.Count > 0)
             {
                 lst_UnFollowed.Items.Clear();
@@ -78,6 +120,11 @@ namespace NewsBuddy
             {
                 lst_Topics.Items.Add(topic);
             }
+
+            if (Settings.Default.APfollowedTopics.Count == 0)
+            {
+                lst_Topics.Items.Add(new TextBlock() { Text = "No Followed Topics", Tag = "NA" });
+            }
         }
 
         private void UpdateFollowedTopics()
@@ -89,7 +136,9 @@ namespace NewsBuddy
                 var topic = lst_Topics.Items[x];
                 if (topic is APTopic)
                 {
-                    Settings.Default.APfollowedTopics.Add((APTopic)topic);
+                    APTopic topica = topic as APTopic;
+                    topica.followed = true;
+                    Settings.Default.APfollowedTopics.Add(topica);
                 }
                 else if (topic is TextBox && (string)((TextBox)topic).Tag == "NA")
                 {
@@ -98,12 +147,15 @@ namespace NewsBuddy
             }
 
             Settings.Default.APunfollowedTopics.Clear();
+
             for (int y = 0; y < lst_UnFollowed.Items.Count; y++)
             {
                 var badTopic = lst_UnFollowed.Items[y];
                 if (badTopic is APTopic)
                 {
-                    Settings.Default.APunfollowedTopics.Add((APTopic)badTopic);
+                    APTopic badTopica = badTopic as APTopic;
+                    badTopica.followed = false;
+                    Settings.Default.APunfollowedTopics.Add(badTopica);
                 }
             }
 
@@ -162,6 +214,11 @@ namespace NewsBuddy
             lst_Topics.Items.Add(newtopic);
 
             UpdateFollowedTopics();
+            ManualTopicAdder.Visibility = Visibility.Collapsed;
+            btn_TopicSync.Visibility = Visibility.Visible;
+            btn_ManualTopic.Content = "Add Topic Manually";
+            manualToggle = false;
+
 
         }
 
@@ -203,9 +260,7 @@ namespace NewsBuddy
                     case MessageBoxResult.Yes: RemoveTopic();
                         break;
                     case MessageBoxResult.No: return;
-                        break;
                     case MessageBoxResult.None: return;
-                        break;
                 }
 
             }
@@ -227,6 +282,32 @@ namespace NewsBuddy
                 txt_NewTopicID.Text = "";
                 idClear = false;
             }
+        }
+
+        private void btn_TopicSync_Click(object sender, RoutedEventArgs e)
+        {
+            this.Dispatcher.Invoke(() => { SyncTopics(); });
+        }
+
+        bool manualToggle = false;
+
+        private void btn_ManualTopic_Click(object sender, RoutedEventArgs e)
+        {
+            if (!manualToggle)
+            {
+                ManualTopicAdder.Visibility = Visibility.Visible;
+                btn_TopicSync.Visibility = Visibility.Collapsed;
+                btn_ManualTopic.Content = "Sync Topics from AP";
+                manualToggle = true;
+            }
+            else
+            {
+                ManualTopicAdder.Visibility = Visibility.Collapsed;
+                btn_TopicSync.Visibility = Visibility.Visible;
+                btn_ManualTopic.Content = "Add Topic Manually";
+                manualToggle = false;
+            }
+            
         }
     }
     

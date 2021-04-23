@@ -113,5 +113,8 @@
     <Setting Name="APunfollowedTopics" Type="System.Collections.Generic.List&lt;NewsBuddy.APTopic&gt;" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="APautoFeed" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

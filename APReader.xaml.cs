@@ -11,6 +11,9 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Linq;
 using System.Xml;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Collections.ObjectModel;
 
 namespace NewsBuddy
 {
@@ -20,16 +23,42 @@ namespace NewsBuddy
     public partial class APReader : Window
     {
         public APingestor ingest;
-       // private List<APObject> stories;
+
         private bool isLoaded = false;
+
+        private bool autoFeed { get; set; }
+
+        private string[] updateMessages =
+        {
+            "Updating  Live",
+            "Updating  Live",
+            "Updating  Live",
+            "Updating  Live"
+
+        };
+
+        private int updateMessageNumber = 0;
+
         public MainWindow mainWindow { get; set; }
+
+        public ObservableCollection<APObject> listObjects = new ObservableCollection<APObject>();
+
+        private readonly BackgroundWorker worker = new BackgroundWorker();
+
         public APReader()
         {
             InitializeComponent();
+            this.DataContext = this;
+
+            list_APStories.ItemsSource = listObjects;
 
             lbl_EditorDisclaimer.Visibility = Visibility.Collapsed;
             btn_DeleteChecked.Visibility = Visibility.Collapsed;
             btn_DeleteUnChecked.Visibility = Visibility.Collapsed;
+
+            worker.DoWork += WorkerFeedUpdate;
+            worker.RunWorkerCompleted += WorkerUpdateUI;
+            worker.WorkerSupportsCancellation = true;
 
             foreach (var btn in editorGrid.Children)
             {
@@ -38,6 +67,8 @@ namespace NewsBuddy
                     ((Button)btn).IsEnabled = false;
                 }
             }
+
+            autoFeed = Settings.Default.APautoFeed;
 
             mainWindow = Application.Current.Windows[0] as MainWindow;
             ingest = new APingestor();
@@ -48,6 +79,186 @@ namespace NewsBuddy
 
             isLoaded = true;
 
+        }
+
+        private void WorkerFeedUpdate(object sender, DoWorkEventArgs e)
+        {
+            try
+            {
+                List<APObject> treeItems = new List<APObject>();
+                if (autoFeed)
+                {
+                    ingest.GetFeed(true);
+                }
+                else
+                {
+                    ingest.GetFeed();
+                }
+
+                if (ingest.isAuthorized)
+                {
+                    foreach (APObject obj in ingest.Items)
+                    {
+                        treeItems.Add(obj);
+                    }
+                    e.Result = treeItems;
+
+                }
+                else
+                {
+                    e.Cancel = true;
+                }
+
+            }
+            catch
+            {
+                e.Result = null;
+            }
+
+        }
+
+        private void WorkerUpdateUI(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if (e.Cancelled)
+            {
+                btn_RefreshAP.Content = "API Key Unauthorized";
+                btn_RefreshAP.IsEnabled = true;
+                progbar.Visibility = Visibility.Collapsed;
+                chk_AutoFeed.IsChecked = false;
+                autoFeed = false;
+                return;
+            }
+
+            if (e.Result == null)
+            {
+                Trace.WriteLine("BackgroundWorker Stopped Unexpectedly");
+                btn_RefreshAP.Content = " Get Latest Stories";
+                btn_RefreshAP.IsEnabled = true;
+                progbar.Visibility = Visibility.Collapsed;
+                autoFeed = false;
+                return;
+            }
+
+            ProcessFeedItems((List<APObject>)e.Result);
+
+            if (autoFeed)
+            {
+                worker.RunWorkerAsync();
+                if (updateMessageNumber > updateMessages.Length - 1)
+                {
+                    updateMessageNumber = 0;
+                }
+                btn_RefreshAP.Content = updateMessages[updateMessageNumber];
+
+                updateMessageNumber++;
+
+            }
+            else
+            {
+                btn_RefreshAP.Content = " Get Latest Stories";
+                btn_RefreshAP.IsEnabled = true;
+                progbar.Visibility = Visibility.Collapsed;
+            }
+
+
+        }
+
+        private List<APObject> GetAllAPObjects(APObject apObj, int depth = 0)
+        {
+            List<APObject> allObjects = new List<APObject>();
+
+            if (apObj.isAssocParent)
+            {
+                foreach (APObject ob in apObj.associations)
+                {
+                    allObjects.AddRange(GetAllAPObjects(ob, depth++));
+                }
+            }
+            else
+            {
+                allObjects.Add(apObj);
+            }
+
+            if (Debugger.IsAttached)
+            {
+                Trace.WriteLine(allObjects.Count.ToString() + " APObjects Found");
+                foreach (APObject test in allObjects)
+                {
+                    Trace.WriteLine("GetAllAPObjects - " + test.headline);
+                }
+            }
+
+            return allObjects;
+
+        }
+
+        private void ProcessFeedItems(List<APObject> newItems)
+        {
+            if (newItems.Count == 0)
+            {
+                Trace.WriteLine("No New Items");
+            }
+
+            for (int i = 0; i < newItems.Count; i++)
+            {
+                APObject newItem = newItems[i];
+                APObject existing = listObjects.FirstOrDefault(p => p.altID == newItem.altID);
+                if (existing != null)
+                {
+                    if (newItem.isAssocParent && existing.isAssocParent)
+                    {
+                        for (int ii = 0; ii < newItem.associations.Count; ii++)
+                        {
+                            APObject newAssoci = newItem.associations[ii];
+                            APObject existAssoci = existing.associations.FirstOrDefault(pp => pp.altID == newAssoci.altID);
+                            if (existAssoci != null)
+                            {
+                                if (newAssoci.version > existAssoci.version)
+                                {
+                                    Trace.WriteLine("ADD: New Association was newer: "+newAssoci.headline+" Version " + newAssoci.version + " vs Version " + existAssoci.version);
+                                    existing.headline = newItem.headline;
+                                    existing.associations.Remove(existAssoci);
+                                    existing.associations.Insert(0, newAssoci);
+                                }
+                                else
+                                {
+                                    Trace.WriteLine("NOTHING: New Association was not newer.");
+                                }
+                            }
+                            else
+                            {
+                                Trace.WriteLine("ADD: Matching association NOT found for " + newAssoci.headline);
+                                existing.associations.Insert(0, newAssoci);
+                            }
+
+                            if (newItem.associations.Count == 0)
+                            {
+                                Trace.WriteLine("NOTHING: All associations used up from new object");
+                            }
+                        }
+                    }
+                    else if (newItem.version > existing.version)
+                    {
+                        Trace.WriteLine("ADD: Found a Match for: " + newItem.headline + "But no associations and it was newer");
+                        listObjects.Remove(existing);
+                        listObjects.Add(newItem);
+                    }
+                    else
+                    {
+                        Trace.WriteLine("NOTHING: Found a Match for: " + newItem.headline + "But it was NOT newer");
+                    }
+                }
+                else if (newItem.isAssocParent)
+                {
+                    Trace.WriteLine("ADD: New Item Found With Associations!");
+                    listObjects.Insert(0, newItem);
+                }
+                else
+                {
+                    Trace.WriteLine("ADD: New Item Found: " + newItem.headline);
+                    listObjects.Add(newItem);
+                }
+            }
         }
 
         private void list_APStories_SelectionChanged()
@@ -68,7 +279,7 @@ namespace NewsBuddy
                         {
                             btn_ToggleMode.Content = "Switch to Story Editor Mode";
                         }
-                        frame_Story.Content=selected.story;
+                        frame_Story.Content = selected.story;
                         foreach (var btn in editorGrid.Children)
                         {
                             if (btn is Button)
@@ -93,55 +304,36 @@ namespace NewsBuddy
                     }
                 }
             }
-           
+
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            worker.CancelAsync();
+            worker.Dispose();
             ingest.Dispose();
         }
 
         private void RefreshAP(object sender, RoutedEventArgs e)
         {
-            list_APStories.Items.Clear();
-            ingest.GetFeed();
-            if (ingest.isAuthorized)
+            btn_RefreshAP.Content = "Getting Feed...";
+            if (chk_AutoFeed.IsChecked == true)
             {
-                foreach (APObject obj in ingest.Items)
+                if (updateMessageNumber > updateMessages.Length - 1)
                 {
-                    if (obj.isAssocParent)
-                    {
-                        TreeViewItem assocParent = new TreeViewItem()
-                        {
-                            Header = obj.headline
-                        };
-                        foreach (APObject assoc in obj.associations)
-                        {
-                            assocParent.Items.Add(assoc);
-                        }
-
-                        list_APStories.Items.Add(assocParent);
-                        
-                    }
-                    else
-                    {
-                        list_APStories.Items.Add(obj);
-                    }
+                    updateMessageNumber = 0;
                 }
+                btn_RefreshAP.Content = updateMessages[updateMessageNumber];
+                autoFeed = true;
             }
-            else
-            {
-                list_APStories.Items.Add(new TextBlock()
-                {
-                    Text = "Unauthorized. Check your API Key\nin NewsJock Settings."
-                });
-                frame_Story.Content = "If you do not have an AP API Key, contact your administrator.";
-            }
+            worker.RunWorkerAsync(ingest);
+            btn_RefreshAP.IsEnabled = false;
+            progbar.Visibility = Visibility.Visible;
         }
 
         private void list_APStories_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
-            this.Dispatcher.Invoke(() => 
+            this.Dispatcher.Invoke(() =>
             {
                 list_APStories_SelectionChanged();
             });
@@ -208,7 +400,7 @@ namespace NewsBuddy
 
         private void btn_SendToNewScript_Click(object sender, RoutedEventArgs e)
         {
-            
+
             APStory story = frame_Story.Content as APStory;
             mainWindow.AddNewTabFromChunks(story.GetChunks());
 
@@ -235,7 +427,20 @@ namespace NewsBuddy
                     ((Button)btn).IsEnabled = false;
                 }
             }
-            frame_Story.Content = new APTopicSettings();
+
+            frame_Story.Content = new APTopicSettings(ingest);
+
+        }
+
+
+        private void chk_AutoFeed_Checked(object sender, RoutedEventArgs e)
+        {
+            autoFeed = true;
+        }
+
+        private void chk_AutoFeed_Unchecked(object sender, RoutedEventArgs e)
+        {
+            autoFeed = false;
         }
     }
 }
