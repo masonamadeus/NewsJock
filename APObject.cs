@@ -18,6 +18,8 @@ namespace NewsBuddy
         private APingestor ingestor { get; set; }
         public List<APObject> associations { get; set; }
         public bool isAssocParent { get; private set; }
+        public bool isTopic { get; set; }
+        public int version { get; set; }
 
         public APObject(object obj, APingestor _ingestor, bool isParent = false)
         {

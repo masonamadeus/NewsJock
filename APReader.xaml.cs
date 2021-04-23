@@ -13,6 +13,7 @@ using System.Linq;
 using System.Xml;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Collections.ObjectModel;
 
 namespace NewsBuddy
 {
@@ -40,11 +41,16 @@ namespace NewsBuddy
 
         public MainWindow mainWindow { get; set; }
 
+        public ObservableCollection<APObject> listObjects = new ObservableCollection<APObject>();
+
         private readonly BackgroundWorker worker = new BackgroundWorker();
 
         public APReader()
         {
             InitializeComponent();
+            this.DataContext = this;
+
+            list_APStories.ItemsSource = listObjects;
 
             lbl_EditorDisclaimer.Visibility = Visibility.Collapsed;
             btn_DeleteChecked.Visibility = Visibility.Collapsed;
@@ -79,7 +85,7 @@ namespace NewsBuddy
         {
             try
             {
-                List<object> treeItems = new List<object>();
+                List<APObject> treeItems = new List<APObject>();
                 if (autoFeed)
                 {
                     ingest.GetFeed(true);
@@ -88,21 +94,21 @@ namespace NewsBuddy
                 {
                     ingest.GetFeed();
                 }
+
                 if (ingest.isAuthorized)
                 {
                     foreach (APObject obj in ingest.Items)
                     {
                         treeItems.Add(obj);
                     }
+                    e.Result = treeItems;
+
                 }
                 else
                 {
-                    treeItems.Add(new TextBlock()
-                    {
-                        Text = "Unauthorized. Check your API Key\nin NewsJock Settings."
-                    });
+                    e.Cancel = true;
                 }
-                e.Result = treeItems;
+
             }
             catch
             {
@@ -115,7 +121,7 @@ namespace NewsBuddy
         {
             if (e.Cancelled)
             {
-                btn_RefreshAP.Content = " Get Latest Stories";
+                btn_RefreshAP.Content = "API Key Unauthorized";
                 btn_RefreshAP.IsEnabled = true;
                 progbar.Visibility = Visibility.Collapsed;
                 chk_AutoFeed.IsChecked = false;
@@ -133,34 +139,7 @@ namespace NewsBuddy
                 return;
             }
 
-            list_APStories.Items.Clear();
-            foreach (object obj in (List<object>)e.Result)
-            {
-                if (obj is APObject)
-                {
-                    APObject APobj = obj as APObject;
-                    if (APobj.isAssocParent)
-                    {
-                        TreeViewItem assocParent = new TreeViewItem()
-                        {
-                            Header = APobj.headline
-                            
-                        };
-                        foreach (APObject assoc in APobj.associations)
-                        {
-                            assocParent.Items.Add(assoc);
-                        }
-
-                        list_APStories.Items.Add(assocParent);
-
-                    }
-                    else
-                    {
-                        list_APStories.Items.Add(obj);
-                    }
-                }
-
-            }
+            ProcessFeedItems((List<APObject>)e.Result);
 
             if (autoFeed)
             {
@@ -182,6 +161,104 @@ namespace NewsBuddy
             }
 
 
+        }
+
+        private List<APObject> GetAllAPObjects(APObject apObj, int depth = 0)
+        {
+            List<APObject> allObjects = new List<APObject>();
+
+            if (apObj.isAssocParent)
+            {
+                foreach (APObject ob in apObj.associations)
+                {
+                    allObjects.AddRange(GetAllAPObjects(ob, depth++));
+                }
+            }
+            else
+            {
+                allObjects.Add(apObj);
+            }
+
+            if (Debugger.IsAttached)
+            {
+                Trace.WriteLine(allObjects.Count.ToString() + " APObjects Found");
+                foreach (APObject test in allObjects)
+                {
+                    Trace.WriteLine("GetAllAPObjects - " + test.headline);
+                }
+            }
+
+            return allObjects;
+
+        }
+
+        private void ProcessFeedItems(List<APObject> newItems)
+        {
+            if (newItems.Count == 0)
+            {
+                Trace.WriteLine("No New Items");
+            }
+
+            for (int i = 0; i < newItems.Count; i++)
+            {
+                APObject newItem = newItems[i];
+                APObject existing = listObjects.FirstOrDefault(p => p.altID == newItem.altID);
+                if (existing != null)
+                {
+                    if (newItem.isAssocParent && existing.isAssocParent)
+                    {
+                        for (int ii = 0; ii < newItem.associations.Count; ii++)
+                        {
+                            APObject newAssoci = newItem.associations[ii];
+                            APObject existAssoci = existing.associations.FirstOrDefault(pp => pp.altID == newAssoci.altID);
+                            if (existAssoci != null)
+                            {
+                                if (newAssoci.version > existAssoci.version)
+                                {
+                                    Trace.WriteLine("ADD: New Association was newer: "+newAssoci.headline+" Version " + newAssoci.version + " vs Version " + existAssoci.version);
+                                    existing.headline = newItem.headline;
+                                    existing.associations.Remove(existAssoci);
+                                    existing.associations.Insert(0, newAssoci);
+                                }
+                                else
+                                {
+                                    Trace.WriteLine("NOTHING: New Association was not newer.");
+                                }
+                            }
+                            else
+                            {
+                                Trace.WriteLine("ADD: Matching association NOT found for " + newAssoci.headline);
+                                existing.associations.Insert(0, newAssoci);
+                            }
+
+                            if (newItem.associations.Count == 0)
+                            {
+                                Trace.WriteLine("NOTHING: All associations used up from new object");
+                            }
+                        }
+                    }
+                    else if (newItem.version > existing.version)
+                    {
+                        Trace.WriteLine("ADD: Found a Match for: " + newItem.headline + "But no associations and it was newer");
+                        listObjects.Remove(existing);
+                        listObjects.Add(newItem);
+                    }
+                    else
+                    {
+                        Trace.WriteLine("NOTHING: Found a Match for: " + newItem.headline + "But it was NOT newer");
+                    }
+                }
+                else if (newItem.isAssocParent)
+                {
+                    Trace.WriteLine("ADD: New Item Found With Associations!");
+                    listObjects.Insert(0, newItem);
+                }
+                else
+                {
+                    Trace.WriteLine("ADD: New Item Found: " + newItem.headline);
+                    listObjects.Add(newItem);
+                }
+            }
         }
 
         private void list_APStories_SelectionChanged()
@@ -242,6 +319,11 @@ namespace NewsBuddy
             btn_RefreshAP.Content = "Getting Feed...";
             if (chk_AutoFeed.IsChecked == true)
             {
+                if (updateMessageNumber > updateMessages.Length - 1)
+                {
+                    updateMessageNumber = 0;
+                }
+                btn_RefreshAP.Content = updateMessages[updateMessageNumber];
                 autoFeed = true;
             }
             worker.RunWorkerAsync(ingest);
@@ -346,7 +428,7 @@ namespace NewsBuddy
                 }
             }
 
-            frame_Story.Content = new APTopicSettings();
+            frame_Story.Content = new APTopicSettings(ingest);
 
         }
 
