@@ -169,6 +169,101 @@ namespace NewsBuddy
 
         }
 
+        public APObject WorkerGetTopicFeed(APTopic topic)
+        {
+            Trace.WriteLine("getting followed topic: " + topic.topicName);
+
+            if (client == null)
+            {
+                client = new HttpClient();
+                client.BaseAddress = new Uri(reqUrl);
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            }
+
+            if (activeTopics.Contains(topic))
+            {
+                HttpResponseMessage response = client.GetAsync("/" + topic.nextPageLink + "&apikey=" + apiKey).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    topic.APIresponse = response.Content.ReadAsStringAsync().Result;
+
+                    Trace.WriteLine(topic.APIresponse);
+                    return WorkerProcessTopicFeed(topic);
+                }
+                else
+                {
+                    Trace.WriteLine(response.RequestMessage + "    " + response.ReasonPhrase);
+                    activeTopics.Remove(topic);
+                    return null;
+                }
+            }
+            else
+            {
+                HttpResponseMessage response = client.GetAsync(String.Format("feed?q=followedtopicid:{0}&apikey={1}&in_my_plan=true&versions=latest&text_links=plain", topic.topicID, apiKey)).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    topic.APIresponse = response.Content.ReadAsStringAsync().Result;
+                    
+                    Trace.WriteLine(topic.APIresponse);
+                    activeTopics.Add(topic);
+                    return WorkerProcessTopicFeed(topic);
+                }
+                else
+                {
+                    Trace.WriteLine(response.RequestMessage + "    " + response.ReasonPhrase);
+                    return null;
+                }
+            }
+
+        }
+
+        private APObject WorkerProcessTopicFeed(APTopic topic)
+        {
+            APObject topicParent = new APObject(topic.APIresponse, this, true)
+            {
+                headline = topic.topicName,
+                isTopic = true,
+                altID = topic.topicID.ToString()
+            };
+
+            dynamic js = JsonConvert.DeserializeObject(topic.APIresponse);
+
+            if (js.error != null)
+            {
+                Trace.WriteLine(js.error.ToString());
+                return null;
+            }
+
+            var dataBlock = js.data;
+            if (dataBlock == null)
+            {
+                Trace.WriteLine("datablock was null on feed processing");
+                return null;
+            }
+
+            string rawNextPageLink = dataBlock.next_page;
+
+            topic.nextPageLink = rawNextPageLink.Replace(@"https://api.ap.org/", "");
+
+            var itemsBlock = dataBlock.items;
+            var itemsCount = (itemsBlock != null && itemsBlock.Count != null) ? itemsBlock.Count : 0;
+
+            for (int entry = 0; entry < itemsCount; entry++)
+            {
+                topicParent.associations.Add(ProcessTopicEntry(itemsBlock[entry], entry));
+            }
+
+            if (topicParent.associations.Count == 0)
+            {
+                return null;
+            }
+            else
+            {
+                return topicParent;
+            }
+
+        }
+
         public void GetTopicFeed(APTopic topic, bool isAuto = false)
         {
             Trace.WriteLine("getting followed topic: " + topic.topicName);
@@ -188,7 +283,6 @@ namespace NewsBuddy
                     topic.APIresponse = response.Content.ReadAsStringAsync().Result;
                     ProcessTopicFeed(topic, isAuto);
                     Trace.WriteLine(topic.APIresponse);
-                    Trace.WriteLine(topic.nextPageLink);
                 }
                 else
                 {
@@ -219,7 +313,8 @@ namespace NewsBuddy
             APObject topicParent = new APObject(topic.APIresponse, this, true)
             {
                 headline = topic.topicName,
-                isTopic = true
+                isTopic = true,
+                altID = topic.topicID.ToString()
             };
 
             dynamic js = JsonConvert.DeserializeObject(topic.APIresponse);
@@ -381,7 +476,7 @@ namespace NewsBuddy
                 ProcessFeed(reply);
 
                 // Get followed topics too
-                if (Settings.Default.APShowTopics && Settings.Default.APfollowedTopics != null && Settings.Default.APfollowedTopics.Count > 0)
+                if (!isAuto && Settings.Default.APShowTopics && Settings.Default.APfollowedTopics != null && Settings.Default.APfollowedTopics.Count > 0)
                 {
                     foreach (APTopic topic in Settings.Default.APfollowedTopics)
                     {

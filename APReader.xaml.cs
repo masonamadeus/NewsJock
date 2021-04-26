@@ -17,6 +17,10 @@ using System.Collections.ObjectModel;
 
 namespace NewsBuddy
 {
+    public class TopicWorker : BackgroundWorker
+    {
+        public APTopic assignedTopic { get; set; }
+    }
     /// <summary>
     /// Interaction logic for APReader.xaml
     /// </summary>
@@ -44,6 +48,8 @@ namespace NewsBuddy
         public ObservableCollection<APObject> listObjects = new ObservableCollection<APObject>();
 
         private readonly BackgroundWorker worker = new BackgroundWorker();
+
+        private List<TopicWorker> topicWorkers = new List<TopicWorker>();
 
         public APReader()
         {
@@ -81,8 +87,97 @@ namespace NewsBuddy
 
         }
 
+        private void AssignTopicWorkers()
+        {
+            if (topicWorkers != null && topicWorkers.Count > 0)
+            {
+                foreach (TopicWorker worker in topicWorkers)
+                {
+                    worker.Dispose();
+                }
+                topicWorkers.Clear();
+            }
+
+            foreach (APTopic followedTopic in Settings.Default.APfollowedTopics)
+            {
+                TopicWorker newWorker = new TopicWorker();
+                newWorker.DoWork += TopicWorkerFetch;
+                newWorker.RunWorkerCompleted += TopicWorkerUpdate;
+                newWorker.WorkerSupportsCancellation = true;
+                newWorker.assignedTopic = followedTopic;
+                topicWorkers.Add(newWorker);
+            }
+        }
+
+        private void TopicWorkerFetch(object sender, DoWorkEventArgs e)
+        {
+            if (worker.CancellationPending)
+            {
+                e.Cancel = true;
+            }
+
+            try
+            {
+                APObject result = ingest.WorkerGetTopicFeed(e.Argument as APTopic);
+                if (result != null)
+                {
+                    e.Result = result;
+                }
+                else
+                {
+                    e.Result = null;
+                }
+
+            }
+            catch
+            {
+                e.Cancel = true;
+            }
+
+        }
+
+        private void TopicWorkerUpdate(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if (e.Cancelled)
+            {
+                Trace.WriteLine("TopicWorker Stopped Working - " + ((TopicWorker)sender).assignedTopic.topicName);
+                return;
+            }
+
+            if (e.Result == null)
+            {
+                Trace.WriteLine("TopicWorker Reported No Results - " + ((TopicWorker)sender).assignedTopic.topicName);
+            }
+            else
+            {
+                List<APObject> newTopic = new List<APObject>();
+                newTopic.Add(e.Result as APObject);
+                ProcessFeedItems(newTopic);
+            }
+
+            if (autoFeed)
+            {
+                Trace.WriteLine("Restarting TopicWorker " + ((TopicWorker)sender).assignedTopic.topicName);
+                ((TopicWorker)sender).RunWorkerAsync(((TopicWorker)sender).assignedTopic);
+
+                if (updateMessageNumber > updateMessages.Length - 1)
+                {
+                    updateMessageNumber = 0;
+                }
+                btn_RefreshAP.Content = updateMessages[updateMessageNumber];
+
+                updateMessageNumber++;
+
+            }
+        }
+
         private void WorkerFeedUpdate(object sender, DoWorkEventArgs e)
         {
+            if (worker.CancellationPending)
+            {
+                e.Cancel = true;
+            }
+
             try
             {
                 List<APObject> treeItems = new List<APObject>();
@@ -144,6 +239,16 @@ namespace NewsBuddy
             if (autoFeed)
             {
                 worker.RunWorkerAsync();
+
+                foreach (TopicWorker topicWorker in topicWorkers)
+                {
+                    if (!topicWorker.IsBusy && Settings.Default.APShowTopics)
+                    {
+                        Trace.WriteLine("Restored Broken TopicWorker - " + topicWorker.assignedTopic.topicName);
+                        topicWorker.RunWorkerAsync(topicWorker.assignedTopic);
+                    }
+                }
+
                 if (updateMessageNumber > updateMessages.Length - 1)
                 {
                     updateMessageNumber = 0;
@@ -163,33 +268,20 @@ namespace NewsBuddy
 
         }
 
-        private List<APObject> GetAllAPObjects(APObject apObj, int depth = 0)
+        private void StopAllFeeds()
         {
-            List<APObject> allObjects = new List<APObject>();
-
-            if (apObj.isAssocParent)
+            worker.CancelAsync();
+            foreach (TopicWorker work in topicWorkers)
             {
-                foreach (APObject ob in apObj.associations)
-                {
-                    allObjects.AddRange(GetAllAPObjects(ob, depth++));
-                }
-            }
-            else
-            {
-                allObjects.Add(apObj);
-            }
+                work.CancelAsync();
 
-            if (Debugger.IsAttached)
-            {
-                Trace.WriteLine(allObjects.Count.ToString() + " APObjects Found");
-                foreach (APObject test in allObjects)
-                {
-                    Trace.WriteLine("GetAllAPObjects - " + test.headline);
-                }
+                work.Dispose();
             }
-
-            return allObjects;
-
+            worker.Dispose();
+            autoFeed = false;
+            btn_RefreshAP.Content = " Get Latest Stories";
+            btn_RefreshAP.IsEnabled = true;
+            progbar.Visibility = Visibility.Collapsed;
         }
 
         private void ProcessFeedItems(List<APObject> newItems)
@@ -215,7 +307,7 @@ namespace NewsBuddy
                             {
                                 if (newAssoci.version > existAssoci.version)
                                 {
-                                    Trace.WriteLine("ADD: New Association was newer: "+newAssoci.headline+" Version " + newAssoci.version + " vs Version " + existAssoci.version);
+                                    Trace.WriteLine("ADD: New Association was newer: " + newAssoci.headline + " Version " + newAssoci.version + " vs Version " + existAssoci.version);
                                     existing.headline = newItem.headline;
                                     existing.associations.Remove(existAssoci);
                                     existing.associations.Insert(0, newAssoci);
@@ -239,13 +331,13 @@ namespace NewsBuddy
                     }
                     else if (newItem.version > existing.version)
                     {
-                        Trace.WriteLine("ADD: Found a Match for: " + newItem.headline + "But no associations and it was newer");
+                        Trace.WriteLine("ADD: Found a Match for: " + newItem.headline + " But no associations and it was newer");
                         listObjects.Remove(existing);
                         listObjects.Add(newItem);
                     }
                     else
                     {
-                        Trace.WriteLine("NOTHING: Found a Match for: " + newItem.headline + "But it was NOT newer");
+                        Trace.WriteLine("NOTHING: Found a Match for: " + newItem.headline + " But it was NOT newer");
                     }
                 }
                 else if (newItem.isAssocParent)
@@ -309,6 +401,7 @@ namespace NewsBuddy
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            StopAllFeeds();
             worker.CancelAsync();
             worker.Dispose();
             ingest.Dispose();
@@ -326,7 +419,18 @@ namespace NewsBuddy
                 btn_RefreshAP.Content = updateMessages[updateMessageNumber];
                 autoFeed = true;
             }
-            worker.RunWorkerAsync(ingest);
+            AssignTopicWorkers();
+
+            worker.RunWorkerAsync();
+
+            if (autoFeed)
+            {
+                foreach (TopicWorker top in topicWorkers)
+                {
+                    top.RunWorkerAsync(top.assignedTopic);
+                }
+            }
+
             btn_RefreshAP.IsEnabled = false;
             progbar.Visibility = Visibility.Visible;
         }
@@ -441,6 +545,7 @@ namespace NewsBuddy
         private void chk_AutoFeed_Unchecked(object sender, RoutedEventArgs e)
         {
             autoFeed = false;
+            StopAllFeeds();
         }
     }
 }

@@ -62,16 +62,26 @@ namespace NewsBuddy
         private void SyncTopics()
         {
             List<APTopic> allTopics = new List<APTopic>();
-            foreach(APTopic topic in lst_Topics.Items)
+            foreach(var item in lst_Topics.Items)
             {
-                topic.followed = true;
-                allTopics.Add(topic);
+                if (item is APTopic)
+                {
+                    APTopic topic = item as APTopic;
+                    topic.followed = true;
+                    allTopics.Add(topic);
+                }
+                
             }
 
-            foreach (APTopic topic2 in lst_UnFollowed.Items)
+            foreach (var item2 in lst_UnFollowed.Items)
             {
-                topic2.followed = false;
-                allTopics.Add(topic2);
+                if (item2 is APTopic)
+                {
+                    APTopic topic2 = item2 as APTopic;
+                    topic2.followed = false;
+                    allTopics.Add(topic2);
+                }
+                
             }
 
             foreach (APTopic topic3 in ingest.GetFollowedTopics())
