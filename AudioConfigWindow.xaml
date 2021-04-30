@@ -26,7 +26,7 @@
                 <ComboBox x:Name="ASIODevices" Background="Gray" SelectionChanged="ASIODevices_SelectionChanged"/>
                 <Label Content="Output" Visibility="{Binding ElementName=SeparateOutputs, Path=IsChecked, Converter={StaticResource BoolToVisInverter}}"/>
                 <ComboBox Name="ASIOChannel" Background="Gray" SelectionChanged="ASIOChannel_SelectionChanged" Visibility="{Binding ElementName=SeparateOutputs, Path=IsChecked, Converter={StaticResource BoolToVisInverter}}"/>
-                <Label Content="WARNING: Beta Feature. Not fully implemented."/>
+                <Label FontWeight="Bold" Content="WARNING: Beta Feature. Not fully implemented."/>
 
                 <Separator Margin="0,15,0,15"/>
             </StackPanel>

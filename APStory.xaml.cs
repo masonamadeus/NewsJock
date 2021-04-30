@@ -14,6 +14,7 @@ using System.Xml;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace NewsBuddy
 {
@@ -53,7 +54,8 @@ namespace NewsBuddy
         private XmlNodeList m_headline;
         private XmlNodeList m_author;
         private XmlNodeList m_paragraphs;
-        private XmlNodeList m_location;
+        private XmlNodeList m_updated;
+        private XmlNodeList m_created;
         public ObservableCollection<APChunk> m_chunks { get; set; }
         public string Story { get; private set; }
         private bool m_isEditMode { get; set; }
@@ -88,7 +90,8 @@ namespace NewsBuddy
             m_author = m_story.GetElementsByTagName("byline");
 
             m_paragraphs = m_story.GetElementsByTagName("p");
-            m_location = m_story.GetElementsByTagName("location");
+            m_updated = m_story.GetElementsByTagName("date.issue");
+
             ToggleModes();
         }
 
@@ -108,7 +111,7 @@ namespace NewsBuddy
             txt_Headline.Text = m_headline[0] != null ? m_headline[0].InnerText : "Error Retrieving Headline";
             txt_Author.Text = m_author[0] != null ? m_author[0].InnerText : "By The Associated Press";
 
-            if (m_location[0] == null || String.Equals(m_location[0].InnerText, ""))
+            if (m_updated[0] == null)
             {
                 txt_Location.Text = "";
                 txt_Location.Visibility = Visibility.Collapsed;
@@ -117,7 +120,20 @@ namespace NewsBuddy
             else
             {
                 txt_Location.Visibility = Visibility.Visible;
-                txt_Location.Text = m_location[0].InnerText;
+                DateTime result = DateTime.ParseExact(m_updated[0].Attributes[0].Value, "yyyyMMddTHHmmssZ", null);
+                int days = (int)DateTime.Now.Subtract(result).Days;
+                int hours = (int)DateTime.Now.Subtract(result).Hours;
+                int minutes = (int)DateTime.Now.Subtract(result).Minutes;
+                string dayLabel = "day";
+                string hourLabel = "hour";
+                string minuteLabel = "minute";
+                if (days > 1) { dayLabel = "days"; }
+                if (hours > 1) { hourLabel = "hours"; }
+                if (minutes > 1) { minuteLabel = "minutes"; }
+                txt_Location.Text = "Updated" + (days > 0 ? (" " + days.ToString() + " " + dayLabel) : "")
+                    + (hours > 0 ? (" " + hours.ToString() + " " + hourLabel) : "")
+                    + (minutes > 0 ? (" " + minutes.ToString() + " " + minuteLabel) : "")
+                    + (minutes > 0 || hours > 0 || days > 0 ? " ago." : " just now.");
                 sep2.Visibility = Visibility.Visible;
             }
 

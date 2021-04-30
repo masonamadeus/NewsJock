@@ -6,7 +6,7 @@
     <UseWPF>true</UseWPF>
     <StartupObject>NewsBuddy.App</StartupObject>
     <AssemblyName>NewsJock</AssemblyName>
-    <Version>0.2.0</Version>
+    <Version>0.3.1</Version>
     <Authors>Mason Amadeus</Authors>
     <Company>NewsJock</Company>
     <Description>A standalone text editor, with the capability of adding and playing back inline audio files. Designed to aid in the presentation of audio news.</Description>
@@ -107,9 +107,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <SplashScreen Include="resources\NewsJockSplashv2.png">
+    <Resource Include="resources\NewsJockSplashv2.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </SplashScreen>
+    </Resource>
   </ItemGroup>
 
   <ItemGroup>

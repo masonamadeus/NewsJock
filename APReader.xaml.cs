@@ -20,6 +20,7 @@ namespace NewsBuddy
     public class TopicWorker : BackgroundWorker
     {
         public APTopic assignedTopic { get; set; }
+        public bool unfollowed = false;
     }
     /// <summary>
     /// Interaction logic for APReader.xaml
@@ -29,6 +30,8 @@ namespace NewsBuddy
         public APingestor ingest;
 
         private bool isLoaded = false;
+
+        bool freezeFeed = false;
 
         private bool autoFeed { get; set; }
 
@@ -89,24 +92,41 @@ namespace NewsBuddy
 
         private void AssignTopicWorkers()
         {
-            if (topicWorkers != null && topicWorkers.Count > 0)
-            {
-                foreach (TopicWorker worker in topicWorkers)
-                {
-                    worker.Dispose();
-                }
-                topicWorkers.Clear();
-            }
-
             foreach (APTopic followedTopic in Settings.Default.APfollowedTopics)
             {
-                TopicWorker newWorker = new TopicWorker();
-                newWorker.DoWork += TopicWorkerFetch;
-                newWorker.RunWorkerCompleted += TopicWorkerUpdate;
-                newWorker.WorkerSupportsCancellation = true;
-                newWorker.assignedTopic = followedTopic;
-                topicWorkers.Add(newWorker);
+                var check = topicWorkers.Find(p => p.assignedTopic.topicID == followedTopic.topicID);
+                if (check != null)
+                {
+                    Trace.WriteLine("Topic Worker Already Assigned - " + check.assignedTopic.topicName);
+                }
+                else
+                {
+                    TopicWorker newWorker = new TopicWorker();
+                    newWorker.DoWork += TopicWorkerFetch;
+                    newWorker.RunWorkerCompleted += TopicWorkerUpdate;
+                    newWorker.WorkerSupportsCancellation = true;
+                    newWorker.assignedTopic = followedTopic;
+                    topicWorkers.Add(newWorker);
+                }
             }
+
+            foreach (APTopic unfollowedTopic in Settings.Default.APunfollowedTopics)
+            {
+                Trace.WriteLine("Checking Unfollowed Topic - " + unfollowedTopic.topicName);
+                var uncheck = topicWorkers.Find(pp => pp.assignedTopic.topicID == unfollowedTopic.topicID);
+                if (uncheck != null)
+                {
+                    Trace.WriteLine("Removing TopicWorker - Unfollowed - " + uncheck.assignedTopic.topicName);
+                    uncheck.unfollowed = true;
+                    topicWorkers.Remove(uncheck);
+                    RemoveTopicFromFeed(unfollowedTopic);
+                }
+                else
+                {
+                    Trace.WriteLine("No worker assigned to " + unfollowedTopic.topicName);
+                }
+            }
+
         }
 
         private void TopicWorkerFetch(object sender, DoWorkEventArgs e)
@@ -118,7 +138,7 @@ namespace NewsBuddy
 
             try
             {
-                APObject result = ingest.WorkerGetTopicFeed(e.Argument as APTopic);
+                APObject result = ingest.WorkerGetTopicFeed(e.Argument as APTopic,autoFeed);
                 if (result != null)
                 {
                     e.Result = result;
@@ -155,8 +175,16 @@ namespace NewsBuddy
                 ProcessFeedItems(newTopic);
             }
 
+            if (((TopicWorker)sender).unfollowed)
+            {
+                ((TopicWorker)sender).Dispose();
+                Trace.WriteLine("Topic Worker Disposing - Topic Unfollowed - " + ((TopicWorker)sender).assignedTopic.topicName);
+                return;
+            }
+
             if (autoFeed)
             {
+                
                 Trace.WriteLine("Restarting TopicWorker " + ((TopicWorker)sender).assignedTopic.topicName);
                 ((TopicWorker)sender).RunWorkerAsync(((TopicWorker)sender).assignedTopic);
 
@@ -187,9 +215,10 @@ namespace NewsBuddy
                 }
                 else
                 {
+
                     ingest.GetFeed();
                 }
-
+                
                 if (ingest.isAuthorized)
                 {
                     foreach (APObject obj in ingest.Items)
@@ -282,6 +311,15 @@ namespace NewsBuddy
             btn_RefreshAP.Content = " Get Latest Stories";
             btn_RefreshAP.IsEnabled = true;
             progbar.Visibility = Visibility.Collapsed;
+        }
+
+        private void RemoveTopicFromFeed(APTopic topic)
+        {
+            APObject existingTopic = listObjects.FirstOrDefault(op => op.altID == topic.topicID.ToString());
+            if (existingTopic != null)
+            {
+                listObjects.Remove(existingTopic);
+            }
         }
 
         private void ProcessFeedItems(List<APObject> newItems)
@@ -409,6 +447,18 @@ namespace NewsBuddy
 
         private void RefreshAP(object sender, RoutedEventArgs e)
         {
+            if (freezeFeed)
+            {
+                Settings.Default.Reload();
+                if (frame_Story.Content.GetType() == typeof(APTopicSettings))
+                {
+                    frame_Story.Content = new APReaderDocs();
+                }
+                freezeFeed = false;
+            }
+
+            AssignTopicWorkers();
+
             btn_RefreshAP.Content = "Getting Feed...";
             if (chk_AutoFeed.IsChecked == true)
             {
@@ -419,17 +469,21 @@ namespace NewsBuddy
                 btn_RefreshAP.Content = updateMessages[updateMessageNumber];
                 autoFeed = true;
             }
-            AssignTopicWorkers();
 
-            worker.RunWorkerAsync();
-
-            if (autoFeed)
+            if (!worker.IsBusy)
             {
-                foreach (TopicWorker top in topicWorkers)
+                worker.RunWorkerAsync();
+            }
+
+            foreach (TopicWorker top in topicWorkers)
+            {
+                if (!top.IsBusy)
                 {
                     top.RunWorkerAsync(top.assignedTopic);
+
                 }
             }
+
 
             btn_RefreshAP.IsEnabled = false;
             progbar.Visibility = Visibility.Visible;
@@ -532,8 +586,14 @@ namespace NewsBuddy
                 }
             }
 
-            frame_Story.Content = new APTopicSettings(ingest);
-
+            if (frame_Story.Content.GetType() != typeof(APTopicSettings))
+            {
+                frame_Story.Content = new APTopicSettings(ingest);
+                StopAllFeeds();
+                freezeFeed = true;
+            }
+            
+            
         }
 
 

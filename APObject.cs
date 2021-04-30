@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml;
 using System.Diagnostics;
+using System.Windows.Input;
 
 namespace NewsBuddy
 {
@@ -20,6 +21,7 @@ namespace NewsBuddy
         public bool isAssocParent { get; private set; }
         public bool isTopic { get; set; }
         public int version { get; set; }
+        private DateTime timeRetrieved { get; set; }
 
         public APObject(object obj, APingestor _ingestor, bool isParent = false)
         {
@@ -37,14 +39,22 @@ namespace NewsBuddy
         {
             get
             {
+                if (DateTime.Now.Subtract(timeRetrieved).TotalMinutes > 1)
+                {
+                    m_hasStory = false;
+                }
+
                 if (isAssocParent)
                 {
                     return false;
                 }
                 if (!m_hasStory)
                 {
+                    Mouse.OverrideCursor = Cursors.Wait;
                     Trace.WriteLine("Fetching Story for " + headline);
                     XmlDocument check = ingestor.GetItem(altID);
+                    timeRetrieved = DateTime.Now;
+                    Mouse.OverrideCursor = null;
                     if (check != null)
                     {
                         this.story = new APStory(check);

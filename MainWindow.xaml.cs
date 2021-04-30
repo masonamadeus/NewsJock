@@ -7,19 +7,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Markup;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
-using System.Windows.Resources;
-using Ookii.Dialogs.Wpf;
 using NAudio.Wave;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace NewsBuddy
 {
@@ -28,12 +21,36 @@ namespace NewsBuddy
     /// </summary>
     public partial class MainWindow : Window
     {
+        // THE DFB
+        // FOR YOU AND ME
+        // THE DFB FOREVER AND ALWAYS
+
+        void DebuggerFunction_Click(object sender, EventArgs e)
+        {
+            Trace.WriteLine(System.IO.Path.Combine
+                (
+                    System.IO.Path.GetDirectoryName
+                    (
+                        System.Reflection.Assembly.GetExecutingAssembly().Location
+                    ), "NewsJock.exe"
+                )
+            );
+
+            Trace.WriteLine(Process.GetCurrentProcess().MainModule.FileName);
+
+            UpdateRegistryKeys();
+
+        }
+
+        // YOU ARE NOW LEAVING THE DFB
+        // WE HOPE YOU ENJOYED YOUR STAY
+        // THE DFB WILL ALWAYS BE HERE
+
 
         FileSystemWatcher fs_scripts;
         FileSystemWatcher fs_sounders;
         FileSystemWatcher fs_clips;
         FileSystemWatcher fs_sharedSounders;
-
 
         public string dirClipsPath = Settings.Default.ClipsDirectory;
         public string dirSoundersPath = Settings.Default.SoundersDirectory;
@@ -41,35 +58,45 @@ namespace NewsBuddy
         public string dirScriptsPath = Settings.Default.ScriptsDirectory;
         public string dirTemplatesPath = Settings.Default.TemplatesDirectory;
         public string[] audioExtensions = new[] { ".mp3", ".wav", ".wma", ".m4a", ".flac" };
-        public string scriptExtension = ".xaml";
+        public string[] scriptExtensions = new[] { ".xaml", ".njs" };
         public TabItem currentTab { get; set; }
         public Page1 currentScript { get { return (((Frame)currentTab.Content).Content as Page1) != null ? (((Frame)currentTab.Content).Content as Page1) : null; } }
-
         public NJAudioPlayer SoundersPlayerNA;
         public NJAudioPlayer ClipsPlayerNA;
-
         public NJAsioMixer asioMixer;
-
         public ListenerLogger logger;
 
         private Cursor nbDropCur = null;
+        private NamedPipeManager pipeManager;
+        private FileAssociation[] fileAssociations;
+        private List<NBfile> sounders = new List<NBfile>();
+        private List<NBfile> clips = new List<NBfile>();
+        private List<ScriptFile> scripts = new List<ScriptFile>();
 
 
-
-
-        public MainWindow()
+        public MainWindow(bool fromFile = false)
         {
             InitializeComponent();
+            logger = new ListenerLogger();
+            Trace.Listeners.Add(logger);
+
             if (Settings.Default.UpgradeNeeded)
             {
                 Settings.Default.Upgrade();
                 Settings.Default.UpgradeNeeded = false;
                 Settings.Default.Save();
+
+                UpdateRegistryKeys();
+                
                 Trace.WriteLine("Upgrading Settings");
             } else
             {
                 Trace.WriteLine("Settings Upgrade not called");
             }
+
+            pipeManager = new NamedPipeManager("NewsJock");
+            pipeManager.StartServer();
+            pipeManager.ReceiveString += HandlePipeString;
 
             // Debugger messages
             if (!Debugger.IsAttached)
@@ -86,8 +113,7 @@ namespace NewsBuddy
                 DFB.Visibility = Visibility.Visible;
             }
 
-            logger = new ListenerLogger();
-            Trace.Listeners.Add(logger);
+            
 
             this.Height = Settings.Default.WindowHeight;
             this.Width = Settings.Default.WindowWidth;
@@ -109,7 +135,10 @@ namespace NewsBuddy
             addTab.Source = new Uri("/TabAdder.xaml", UriKind.Relative);
             _tabAdd.Content = addTab;
             _tabItems.Add(_tabAdd);
-            this.AddTabItem(true);
+            if (!fromFile)
+            { 
+                this.AddTabItem(true);
+            }
 
             DynamicTabs.DataContext = _tabItems;
             DynamicTabs.SelectedIndex = 0;
@@ -129,23 +158,12 @@ namespace NewsBuddy
             sVolSlider.Value = Settings.Default.SoundersVolLevel;
             cVolSlider.Value = Settings.Default.ClipsVolLevel;
             Trace.WriteLine("Started Running");
+            Trace.WriteLine(System.Reflection.Assembly.GetExecutingAssembly().Location);
+
+
         }
 
-        // THE DFB
-        // FOR YOU AND ME
-        // THE DFB FOREVER AND ALWAYS
-
-        void DebuggerFunction_Click(object sender, EventArgs e)
-        {
-            APReader aPReader = new APReader();
-            aPReader.Owner = this;
-            aPReader.Show();
-            aPReader.Owner = null;
-        }
-
-        // YOU ARE NOW LEAVING THE DFB
-        // WE HOPE YOU ENJOYED YOUR STAY
-        // THE DFB WILL ALWAYS BE HERE
+        #region Interaction Controls
 
         void ExceptionCatcher(Exception e, bool promptForShutdown)
         {
@@ -157,8 +175,36 @@ namespace NewsBuddy
             }
         }
 
+        public void HandlePipeString(string filesToOpen)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (!string.IsNullOrEmpty(filesToOpen))
+                {
+                    string[] paths = filesToOpen.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (string file in paths)
+                    {
+                        AddNewTabFromFrame(file);
+                    }
+                    this.Topmost = true;
+                    this.Activate();
+                    Dispatcher.BeginInvoke(new Action(() => { this.Topmost = false; }));
+                }
+            });
+        }
 
-        #region Drag&Drop Controls
+        private void HandlePreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (!e.Handled)
+            {
+                e.Handled = true;
+                var eventArg = new MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta);
+                eventArg.RoutedEvent = UIElement.MouseWheelEvent;
+                eventArg.Source = sender;
+                var parent = ((Control)sender).Parent as UIElement;
+                parent.RaiseEvent(eventArg);
+            }
+        }
 
         protected override void OnGiveFeedback(GiveFeedbackEventArgs e)
         {
@@ -231,13 +277,81 @@ namespace NewsBuddy
             }
         }
 
+        private void PrintLog()
+        {
+            if (logger != null)
+            {
+                string trace = logger.Trace;
+                string filePath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "NewsJock Dump Log.txt");
+                using (StreamWriter outputFile = new StreamWriter(filePath))
+                {
+                    outputFile.Write(trace);
+                }
+            }
+            else
+            {
+                Trace.WriteLine("Logger was Not Attached");
+            }
+
+
+        }
+
+        private void Window_Closing(object sender, CancelEventArgs e)
+        {
+            if (this.WindowState != WindowState.Maximized | this.WindowState != WindowState.Minimized)
+            {
+                Settings.Default.WindowHeight = this.Height;
+                Settings.Default.WindowWidth = this.Width;
+            }
+
+            Settings.Default.SoundersVolLevel = sVolSlider.Value;
+            Settings.Default.ClipsVolLevel = cVolSlider.Value;
+            Settings.Default.Save();
+            if (SoundersPlayerNA != null)
+            {
+                SoundersPlayerNA.Dispose();
+            }
+            if (ClipsPlayerNA != null)
+            {
+                ClipsPlayerNA.Dispose();
+            }
+            if (asioMixer != null)
+            {
+                asioMixer.KillMixer();
+            }
+            Trace.WriteLine("Window Closing, Program Closing.");
+            if (Settings.Default.PrintDebug)
+            {
+                PrintLog();
+            }
+
+            pipeManager.StopServer();
+
+            Application.Current.Shutdown();
+
+        }
+
         #endregion
 
         #region Directory Controls
 
-        List<NBfile> sounders = new List<NBfile>();
-        List<NBfile> clips = new List<NBfile>();
-        List<ScriptFile> scripts = new List<ScriptFile>();
+        private void UpdateRegistryKeys()
+        {
+            List<FileAssociation> newAssocs = new List<FileAssociation>();
+            foreach (string fileType in scriptExtensions)
+            {
+                newAssocs.Add(new FileAssociation()
+                {
+                    FileTypeDescription = "NewsJock Script File",
+                    Extension = fileType,
+                    ExecutableFilePath = Process.GetCurrentProcess().MainModule.FileName,
+                    ProgId = "NewsJock"
+                });
+            }
+            fileAssociations = newAssocs.ToArray();
+            FileAssociationsManager.EnsureAssociationsSet(fileAssociations);
+
+        }
 
         void CheckDirectories()
         {
@@ -310,7 +424,7 @@ namespace NewsBuddy
                 .ToArray();
 
                 object[] AllScripts = new DirectoryInfo(dirScriptsPath).GetFiles()
-                .Where(sf => scriptExtension.Contains(sf.Extension.ToLower())).OrderByDescending(sf2 => sf2.CreationTime)
+                .Where(sf => scriptExtensions.Contains(sf.Extension.ToLower())).OrderByDescending(sf2 => sf2.CreationTime)
                 .ToArray();
 
                 foreach (object c in AllClips)
@@ -366,7 +480,6 @@ namespace NewsBuddy
                 MessageBox.Show("Whoops. Something ain't right. Click the gear on the top right of the main window, and check the paths to your files!", "Directories Don't Exist", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
 
         void MonitorDirectory(string dirPath, FileSystemWatcher fs_var)
         {
@@ -626,7 +739,6 @@ namespace NewsBuddy
            
         }
 
-
         #endregion
 
         #region Tab Controls
@@ -635,6 +747,7 @@ namespace NewsBuddy
         TabItem _tabAdd;
 
         private readonly Random _random = new Random();
+
         private string RandomID()
         {
             var builder = new StringBuilder(10);
@@ -647,7 +760,6 @@ namespace NewsBuddy
             }
             return builder.ToString();
         }
-
 
         /// <summary>
         /// Adds a tab item based on either the URI of an existing file, or the default blank script.
@@ -759,7 +871,7 @@ namespace NewsBuddy
                 if (_tabItems.Count < 3)
                 {
                     TabItem selectedTab = DynamicTabs.SelectedItem as TabItem;
-                    if (selectedTab != null && (((Frame)selectedTab.Content).Content as Page1).isChanged)
+                    if (selectedTab != null && ((Frame)selectedTab.Content).Content is Page1 && (((Frame)selectedTab.Content).Content as Page1).isChanged)
                     {
                         if (MessageBox.Show(string.Format("'{0}' has not been saved.\nClose without saving?", tab.Header.ToString()),
                   "Close Tab", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
@@ -861,11 +973,15 @@ namespace NewsBuddy
 
         }
 
+        private void DynamicTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            TabControl tabs = (TabControl)sender;
+            currentTab = tabs.SelectedItem as TabItem;
+        }
 
         #endregion
 
         #region Menu Controls
-
 
         private void mnNJSettings_Click(object sender, RoutedEventArgs e)
         {
@@ -874,17 +990,6 @@ namespace NewsBuddy
             Settings.Default.Reload();
             DisplayDirectories();
           
-        }
-
-        private void mnResetSettings_Click(object sender, RoutedEventArgs e)
-        {
-            Settings.Default.Reset();
-            DisplayDirectories();
-        }
-
-        private void mnWebSettings_Click(object sender, RoutedEventArgs e)
-        {
-
         }
 
         private void lblSounders_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -901,6 +1006,7 @@ namespace NewsBuddy
         {
             Process.Start("explorer.exe", Settings.Default.ScriptsDirectory);
         }
+
         private void listScripts_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             ScriptFile chosen = listScripts.SelectedItem as ScriptFile;
@@ -959,86 +1065,61 @@ namespace NewsBuddy
             }
 
         }
+
         private void mnRefresh_Click(object sender, RoutedEventArgs e)
         {
             CleanUpScripts();
             CheckDirectories();           
         }
 
-        private void PrintLog()
+        private void mnAudioSettings_Click(object sender, RoutedEventArgs e)
         {
-            if (logger != null)
+            AudioConfigWindow ac = new AudioConfigWindow();
+            ac.Owner = this;
+            ac.ShowDialog();
+            ac.Owner = null;
+
+            DynamicTabs.DataContext = null;
+            Settings.Default.Reload();
+            if (Settings.Default.AudioOutType == 1 &&
+                ((Settings.Default.SeparateOutputs & Settings.Default.ASIOSplit)
+                || Settings.Default.ASIOSounders == Settings.Default.ASIOClips))
             {
-                string trace = logger.Trace;
-                string filePath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "NewsJock Dump Log.txt" );
-                using (StreamWriter outputFile = new StreamWriter(filePath))
+                if (asioMixer != null)
                 {
-                    outputFile.Write(trace);
+                    asioMixer.KillMixer();
+                    asioMixer = null;
+                    Trace.WriteLine("Killed ASIO Mixer because you needed a new one.");
                 }
+                asioMixer = new NJAsioMixer(Settings.Default.ASIODevice, Settings.Default.ASIOOutput);
             }
-            else
-            {
-                Trace.WriteLine("Logger was Not Attached");
-            }
-
-
-        }
-
-
-        private void Window_Closing(object sender, CancelEventArgs e)
-        {
-            if (this.WindowState != WindowState.Maximized | this.WindowState != WindowState.Minimized)
-            {
-                Settings.Default.WindowHeight = this.Height;
-                Settings.Default.WindowWidth = this.Width;
-            }
-
-            Settings.Default.SoundersVolLevel = sVolSlider.Value;
-            Settings.Default.ClipsVolLevel = cVolSlider.Value;
-            Settings.Default.Save();
-            if (SoundersPlayerNA != null)
-            {
-                SoundersPlayerNA.Dispose();
-            }
-            if (ClipsPlayerNA != null)
-            {
-                ClipsPlayerNA.Dispose();
-            }
-            if (asioMixer != null)
+            else if (asioMixer != null)
             {
                 asioMixer.KillMixer();
+                asioMixer = null;
+                Trace.WriteLine("Killed ASIO Mixer because you don't want it.");
             }
-            Trace.WriteLine("Window Closing, Program Closing.");
-            if (Settings.Default.PrintDebug)
-            {
-                PrintLog();
-            }
-
-            Application.Current.Shutdown();
-
+            DynamicTabs.DataContext = _tabItems;
+            DynamicTabs.SelectedItem = _tabItems[0];
+            currentTab = _tabItems[0];
 
         }
 
-
-        private void HandlePreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        private void btnAP_Click(object sender, RoutedEventArgs e)
         {
-            if (!e.Handled)
-            {
-                e.Handled = true;
-                var eventArg = new MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta);
-                eventArg.RoutedEvent = UIElement.MouseWheelEvent;
-                eventArg.Source = sender;
-                var parent = ((Control)sender).Parent as UIElement;
-                parent.RaiseEvent(eventArg);
-            }
+            APReader aPReader = new APReader();
+            aPReader.Owner = this;
+            aPReader.Show();
+            aPReader.Owner = null;
         }
 
-        #endregion
+        #endregion  
 
         #region Audio Player Controls
 
         DispatcherTimer sounderTimer;
         DispatcherTimer clipTimer;
+
         private void sVolSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (SoundersPlayerNA != null)
@@ -1094,6 +1175,7 @@ namespace NewsBuddy
                 sounderTimer.Start();
             }
         }
+
         public void AsioSndrTick(object sender, EventArgs e)
         {
             if (asioMixer.currentSounder != null && asioMixer.currentSounder.isPlaying)
@@ -1116,6 +1198,7 @@ namespace NewsBuddy
 
 
         }
+
         public void AsioClipTimer()
         {
             if (asioMixer.currentClip != null)
@@ -1260,8 +1343,7 @@ namespace NewsBuddy
         }
 
         private void TimerClips()
-        {
-            
+        { 
             if (ClipsPlayerNA != null && ClipsPlayerNA.IsPlaying())
             {
                 clipTimer = new DispatcherTimer();
@@ -1307,58 +1389,8 @@ namespace NewsBuddy
            
         }
 
-
         #endregion
 
-        private void mnAudioSettings_Click(object sender, RoutedEventArgs e)
-        {
-            AudioConfigWindow ac = new AudioConfigWindow();
-            ac.ShowDialog();
-
-            DynamicTabs.DataContext = null;
-            Settings.Default.Reload();
-            if (Settings.Default.AudioOutType == 1 && 
-                ((Settings.Default.SeparateOutputs & Settings.Default.ASIOSplit) 
-                || Settings.Default.ASIOSounders == Settings.Default.ASIOClips))
-            {
-                if (asioMixer != null)
-                {
-                    asioMixer.KillMixer();
-                    asioMixer = null;
-                    Trace.WriteLine("Killed ASIO Mixer because you needed a new one.");
-                }
-                asioMixer = new NJAsioMixer(Settings.Default.ASIODevice, Settings.Default.ASIOOutput);
-            }
-            else if (asioMixer != null)
-            {
-                asioMixer.KillMixer();
-                asioMixer = null;
-                Trace.WriteLine("Killed ASIO Mixer because you don't want it.");
-            }
-            DynamicTabs.DataContext = _tabItems;
-            DynamicTabs.SelectedItem = _tabItems[0];
-            currentTab = _tabItems[0];
-
-        }
-
-        private void MenuItem_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
-        private void DynamicTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            TabControl tabs = (TabControl)sender;
-            currentTab = tabs.SelectedItem as TabItem;
-        }
-
-        private void btnAP_Click(object sender, RoutedEventArgs e)
-        {
-            APReader aPReader = new APReader();
-            aPReader.Owner = this;
-            aPReader.Show();
-            aPReader.Owner = null;
-        }
     }
 
 }

@@ -17,7 +17,8 @@
         FontSize="14"
         ShowInTaskbar="True"
         AllowsTransparency="False"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        >
 
 
     <Grid>

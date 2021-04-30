@@ -59,7 +59,9 @@
 
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate DataType="{x:Type local:APObject}" ItemsSource="{Binding associations}">
-                    <TextBlock Text="{Binding headline}" TextWrapping="Wrap"/>
+                    
+                        <TextBlock Text="{Binding headline}" TextWrapping="Wrap"/>
+                    
                 </HierarchicalDataTemplate>
                 
             </TreeView.ItemTemplate>
@@ -230,12 +232,6 @@
     </Grid>
 
 
-    <Window.Resources>
-        <DataTemplate DataType="{x:Type local:APObject}">
-            <TextBlock Text="{Binding headline}" ToolTip="{Binding uri}" TextWrapping="Wrap"/>
-        </DataTemplate>
+  
 
-
-
-    </Window.Resources>
 </Window>

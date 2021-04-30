@@ -152,11 +152,6 @@ namespace NewsBuddy
                     response.Content.ReadAsStringAsync().Result;
                     XmlDocument story = new XmlDocument();
 
-                    if (Debugger.IsAttached)
-                    {
-                        Trace.WriteLine(rawXml);
-                    }
-
                     story.LoadXml(rawXml);
                     return story;
                 }
@@ -169,7 +164,7 @@ namespace NewsBuddy
 
         }
 
-        public APObject WorkerGetTopicFeed(APTopic topic)
+        public APObject WorkerGetTopicFeed(APTopic topic, bool isAuto=false)
         {
             Trace.WriteLine("getting followed topic: " + topic.topicName);
 
@@ -180,7 +175,7 @@ namespace NewsBuddy
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             }
 
-            if (activeTopics.Contains(topic))
+            if (activeTopics.Contains(topic) && isAuto)
             {
                 HttpResponseMessage response = client.GetAsync("/" + topic.nextPageLink + "&apikey=" + apiKey).Result;
                 if (response.IsSuccessStatusCode)
@@ -189,6 +184,14 @@ namespace NewsBuddy
 
                     Trace.WriteLine(topic.APIresponse);
                     return WorkerProcessTopicFeed(topic);
+                }
+                else if (response.ReasonPhrase.Contains("qt is expired"))
+                {
+                    topic.nextPageLink = "null";
+                   
+                    activeTopics.Remove(topic);
+
+                    return null;
                 }
                 else
                 {
@@ -205,7 +208,10 @@ namespace NewsBuddy
                     topic.APIresponse = response.Content.ReadAsStringAsync().Result;
                     
                     Trace.WriteLine(topic.APIresponse);
-                    activeTopics.Add(topic);
+                    if (isAuto && !activeTopics.Contains(topic))
+                    {
+                        activeTopics.Add(topic);
+                    }
                     return WorkerProcessTopicFeed(topic);
                 }
                 else
@@ -264,96 +270,6 @@ namespace NewsBuddy
 
         }
 
-        public void GetTopicFeed(APTopic topic, bool isAuto = false)
-        {
-            Trace.WriteLine("getting followed topic: " + topic.topicName);
-
-            if (client == null)
-            {
-                client = new HttpClient();
-                client.BaseAddress = new Uri(reqUrl);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            }
-
-            if (activeTopics.Contains(topic) && isAuto)
-            {
-                HttpResponseMessage response = client.GetAsync("/" + topic.nextPageLink + "&apikey=" + apiKey).Result;
-                if (response.IsSuccessStatusCode)
-                {
-                    topic.APIresponse = response.Content.ReadAsStringAsync().Result;
-                    ProcessTopicFeed(topic, isAuto);
-                    Trace.WriteLine(topic.APIresponse);
-                }
-                else
-                {
-                    Trace.WriteLine(response.RequestMessage + "    " + response.ReasonPhrase);
-                    activeTopics.Remove(topic);
-                }
-            }
-            else
-            {
-                HttpResponseMessage response = client.GetAsync(String.Format("feed?q=followedtopicid:{0}&apikey={1}&in_my_plan=true&versions=latest&text_links=plain", topic.topicID, apiKey)).Result;
-                if (response.IsSuccessStatusCode)
-                {
-                    topic.APIresponse = response.Content.ReadAsStringAsync().Result;
-                    ProcessTopicFeed(topic, isAuto);
-                    Trace.WriteLine(topic.APIresponse);
-                    activeTopics.Add(topic);
-                }
-                else
-                {
-                    Trace.WriteLine(response.RequestMessage + "    " + response.ReasonPhrase);
-                }
-            }
-
-        }
-
-        private void ProcessTopicFeed(APTopic topic, bool isAuto)
-        {
-            APObject topicParent = new APObject(topic.APIresponse, this, true)
-            {
-                headline = topic.topicName,
-                isTopic = true,
-                altID = topic.topicID.ToString()
-            };
-
-            dynamic js = JsonConvert.DeserializeObject(topic.APIresponse);
-
-            if (js.error != null)
-            {
-                Trace.WriteLine(js.error.ToString());
-                return;
-            }
-
-            var dataBlock = js.data;
-            if (dataBlock == null)
-            {
-                Trace.WriteLine("datablock was null on feed processing");
-                return;
-            }
-
-            string rawNextPageLink = dataBlock.next_page;
-
-            topic.nextPageLink = rawNextPageLink.Replace(@"https://api.ap.org/", "");
-
-            var itemsBlock = dataBlock.items;
-            var itemsCount = (itemsBlock != null && itemsBlock.Count != null) ? itemsBlock.Count : 0;
-
-            for (int entry = 0; entry < itemsCount; entry++)
-            {
-                topicParent.associations.Add(ProcessTopicEntry(itemsBlock[entry], entry));
-            }
-            if (topicParent.associations.Count == 0)
-            {
-                return;
-            }
-            else
-            {
-                apFeedItems.Add(topicParent);
-            }
-
-        }
-
         private APObject ProcessTopicEntry(dynamic d_item, int index)
         {
             List<APObject> textAssociations = new List<APObject>();
@@ -369,13 +285,7 @@ namespace NewsBuddy
                     {
                         // if it is text, add it to the list of text associations
                         dynamic currentAssoc = association.Value;
-                        textAssociations.Add(new APObject(currentAssoc, this)
-                        {
-                            headline = currentAssoc.headline != null ? currentAssoc.headline.ToString() : "",
-                            altID = currentAssoc.altids.itemid != null ? currentAssoc.altids.itemid.ToString() : "",
-                            uri = currentAssoc.uri != null ? item.uri.ToString() : "",
-                            version = currentAssoc.version != null ? Int32.Parse(currentAssoc.version.ToString()) : null
-                        });
+                        textAssociations.Add(NewAPObject(currentAssoc, this));
                     }
                 }
             }
@@ -383,13 +293,7 @@ namespace NewsBuddy
             // if there ARE text associations, make a parent container with them in it.
             if (textAssociations.Count > 0)
             {
-                APObject assocParent = new APObject(item, this, true)
-                {
-                    headline = item.headline != null ? item.headline.ToString() : "",
-                    uri = null,
-                    altID = item.altids.itemid != null ? item.altids.itemid.ToString() : "",
-                    version = item.version != null ? Int32.Parse(item.version.ToString()) : null
-                };
+                APObject assocParent = NewAPObject(item, this, true);
 
                 foreach (APObject textAssociation in textAssociations)
                 {
@@ -399,14 +303,7 @@ namespace NewsBuddy
             }
             else // if there are not text associations, make a new story and strip out the associations.
             {
-                return new APObject(item, this)
-                {
-                    headline = item.headline != null ? item.headline.ToString() : "",
-                    uri = item.uri != null ? item.uri.ToString() : "",
-                    altID = item.altids.itemid != null ? item.altids.itemid.ToString() : "",
-                    version = item.version != null ? Int32.Parse(item.version.ToString()) : null
-
-                };
+                return NewAPObject(item, this);
             }
         }
 
@@ -475,14 +372,6 @@ namespace NewsBuddy
 
                 ProcessFeed(reply);
 
-                // Get followed topics too
-                if (!isAuto && Settings.Default.APShowTopics && Settings.Default.APfollowedTopics != null && Settings.Default.APfollowedTopics.Count > 0)
-                {
-                    foreach (APTopic topic in Settings.Default.APfollowedTopics)
-                    {
-                        GetTopicFeed(topic, isAuto);
-                    }
-                }
 
                 SortList();
 
@@ -508,6 +397,11 @@ namespace NewsBuddy
             else if (response.StatusCode == HttpStatusCode.NotModified)
             {
                 Trace.WriteLine("Not Modified. Same ETag");
+            }
+            else if (response.ReasonPhrase.Contains("qt is expired"))
+            {
+                feedNextPage = "null";
+                return;
             }
             else
             {
@@ -566,13 +460,7 @@ namespace NewsBuddy
                     {
                         // if it is text, add it to the list of text associations
                         dynamic currentAssoc = association.Value;
-                        textAssociations.Add(new APObject(currentAssoc, this)
-                        {
-                            headline = currentAssoc.headline != null ? currentAssoc.headline.ToString() : "",
-                            altID = currentAssoc.altids.itemid != null ? currentAssoc.altids.itemid.ToString() : "",
-                            uri = currentAssoc.uri != null ? currentAssoc.uri.ToString() : "",
-                            version = currentAssoc.version != null ? Int32.Parse(currentAssoc.version.ToString()) : null
-                        });
+                        textAssociations.Add(NewAPObject(currentAssoc, this));
                     }
                 }
             }
@@ -580,13 +468,7 @@ namespace NewsBuddy
             // if there ARE text associations, make a parent container with them in it.
             if (textAssociations.Count > 0)
             {
-                APObject assocParent = new APObject(item, this, true)
-                {
-                    headline = item.headline != null ? item.headline.ToString() : "",
-                    uri = null,
-                    altID = item.altids.itemid.ToString() != null ? item.altids.itemid.ToString() : "",
-                    version = item.version != null ? Int32.Parse(item.version.ToString()) : null
-                };
+                APObject assocParent = NewAPObject(item, this, true);
 
                 foreach (APObject textAssociation in textAssociations)
                 {
@@ -597,21 +479,26 @@ namespace NewsBuddy
             }
             else // if there are not text associations, make a new story and strip out the associations.
             {
-                apFeedItems.Add(new APObject(item, this)
-                {
-                    headline = item.headline != null ? item.headline.ToString() : "",
-                    uri = item.uri != null ? item.uri.ToString() : "",
-                    altID = item.altids.itemid != null ? item.altids.itemid.ToString() : "",
-                    version = item.version != null ? Int32.Parse(item.version.ToString()) : null
-                });
+                apFeedItems.Add(NewAPObject(item, this));
             }
+        }
+
+        private APObject NewAPObject(dynamic _item, APingestor _ingestor, bool isParent = false)
+        {
+            APObject newObject = new APObject(_item, _ingestor, isParent)
+            {
+                headline = _item.headline != null ? _item.headline.ToString() : "",
+                uri = _item.uri != null ? _item.uri.ToString() : "",
+                altID = _item.altids.itemid != null ? _item.altids.itemid.ToString() : "",
+                version = _item.version != null ? Int32.Parse(_item.version.ToString()) : null,
+                updateDate = _item.versioncreated != null ? _item.versioncreated.ToString() : ""
+            };
+
+            return newObject;
         }
 
         private void SortList()
         {
-
-            //apFeedItems = apFeedItems.DistinctBy(p => p.headline).ToList();
-
             List<APObject> assocParents = new List<APObject>();
             for (int o = 0; o < apFeedItems.Count; o++)
             {
@@ -621,13 +508,6 @@ namespace NewsBuddy
                     assocParents.Add(item);
                 }
             }
-
-            /*
-            for (int op = 0; op < assocParents.Count; op++)
-            {
-                assocParents[op].associations = assocParents[op].associations.DistinctBy(p => p.headline).ToList();
-            }
-            */
 
             for (int pp = assocParents.Count - 1; pp >= 0; pp--)
             {

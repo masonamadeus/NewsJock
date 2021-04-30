@@ -26,8 +26,11 @@ namespace NewsBuddy
 
     public partial class Page1 : Page
     {
+        FileSystemWatcher fsP;
         public string scriptUri { get; set; }
         public bool isChanged { get; set; }
+
+        private string fileFilter = "NewsJock Scripts (*.njs)|*.njs | XAML Files (*.xaml)|*.xaml";
 
 
         public Page1(bool fromTemplate, string uri = "")
@@ -73,17 +76,252 @@ namespace NewsBuddy
             MonitorDirectories(Settings.Default.SoundersDirectory);
         }
 
-        FileSystemWatcher fsP;
+        #region Saving & Loading
 
-        private void MonitorDirectories(string dirPath)
+        public void SaveTemplateXaml(object sender, RoutedEventArgs e)
         {
-            fsP = new FileSystemWatcher(dirPath, "*.*");
+            SaveFileDialog svD = new SaveFileDialog
+            {
+                Filter = fileFilter,
+                DefaultExt = "xaml",
+                InitialDirectory = Settings.Default.TemplatesDirectory,
+                RestoreDirectory = true,
+                Title = "Save Template"
+            };
 
-            fsP.EnableRaisingEvents = true;
-            fsP.IncludeSubdirectories = true;
+            if ((bool)svD.ShowDialog())
+            {
+                ToggleLoading(true);
+                if (scriptUri == null)
+                {
+                    scriptUri = svD.FileName;
+                }
+                string fileName = svD.FileName;
+                //StartNewWorker(new NJSaveFile(rtbScript.Document, svD.FileName), true);
 
-            fsP.Renamed += new RenamedEventHandler(NBrenamed);
-            fsP.Deleted += new FileSystemEventHandler(NBdeleted);
+
+                FileStream fs = new FileStream(fileName, FileMode.Create);
+                XamlWriter.Save(rtbScript.Document, fs);
+                fs.Close();
+                ((MainWindow)Application.Current.MainWindow).ChangeTabName(scriptUri);
+                isChanged = false;
+
+            }
+
+            ToggleLoading(false);
+        }
+
+        public void SaveAsXaml(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog svD = new SaveFileDialog
+            {
+                Filter = fileFilter,
+                DefaultExt = "xaml",
+                InitialDirectory = Settings.Default.ScriptsDirectory,
+                RestoreDirectory = true,
+                Title = "Save Script"
+            };
+
+            if ((bool)svD.ShowDialog())
+            {
+                ToggleLoading(true);
+
+                scriptUri = svD.FileName;
+                //StartNewWorker(new NJSaveFile(rtbScript.Document, svD.FileName), true);
+
+                // now its time to actually save the stupid thing out. savey savey save save.
+                string fileName = svD.FileName;
+                FileStream fs;
+                fs = new FileStream(fileName, FileMode.Create);
+                XamlWriter.Save(rtbScript.Document, fs);
+                fs.Close();
+                ((MainWindow)Application.Current.MainWindow).ChangeTabName(scriptUri);
+
+                isChanged = false;
+
+            }
+            ToggleLoading(false);
+        }
+
+        public void SaveXaml(object sender, RoutedEventArgs e)
+        {
+            string dir = "no";
+
+            if (scriptUri != null && File.Exists(scriptUri))
+            {
+                dir = System.IO.Path.GetDirectoryName(scriptUri);
+            }
+
+            if (dir != "no" && dir != Settings.Default.TemplatesDirectory && File.Exists(scriptUri))
+            {
+                //StartNewWorker(new NJSaveFile(rtbScript.Document, scriptUri), true);
+
+                ToggleLoading(true);
+                string fileName = scriptUri;
+                FileStream fs;
+                fs = new FileStream(fileName, FileMode.Create);
+                XamlWriter.Save(rtbScript.Document, fs);
+                fs.Close();
+                isChanged = false;
+
+            }
+            else
+            {
+                SaveFileDialog svD = new SaveFileDialog
+                {
+                    Filter = fileFilter,
+                    DefaultExt = "njs",
+                    InitialDirectory = Settings.Default.ScriptsDirectory,
+                    RestoreDirectory = true,
+                    Title = "Save Script"
+                };
+
+                if ((bool)svD.ShowDialog())
+                {
+                    ToggleLoading(true);
+
+                    scriptUri = svD.FileName;
+                    //StartNewWorker(new NJSaveFile(rtbScript.Document, svD.FileName), true);
+
+
+                    // now its time to actually save the stupid thing out. savey savey save save.
+                    string fileName = svD.FileName;
+                    FileStream fs;
+                    fs = new FileStream(fileName, FileMode.Create);
+                    XamlWriter.Save(rtbScript.Document, fs);
+                    fs.Close();
+                    ((MainWindow)Application.Current.MainWindow).ChangeTabName(scriptUri);
+                    isChanged = false;
+
+                }
+            }
+            ToggleLoading(false);
+        }
+
+        public void OpenXaml(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog opn = new OpenFileDialog();
+            opn.InitialDirectory = Settings.Default.ScriptsDirectory;
+            opn.RestoreDirectory = true;
+            opn.Title = "Open a Script";
+            opn.Filter = fileFilter;
+            if ((bool)opn.ShowDialog())
+            {
+
+                ToggleLoading(true);
+                try
+                {
+                    if (opn.CheckFileExists)
+                    {
+                        //StartNewWorker(new NJSaveFile(rtbScript.Document, opn.FileName), false);
+
+                        FileStream fs;
+                        fs = new FileStream(opn.FileName, FileMode.Open);
+                        FlowDocument loaded = XamlReader.Load(fs) as FlowDocument;
+                        fs.Close();
+                        scriptUri = opn.FileName;
+                        rtbScript.Document = loaded;
+                        RestoreNBXaml();
+                        isChanged = false;
+                    }
+                }
+                catch
+                {
+                    MessageBox.Show("The selected file could not be opened.", "Error Opening File", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+
+            ToggleLoading(false);
+        }
+
+        public void OpenXamlFromTemplate(string uri)
+        {
+
+            if (File.Exists(uri))
+            {
+                //StartNewWorker(new NJSaveFile(rtbScript.Document, uri), false);
+                try
+                {
+                    ToggleLoading(true);
+                    FileStream fs = new FileStream(uri, FileMode.Open);
+                    FlowDocument loaded = XamlReader.Load(fs) as FlowDocument;
+                    fs.Close();
+                    rtbScript.Document = loaded;
+                    scriptUri = uri;
+                    RestoreNBXaml();
+                    isChanged = false;
+                }
+                catch
+                {
+                    MessageBox.Show("The selected file could not be opened.", "Error Opening File", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+
+            }
+            else { MessageBox.Show("This file is busted. Sorry!"); }
+
+            ToggleLoading(false);
+        }
+
+
+        #endregion
+
+        #region Script Interaction
+
+        /// <summary>
+        /// Recieves a list of APChunks and parses them into the rich text document.
+        /// </summary>
+        /// <param name="chunks"></param>
+        public void InsertChunksFromIngestor(List<APChunk> chunks)
+        {
+            List<Paragraph> newParas = new List<Paragraph>();
+            for (int x = 0; x < chunks.Count; x++)
+            {
+                APChunk chunk = chunks[x];
+                Paragraph text = new Paragraph();
+                if (chunk.chunk_fontWeight == FontWeights.Bold || chunk.chunk_fontStyle == FontStyles.Italic)
+                {
+                    text.Inlines.Add(chunk.chunk_text);
+                }
+                else
+                {
+                    text.Inlines.Add("     " + chunk.chunk_text);
+                }
+                text.FontStyle = chunk.chunk_fontStyle;
+                text.FontWeight = chunk.chunk_fontWeight;
+                text.FontSize = chunk.chunk_fontSize;
+                text.TextAlignment = chunk.chunk_textAlignment;
+                newParas.Add(text);
+            }
+
+            if (!rtbScript.Selection.IsEmpty)
+            {
+                rtbScript.Selection.Text = "";
+            }
+
+            if (rtbScript.CaretPosition == null)
+            {
+                rtbScript.CaretPosition = rtbScript.Document.ContentStart;
+            }
+
+            for (int i = 0; i < newParas.Count; i++)
+            {
+                if (rtbScript.CaretPosition.Paragraph == null)
+                {
+                    rtbScript.Document.Blocks.Add(new Paragraph());
+                }
+                if (rtbScript.CaretPosition.Paragraph.Parent is ListItem)
+                {
+                    ListItem nextItem = rtbScript.CaretPosition.Paragraph.Parent as ListItem;
+                    nextItem.Blocks.InsertBefore(rtbScript.CaretPosition.Paragraph, newParas[i]);
+                }
+                else
+                {
+                    rtbScript.Document.Blocks.InsertBefore(rtbScript.CaretPosition.Paragraph, newParas[i]);
+
+                }
+
+            }
+
         }
 
         private void Script_DragOver(object sender, DragEventArgs e)
@@ -110,7 +348,7 @@ namespace NewsBuddy
 
                 InlineUIContainer nb = new InlineUIContainer(nButton, rtbScript.CaretPosition)
                 {
-                    Tag = passNB   
+                    Tag = passNB
                 };
                 isChanged = true;
                 e.Handled = true;
@@ -184,446 +422,18 @@ namespace NewsBuddy
 
         }
 
-        public void InsertChunksFromIngestor(List<APChunk> chunks)
+        // used to determine if need to prompt on close
+        private void rtbScript_TextChanged(object sender, TextChangedEventArgs e)
         {
-            List<Paragraph> newParas = new List<Paragraph>();
-            for (int x = 0; x < chunks.Count; x++)
+            if (!isChanged)
             {
-                APChunk chunk = chunks[x];
-                Paragraph text = new Paragraph();
-                if (chunk.chunk_fontWeight == FontWeights.Bold || chunk.chunk_fontStyle == FontStyles.Italic)
-                {
-                    text.Inlines.Add(chunk.chunk_text);
-                }
-                else
-                { 
-                    text.Inlines.Add("     "+chunk.chunk_text); 
-                }
-                text.FontStyle = chunk.chunk_fontStyle;
-                text.FontWeight = chunk.chunk_fontWeight;
-                text.FontSize = chunk.chunk_fontSize;
-                text.TextAlignment = chunk.chunk_textAlignment;
-                newParas.Add(text);
-            }
-
-            if (!rtbScript.Selection.IsEmpty)
-            {
-                rtbScript.Selection.Text = "";
-            }
-
-            if (rtbScript.CaretPosition == null)
-            {
-                rtbScript.CaretPosition = rtbScript.Document.ContentStart;
-            }
-
-            for (int i = 0; i < newParas.Count; i++)
-            {
-                if (rtbScript.CaretPosition.Paragraph == null)
-                {
-                    rtbScript.Document.Blocks.Add(new Paragraph());
-                }
-                if (rtbScript.CaretPosition.Paragraph.Parent is ListItem)
-                {
-                    ListItem nextItem = rtbScript.CaretPosition.Paragraph.Parent as ListItem;
-                    nextItem.Blocks.InsertBefore(rtbScript.CaretPosition.Paragraph, newParas[i]);  
-                }
-                else
-                {
-                    rtbScript.Document.Blocks.InsertBefore(rtbScript.CaretPosition.Paragraph, newParas[i]);
-
-                }
-
-            }
-
-        }
-
-        public void SaveTemplateXaml(object sender, RoutedEventArgs e)
-        {
-            SaveFileDialog svD = new SaveFileDialog
-            {
-                Filter = "xaml files (*.xaml)|*.xaml",
-                DefaultExt = "xaml",
-                InitialDirectory = Settings.Default.TemplatesDirectory,
-                RestoreDirectory = true,
-                Title = "Save Template"
-            };
-
-            if ((bool)svD.ShowDialog())
-            {
-                ToggleLoading(true);
-                if (scriptUri == null)
-                {
-                    scriptUri = svD.FileName;
-                }
-                string fileName = svD.FileName;
-                //StartNewWorker(new NJSaveFile(rtbScript.Document, svD.FileName), true);
-
-
-                FileStream fs = new FileStream(fileName, FileMode.Create);
-                XamlWriter.Save(rtbScript.Document, fs);
-                fs.Close();
-                ((MainWindow)Application.Current.MainWindow).ChangeTabName(scriptUri);
-                isChanged = false;
-
-            }
-            
-            ToggleLoading(false);
-        }
-
-        public void SaveAsXaml(object sender, RoutedEventArgs e)
-        {
-            SaveFileDialog svD = new SaveFileDialog
-            {
-                Filter = "xaml files (*.xaml)|*.xaml",
-                DefaultExt = "xaml",
-                InitialDirectory = Settings.Default.ScriptsDirectory,
-                RestoreDirectory = true,
-                Title = "Save Script"
-            };
-
-            if ((bool)svD.ShowDialog())
-            {
-                ToggleLoading(true);
-
-                scriptUri = svD.FileName;
-                //StartNewWorker(new NJSaveFile(rtbScript.Document, svD.FileName), true);
-
-                // now its time to actually save the stupid thing out. savey savey save save.
-                string fileName = svD.FileName;
-                FileStream fs;
-                fs = new FileStream(fileName, FileMode.Create);
-                XamlWriter.Save(rtbScript.Document, fs);
-                fs.Close();
-                ((MainWindow)Application.Current.MainWindow).ChangeTabName(scriptUri);
-
-                isChanged = false;
-
-            }
-            ToggleLoading(false);
-        }
-
-        public void SaveXaml(object sender, RoutedEventArgs e)
-        {
-            string dir = "no";
-
-            if (scriptUri != null && File.Exists(scriptUri))
-            {
-                dir = System.IO.Path.GetDirectoryName(scriptUri);
-            }
-
-            if (dir != "no" && dir != Settings.Default.TemplatesDirectory && File.Exists(scriptUri))
-            {
-                //StartNewWorker(new NJSaveFile(rtbScript.Document, scriptUri), true);
-
-                ToggleLoading(true);
-                string fileName = scriptUri;
-                FileStream fs;
-                fs = new FileStream(fileName, FileMode.Create);
-                XamlWriter.Save(rtbScript.Document, fs);
-                fs.Close();
-                isChanged = false;
-
-            }
-            else
-            {
-                SaveFileDialog svD = new SaveFileDialog
-                {
-                    Filter = "xaml files (*.xaml)|*.xaml",
-                    DefaultExt = "xaml",
-                    InitialDirectory = Settings.Default.ScriptsDirectory,
-                    RestoreDirectory = true,
-                    Title = "Save Script"
-                };
-
-                if ((bool)svD.ShowDialog())
-                {
-                    ToggleLoading(true);
-
-                    scriptUri = svD.FileName;
-                    //StartNewWorker(new NJSaveFile(rtbScript.Document, svD.FileName), true);
-
-
-                    // now its time to actually save the stupid thing out. savey savey save save.
-                    string fileName = svD.FileName;
-                    FileStream fs;
-                    fs = new FileStream(fileName, FileMode.Create);
-                    XamlWriter.Save(rtbScript.Document, fs);
-                    fs.Close();
-                    ((MainWindow)Application.Current.MainWindow).ChangeTabName(scriptUri);
-                    isChanged = false;
-
-                }
-            }
-            ToggleLoading(false);
-        }
-
-        public void OpenXaml(object sender, RoutedEventArgs e)
-        {
-            OpenFileDialog opn = new OpenFileDialog();
-            opn.InitialDirectory = Settings.Default.ScriptsDirectory;
-            opn.RestoreDirectory = true;
-            opn.Title = "Open a Script";
-            if ((bool)opn.ShowDialog())
-            {
-
-                ToggleLoading(true);
-                if (opn.CheckFileExists)
-                {
-                    //StartNewWorker(new NJSaveFile(rtbScript.Document, opn.FileName), false);
-
-                    FileStream fs;
-                    fs = new FileStream(opn.FileName, FileMode.Open);
-                    FlowDocument loaded = XamlReader.Load(fs) as FlowDocument;
-                    fs.Close();
-                    scriptUri = opn.FileName;
-                    rtbScript.Document = loaded;
-                    RestoreNBXaml();
-                    isChanged = false;
-                }
-            }
-
-            ToggleLoading(false);
-        }
-
-        public void OpenXamlFromTemplate(string uri)
-        {
-
-            if (File.Exists(uri))
-            {
-                //StartNewWorker(new NJSaveFile(rtbScript.Document, uri), false);
-                ToggleLoading(true);
-                FileStream fs = new FileStream(uri, FileMode.Open);
-                FlowDocument loaded = XamlReader.Load(fs) as FlowDocument;
-                fs.Close();
-                rtbScript.Document = loaded;
-                scriptUri = uri;
-                RestoreNBXaml();
-                isChanged = false;
-
-            }
-            else { MessageBox.Show("This file is busted. Sorry!"); }
-
-            ToggleLoading(false);
-        }
-
-        public void RestoreNBXaml()
-        {
-            List<Inline> nbInlines = DetectNBs(rtbScript.Document.Blocks);
-
-            for (int i = 0; i < nbInlines.Count; i++)
-            {
-                Inline inl = nbInlines[i];
-                InlineUIContainer nbi = inl as InlineUIContainer;
-                NBfile nb = inl.Tag as NBfile;
-                nbi.Child = nb.NBbutton();
-            }
-            Trace.WriteLine("Restoring NBs");
-        }
-
-        public void NBrenamed2(object sender, RenamedEventArgs e)
-        {
-            List<Inline> foundInlines = DetectNBs(rtbScript.Document.Blocks);
-
-            for (int line = 0; line < foundInlines.Count; line++)
-            {
-                Inline examine = foundInlines[line];
-
-                NBfile nb = examine.Tag as NBfile;
-                if (nb.NBPath == e.OldFullPath)
-                {
-                    nb.NBPath = e.FullPath;
-                    nb.NBName = System.IO.Path.GetFileNameWithoutExtension(e.FullPath);
-                }
-
-            }
-
-        }
-
-        public void NBdeleted2(object sender, FileSystemEventArgs e)
-        {
-            List<Inline> deletedNBs = new List<Inline>();
-            List<Inline> foundInlines = DetectNBs(rtbScript.Document.Blocks);
-
-
-            for (int line = 0; line < foundInlines.Count; line++)
-            {
-                Inline examine = foundInlines[line];
-
-                NBfile nb = examine.Tag as NBfile;
-                if (nb.NBPath == e.FullPath)
-                {
-                    deletedNBs.Add(examine);
-                }
-
-            }
-
-            for (int d = 0; d < deletedNBs.Count; d++)
-            {
-                Inline del = deletedNBs[d];
-
-                List<Paragraph> blocks = DetectParagraphs(rtbScript.Document.Blocks);
-
-                for (int dd = 0; dd < blocks.Count; dd++)
-                {
-
-                    Paragraph bl = blocks[dd];
-                    if (bl.Inlines.Contains(del))
-                    {
-                        bl.Inlines.Remove(del);
-                    }
-
-                }
-
+                isChanged = true;
             }
         }
-
-        void NBrenamed(object sender, RenamedEventArgs e)
-        {
-            this.Dispatcher.Invoke(() =>
-            {
-                NBrenamed2(sender, e);
-            });
-        }
-        void NBdeleted(object sender, FileSystemEventArgs e)
-        {
-            this.Dispatcher.Invoke(() =>
-            {
-                NBdeleted2(sender, e);
-            });
-        }
-
-
-        public void ToggleLoading(bool show)
-        {
-            if (show)
-            {
-                Mouse.OverrideCursor = Cursors.Wait;
-                rtbScript.IsEnabled = false;
-                progBar.Visibility = Visibility.Visible;
-                topMenu.Visibility = Visibility.Hidden;
-            }
-            else
-            {
-                rtbScript.IsEnabled = true;
-                Mouse.OverrideCursor = null;
-                progBar.Visibility = Visibility.Collapsed;
-                topMenu.Visibility = Visibility.Visible;
-            }
-        }
-
-        #region Background Worker (in progress)
-        private void StartNewWorker(NJSaveFile saveFile, bool isSave)
-        {
-
-            Mouse.OverrideCursor = Cursors.Wait;
-            progBar.Visibility = Visibility.Visible;
-            topMenu.Visibility = Visibility.Collapsed;
-            BackgroundWorker worker = new BackgroundWorker();
-            if (isSave)
-            {
-                worker.DoWork += Worker_DoSave;
-            }
-            else
-            {
-                worker.DoWork += Worker_DoLoad;
-            }
-            worker.ProgressChanged += Worker_Progress;
-            worker.WorkerReportsProgress = true;
-            worker.WorkerSupportsCancellation = false;
-            worker.RunWorkerAsync(saveFile);
-
-        }
-        private void Worker_DoSave(object sender, DoWorkEventArgs w)
-        {
-            BackgroundWorker bw = sender as BackgroundWorker;
-
-            NJSaveFile file = (NJSaveFile)w.Argument;
-            FileStream fs = new FileStream(file.uri, FileMode.Create);
-            XamlWriter.Save(file.document, fs);
-            fs.Close();
-
-
-            List<Inline> nbInlines = new List<Inline>();
-
-            foreach (Paragraph para in file.document.Blocks)
-            {
-                foreach (Inline inline in para.Inlines)
-                {
-                    if (inline.Tag is NBfile)
-                    {
-                        nbInlines.Add(inline);
-                    }
-                }
-            }
-
-            for (int i = 0; i < nbInlines.Count; i++)
-            {
-                Inline inl = nbInlines[i];
-                InlineUIContainer nbi = inl as InlineUIContainer;
-                NBfile nb = inl.Tag as NBfile;
-                nbi.Child = nb.NBbutton();
-            }
-
-            w.Result = file;
-
-        }
-
-        private void Worker_DoLoad(object sender, DoWorkEventArgs w)
-        {
-            BackgroundWorker bw = sender as BackgroundWorker;
-            NJSaveFile file = (NJSaveFile)w.Argument;
-            FileStream fs = new FileStream(file.uri, FileMode.Open);
-            FlowDocument loaded = XamlReader.Load(fs) as FlowDocument;
-            fs.Close();
-            file.document = loaded;
-
-            List<Inline> nbInlines = new List<Inline>();
-
-            foreach (Paragraph para in file.document.Blocks)
-            {
-                foreach (Inline inline in para.Inlines)
-                {
-                    if (inline.Tag is NBfile)
-                    {
-                        nbInlines.Add(inline);
-                    }
-                }
-            }
-
-            for (int i = 0; i < nbInlines.Count; i++)
-            {
-                Inline inl = nbInlines[i];
-                InlineUIContainer nbi = inl as InlineUIContainer;
-                NBfile nb = inl.Tag as NBfile;
-                nbi.Child = nb.NBbutton();
-            }
-            w.Result = file;
-
-        }
-
-        private void Worker_Progress(object sender, ProgressChangedEventArgs p)
-        {
-            double per = (p.ProgressPercentage * 100) / 50;
-            progBar.IsIndeterminate = false;
-            progBar.Value = Math.Round(per, 0);
-
-        }
-
-        private void Worker_Done(object sender, DoWorkEventArgs w)
-        {
-            NJSaveFile result = (NJSaveFile)w.Result;
-            rtbScript.Document = result.document;
-            scriptUri = result.uri;
-            progBar.Visibility = Visibility.Collapsed;
-            topMenu.Visibility = Visibility.Visible;
-            Mouse.OverrideCursor = null;
-        }
-
-        #endregion
 
         private void rtbScript_Pasting(object sender, DataObjectPastingEventArgs e)
         {
-            
+
             if (e.FormatToApply == "Bitmap")
             {
                 try
@@ -634,13 +444,13 @@ namespace NewsBuddy
                 {
                     e.CancelCommand();
                 }
-            } 
+            }
             else
             if (e.DataObject.GetDataPresent("Text"))
             {
                 e.FormatToApply = "Text";
                 Trace.WriteLine("Pasting as text");
-            } 
+            }
 
             // Can remove later
             if (e.DataObject.GetDataPresent("NBcount"))
@@ -655,7 +465,7 @@ namespace NewsBuddy
                     {
                         sounder = false;
                     }
-                    
+
                     Trace.WriteLine("Gonna Paste " + datacall);
                     NBfile passNB = new NBfile(datacall, sounder);
                     NButton nButton = passNB.NBbutton();
@@ -666,8 +476,8 @@ namespace NewsBuddy
                         Tag = passNB
                     };
                 }
-                
-                
+
+
             }
 
             if (Debugger.IsAttached)
@@ -682,7 +492,7 @@ namespace NewsBuddy
 
         private void rtbScript_Copying(object sender, DataObjectCopyingEventArgs e)
         {
-            
+
             List<NBfile> foundNBfiles = new List<NBfile>();
 
             List<Inline> found = DetectNBs(rtbScript.Document.Blocks);
@@ -707,51 +517,155 @@ namespace NewsBuddy
                     e.DataObject.SetData(String.Format("NB{0}", ix), tempNB.NBPath);
                 }
             }
-            
+
 
         }
 
-        void DarkMode_Toggle(object sender, RoutedEventArgs e)
+        private void rtbScript_Loaded(object sender, RoutedEventArgs e)
         {
-            if (btnDark.IsChecked == true)
+            Trace.WriteLine("Script Reloaded.");
+            this.Dispatcher.Invoke(() => {
+                RestoreNBXaml();
+            });
+        }
+
+
+        #endregion
+
+        #region Utility Methods
+
+
+        /// <summary>
+        /// Restores all sound cue buttons to a working state.
+        /// </summary>
+        public void RestoreNBXaml()
+        {
+            List<Inline> nbInlines = DetectNBs(rtbScript.Document.Blocks);
+
+            for (int i = 0; i < nbInlines.Count; i++)
             {
-                rtbScript.Background = Brushes.Black;
-                rtbScript.Foreground = Brushes.White;
-            } else if (btnDark.IsChecked == false)
+                Inline inl = nbInlines[i];
+                InlineUIContainer nbi = inl as InlineUIContainer;
+                NBfile nb = inl.Tag as NBfile;
+                nbi.Child = nb.NBbutton();
+            }
+            Trace.WriteLine("Restoring NBs");
+        }
+
+        /// <summary>
+        /// If true, overrides the mouse cursor to the spinning circle. If false, returns mouse cursor to normal state.
+        /// </summary>
+        /// <param name="show"></param>
+        public void ToggleLoading(bool show)
+        {
+            if (show)
             {
-                rtbScript.Background = Brushes.White;
-                rtbScript.Foreground = Brushes.Black;
+                Mouse.OverrideCursor = Cursors.Wait;
+                rtbScript.IsEnabled = false;
+                progBar.Visibility = Visibility.Visible;
+                topMenu.Visibility = Visibility.Hidden;
+            }
+            else
+            {
+                rtbScript.IsEnabled = true;
+                Mouse.OverrideCursor = null;
+                progBar.Visibility = Visibility.Collapsed;
+                topMenu.Visibility = Visibility.Visible;
             }
         }
 
-        // used to determine if need to prompt on close
-        private void rtbScript_TextChanged(object sender, TextChangedEventArgs e)
+        private void MonitorDirectories(string dirPath)
         {
-            if (!isChanged)
+            fsP = new FileSystemWatcher(dirPath, "*.*");
+
+            fsP.EnableRaisingEvents = true;
+            fsP.IncludeSubdirectories = true;
+
+            fsP.Renamed += new RenamedEventHandler(NBrenamed);
+            fsP.Deleted += new FileSystemEventHandler(NBdeleted);
+        }
+
+        void NBrenamed(object sender, RenamedEventArgs e)
+        {
+            this.Dispatcher.Invoke(() =>
             {
-                isChanged = true;
-            }
+                List<Inline> foundInlines = DetectNBs(rtbScript.Document.Blocks);
+
+                for (int line = 0; line < foundInlines.Count; line++)
+                {
+                    Inline examine = foundInlines[line];
+
+                    NBfile nb = examine.Tag as NBfile;
+                    if (nb.NBPath == e.OldFullPath)
+                    {
+                        nb.NBPath = e.FullPath;
+                        nb.NBName = System.IO.Path.GetFileNameWithoutExtension(e.FullPath);
+                    }
+
+                }
+            });
+        }
+
+        void NBdeleted(object sender, FileSystemEventArgs e)
+        {
+            this.Dispatcher.Invoke(() =>
+            {
+                List<Inline> deletedNBs = new List<Inline>();
+                List<Inline> foundInlines = DetectNBs(rtbScript.Document.Blocks);
+
+
+                for (int line = 0; line < foundInlines.Count; line++)
+                {
+                    Inline examine = foundInlines[line];
+
+                    NBfile nb = examine.Tag as NBfile;
+                    if (nb.NBPath == e.FullPath)
+                    {
+                        deletedNBs.Add(examine);
+                    }
+
+                }
+
+                for (int d = 0; d < deletedNBs.Count; d++)
+                {
+                    Inline del = deletedNBs[d];
+
+                    List<Paragraph> blocks = DetectParagraphs(rtbScript.Document.Blocks);
+
+                    for (int dd = 0; dd < blocks.Count; dd++)
+                    {
+
+                        Paragraph bl = blocks[dd];
+                        if (bl.Inlines.Contains(del))
+                        {
+                            bl.Inlines.Remove(del);
+                        }
+
+                    }
+
+                }
+            });
         }
 
         // Returns a list of every paragraph chunk of text, recursively searching through lists.
         private List<Paragraph> DetectParagraphs(BlockCollection blocks, int depth = 0)
         {
-            Trace.WriteLine(String.Format("[{0}]Detect Paragraph Loop Started",depth));
+            Trace.WriteLine(String.Format("[{0}]Detect Paragraph Loop Started", depth));
             List<Paragraph> paragraphs = new List<Paragraph>();
             foreach (var block in blocks)
             {
                 if (block is Paragraph)
                 {
-                    Trace.WriteLine(String.Format("[{0}]Found Paragraph",depth));
+                    Trace.WriteLine(String.Format("[{0}]Found Paragraph", depth));
                     paragraphs.Add((Paragraph)block);
                 }
                 if (block is List)
                 {
-                    Trace.WriteLine(String.Format("[{0}]Found List",depth));
+                    Trace.WriteLine(String.Format("[{0}]Found List", depth));
                     foreach (ListItem listItems in ((List)block).ListItems)
                     {
-                        Trace.WriteLine(String.Format("[{0}]Starting loop for list item",depth));
-                        paragraphs.AddRange(DetectParagraphs(listItems.Blocks,depth+1));
+                        Trace.WriteLine(String.Format("[{0}]Starting loop for list item", depth));
+                        paragraphs.AddRange(DetectParagraphs(listItems.Blocks, depth + 1));
                     }
                 }
             }
@@ -762,43 +676,65 @@ namespace NewsBuddy
         // Returns a list of every inline containing an NB file. Recursively searches lists.
         private List<Inline> DetectNBs(BlockCollection blocks, int depth = 0)
         {
-            Trace.WriteLine(String.Format("[{0}]DetectNBs Loop Started",depth));
+            Trace.WriteLine(String.Format("[{0}]DetectNBs Loop Started", depth));
             List<Inline> inlines = new List<Inline>();
             foreach (var block in blocks)
             {
                 if (block is Paragraph)
                 {
-                    Trace.WriteLine(String.Format("[{0}]Found Paragraph",depth));
+                    Trace.WriteLine(String.Format("[{0}]Found Paragraph", depth));
                     foreach (Inline inl in ((Paragraph)block).Inlines)
                     {
                         if (inl.Tag is NBfile)
                         {
-                            Trace.WriteLine(String.Format("[{0}]Found NB File",depth));
+                            Trace.WriteLine(String.Format("[{0}]Found NB File", depth));
                             inlines.Add(inl);
                         }
-                        
+
                     }
                 }
                 if (block is List)
                 {
-                    Trace.WriteLine(String.Format("[{0}]Found List",depth));
+                    Trace.WriteLine(String.Format("[{0}]Found List", depth));
                     foreach (ListItem listItems in ((List)block).ListItems)
                     {
-                        Trace.WriteLine(String.Format("[{0}]Starting loop for list item",depth));
-                        inlines.AddRange(DetectNBs(listItems.Blocks,depth+1));
+                        Trace.WriteLine(String.Format("[{0}]Starting loop for list item", depth));
+                        inlines.AddRange(DetectNBs(listItems.Blocks, depth + 1));
                     }
                 }
             }
             return inlines;
         }
 
-        private void rtbScript_Loaded(object sender, RoutedEventArgs e)
+
+        #endregion
+
+        #region User Interface
+        void DarkMode_Toggle(object sender, RoutedEventArgs e)
         {
-            Trace.WriteLine("Script Reloaded.");
-            this.Dispatcher.Invoke(() => {
-                RestoreNBXaml();
-            });
+            if (btnDark.IsChecked == true)
+            {
+                rtbScript.Background = Brushes.Black;
+                rtbScript.Foreground = Brushes.White;
+            }
+            else if (btnDark.IsChecked == false)
+            {
+                rtbScript.Background = Brushes.White;
+                rtbScript.Foreground = Brushes.Black;
+            }
         }
+
+        #endregion
+
+
+
+
+
+
+
+
+
+
 
     }
 
