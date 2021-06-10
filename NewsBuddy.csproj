@@ -6,10 +6,10 @@
     <UseWPF>true</UseWPF>
     <StartupObject>NewsBuddy.App</StartupObject>
     <AssemblyName>NewsJock</AssemblyName>
-    <Version>0.3.1</Version>
+    <Version>0.3.5</Version>
     <Authors>Mason Amadeus</Authors>
     <Company>NewsJock</Company>
-    <Description>A standalone text editor, with the capability of adding and playing back inline audio files. Designed to aid in the presentation of audio news.</Description>
+    <Description>NewsJock is a lightweight Windows 10 application for the construction and presentation of audio-format news content.</Description>
     <Copyright>2021</Copyright>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>NewsJock key2.snk</AssemblyOriginatorKeyFile>

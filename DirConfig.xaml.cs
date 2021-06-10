@@ -33,8 +33,6 @@ namespace NewsBuddy
 
         }
 
-
-
         private void okButton_Click(object sender, RoutedEventArgs e)
         {
             Settings.Default.ClipsDirectory = selDirClip.Text;

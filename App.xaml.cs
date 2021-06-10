@@ -8,6 +8,7 @@ using System.Windows;
 using System.IO;
 using System.Threading;
 using System.Text;
+using System.Diagnostics;
 
 namespace NewsBuddy
 {
@@ -17,6 +18,9 @@ namespace NewsBuddy
     public partial class App : Application
     {
         public Mutex mutex;
+
+        public event Action AppActivated;
+        public event Action AppDeactivated;
 
         public App()
         {
@@ -82,6 +86,17 @@ namespace NewsBuddy
 
             main.Show();
 
+        }
+
+        private void Application_Activated(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void Application_Deactivated(object sender, EventArgs e)
+        {
+            ((MainWindow)Application.Current.Windows[0]).KillAllPlayers();
+            Trace.WriteLine("Killing All Players");
         }
     }
 

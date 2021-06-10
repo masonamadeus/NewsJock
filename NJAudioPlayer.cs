@@ -31,6 +31,8 @@ namespace NewsBuddy
 
         public string source { get; }
 
+        public bool isDisposed = false;
+
         WaveChannel32 _wave { get; set; }
 
         string _ASIOname { get; set; }
@@ -231,6 +233,8 @@ namespace NewsBuddy
             {
                 _wave.Dispose();
             }
+
+            isDisposed = true;
         }
 
         public double GetLengthInSeconds()

@@ -37,13 +37,6 @@ namespace NewsBuddy
             }
             FillList();
 
-            if (Debugger.IsAttached)
-            {
-                foreach (APTopic i in Settings.Default.APunfollowedTopics)
-                {
-                    Trace.WriteLine(i.topicName);
-                }
-            }
 
 
         }
@@ -62,28 +55,46 @@ namespace NewsBuddy
         private void SyncTopics()
         {
             List<APTopic> allTopics = new List<APTopic>();
-            foreach(var item in lst_Topics.Items)
+
+            if (!ingest.isAuthorized)
             {
-                if (item is APTopic)
-                {
-                    APTopic topic = item as APTopic;
-                    topic.followed = true;
-                    allTopics.Add(topic);
-                }
-                
+                btn_TopicSync.Content = "API Key Unauthorized";
+                return;
+            }
+            else
+            {
+                btn_TopicSync.Content = "Sync Topics with AP Newsroom";
             }
 
-            foreach (var item2 in lst_UnFollowed.Items)
+            if (lst_Topics.Items != null)
             {
-                if (item2 is APTopic)
+                foreach (var item in lst_Topics.Items)
                 {
-                    APTopic topic2 = item2 as APTopic;
-                    topic2.followed = false;
-                    allTopics.Add(topic2);
-                }
-                
-            }
+                    if (item != null && item is APTopic)
+                    {
+                        APTopic topic = item as APTopic;
+                        topic.followed = true;
+                        allTopics.Add(topic);
+                    }
 
+                }
+            }
+            
+
+            if (lst_UnFollowed.Items.Count > 0) 
+            {
+                foreach (var item2 in lst_UnFollowed.Items)
+                {
+                    if (item2 is APTopic)
+                    {
+                        APTopic topic2 = item2 as APTopic;
+                        topic2.followed = false;
+                        allTopics.Add(topic2);
+                    }
+
+                }
+            }
+            
             foreach (APTopic topic3 in ingest.GetFollowedTopics())
             {
                 topic3.followed = true;
@@ -226,7 +237,7 @@ namespace NewsBuddy
             UpdateFollowedTopics();
             ManualTopicAdder.Visibility = Visibility.Collapsed;
             btn_TopicSync.Visibility = Visibility.Visible;
-            btn_ManualTopic.Content = "Add Topic Manually";
+            //btn_ManualTopic.Content = "Add Topic Manually";
             manualToggle = false;
 
 
@@ -307,14 +318,14 @@ namespace NewsBuddy
             {
                 ManualTopicAdder.Visibility = Visibility.Visible;
                 btn_TopicSync.Visibility = Visibility.Collapsed;
-                btn_ManualTopic.Content = "Sync Topics from AP";
+                //btn_ManualTopic.Content = "Sync Topics from AP";
                 manualToggle = true;
             }
             else
             {
                 ManualTopicAdder.Visibility = Visibility.Collapsed;
                 btn_TopicSync.Visibility = Visibility.Visible;
-                btn_ManualTopic.Content = "Add Topic Manually";
+                //btn_ManualTopic.Content = "Add Topic Manually";
                 manualToggle = false;
             }
             

@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:NewsBuddy"
         mc:Ignorable="d"
         ShowInTaskbar="True"
-        ResizeMode="NoResize"
+        ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen"
         Background="#FF8B8A8A"     
         Title="NewsJock Settings"
@@ -14,10 +14,10 @@
         FontFamily="{StaticResource OpenSans}"
         Topmost="True">
     <Grid Margin="15">
-    <DockPanel>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <DockPanel>
             <StackPanel DockPanel.Dock="Top">
-                <TextBlock HorizontalAlignment="Center" Margin="0,10,0,5" Padding="3" Background="LightGray">Configure directories and preferences for News Jock</TextBlock>
-                <Separator Margin="30,8,30,8"></Separator>
+                <Separator Margin="30,10,30,8"></Separator>
                 <Label>Personal Sounders folder:</Label>
                 <WrapPanel>
                     <TextBox x:Name="selDirSounder" Margin="10,0,10,0"  TextWrapping="NoWrap" AcceptsReturn="False" Width="300"/>
@@ -44,7 +44,7 @@
                 <Separator Margin="30,8,30,8"/>
                 <Label>AP Media API Key:</Label>
                 <TextBox x:Name="selAPApiKey" Margin="10,0,10,0"  TextWrapping="NoWrap" AcceptsReturn="False" Width="300" Text="{Binding Source={x:Static local:Settings.Default}, Path=APapiKey, Mode=TwoWay}" />
-
+                <CheckBox Name="chk_APAutoStart" Margin="50,5,10,10" Content="Automatically open AP Ingestor when NewsJock Starts" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=APAutoStart,Mode=TwoWay}"/>
                 <Separator Margin="30,8,30,8"/>
                 <CheckBox Name="btnSpell" HorizontalAlignment="Left" Margin="10,12,0,0" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=SpellCheck, Mode=TwoWay}">Script Spell Check</CheckBox>
                 
@@ -70,6 +70,8 @@
                     <Label Content=" Gb (recommended)"/>
                 </WrapPanel>
                 <Separator Margin="30,8,30,8"/>
+                <CheckBox Name="btnVeryOldWarn" HorizontalAlignment="Left" Margin="10,12,0,10" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=VeryOldWarn, Mode=TwoWay}">Prompt me to delete files that are over 2 years old.</CheckBox>
+
                 <CheckBox Name="btnDebug" HorizontalAlignment="Left" Margin="10,12,0,10" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=PrintDebug, Mode=TwoWay}"> Write debug log to desktop when closing NewsJock</CheckBox>
                 <Separator Margin="30,8,30,8"/>
 
@@ -82,6 +84,6 @@
             
         </WrapPanel>
     </DockPanel>
-
+        </ScrollViewer>
     </Grid>
 </Window>

@@ -28,6 +28,21 @@ namespace NewsBuddy
 
         public NJAudioPlayer player { get; set; }
 
+        private bool hasPlayer
+        {
+            get
+            {
+                if (player == null || player.isDisposed)
+                { 
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+        }
+
         public NJFileReader NJF { get; set; }
 
 
@@ -54,6 +69,12 @@ namespace NewsBuddy
 
         public void NBPlayNA(bool isSounder)
         {
+            if (!hasPlayer)
+            {
+                MakePlayer(this, new RoutedEventArgs());
+                Trace.WriteLine("Made Player On-Click for " + NBName);
+            }
+
             if (File.Exists(NBPath))
             {
                 if (Settings.Default.AudioOutType == 1 && ((Settings.Default.ASIOSounders == Settings.Default.ASIOClips) || Settings.Default.ASIOSplit || !Settings.Default.SeparateOutputs))
@@ -199,7 +220,8 @@ namespace NewsBuddy
                 {
                     MessageBox.Show("Audio Device Error.\nCheck your Settings under:\nSettings > Audio Device Settings", "Audio Device Error");
                 }
-            } else
+            }
+            else
             {
                 Trace.WriteLine("Player was not null when MakePlayer called: " + NBName);
             }
@@ -212,10 +234,12 @@ namespace NewsBuddy
                 player.Dispose();
                 Trace.WriteLine("Disposed of player for " + NBName);
                 player = null;
-            } else
+            } 
+            else
             {
                 Trace.WriteLine("Player called for dispose but was null OR playing: " + NBName);
             }
+            
             if (NJF != null && !NJF.isPlaying)
             {
                 NJF.reader.Position = 0;
@@ -225,7 +249,7 @@ namespace NewsBuddy
             }
             else
             {
-                Trace.WriteLine("NJF called for dispose but was null or playing." + NBName);
+                // Trace.WriteLine("NJF called for dispose but was null or playing." + NBName);
             }
 
         }
@@ -242,6 +266,10 @@ namespace NewsBuddy
 
         }
 
+        public void KillPlayer()
+        {
+            DisposePlayer(this, new RoutedEventArgs());
+        }
 
     }
 

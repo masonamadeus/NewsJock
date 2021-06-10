@@ -22,7 +22,7 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <CheckBox Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" Grid.ColumnSpan="3" Content="Show Followed Topics in Feed" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=APShowTopics, Mode=TwoWay}"/>
+      <!--  <CheckBox Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" Grid.ColumnSpan="3" Content="Show Followed Topics in Feed" IsChecked="{Binding Source={x:Static local:Settings.Default}, Path=APShowTopics, Mode=TwoWay}"/> -->
         <WrapPanel x:Name="ManualTopicAdder" Visibility="Collapsed" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Top" Grid.ColumnSpan="3">
             <TextBox x:Name="txt_NewTopicName" GotFocus="txt_NewTopicName_GotFocus" Width="150" AcceptsReturn="False" AcceptsTab="False" FontSize="14" Text="Topic Name" Margin="0,0,5,0"/>
             <TextBox x:Name="txt_NewTopicID" GotFocus="txt_NewTopicID_GotFocus" Width="80" AcceptsReturn="False" AcceptsTab="False" FontSize="14" Text="Topic ID #" PreviewTextInput="NumbersOnly"/>
@@ -30,7 +30,7 @@
             <Button Name="btn_AddTopic" Content="Add Topic" Click="btn_AddTopic_Click" FontSize="14"/>
         </WrapPanel>
         <Button x:Name="btn_TopicSync" Grid.Row="1" HorizontalAlignment="Center" Grid.ColumnSpan="3" VerticalAlignment="Top" FontSize="16" Content="Sync Topics with AP Newsroom" Click="btn_TopicSync_Click" Padding="5,2,5,3" Grid.IsSharedSizeScope="True"/>
-        <Button x:Name="btn_ManualTopic" Grid.Row="1" HorizontalAlignment="Center" Grid.ColumnSpan="3" VerticalAlignment="Bottom" FontSize="12" Content="Add Topic Manually" Click="btn_ManualTopic_Click" Margin="0,0,0,7" Padding="5,2,5,2"/>
+        <!--<Button x:Name="btn_ManualTopic" Grid.Row="1" HorizontalAlignment="Center" Grid.ColumnSpan="3" VerticalAlignment="Bottom" FontSize="12" Content="Add Topic Manually" Click="btn_ManualTopic_Click" Margin="0,0,0,7" Padding="5,2,5,2"/>-->
         <Label Grid.Row="1" Grid.Column="0" VerticalAlignment="Bottom" HorizontalContentAlignment="Center" FontSize="14" HorizontalAlignment="Center">Active Topics</Label>
         <ListBox Name="lst_Topics" Grid.Row="2" Grid.Column="0" Grid.RowSpan="2" Margin="10,0,10,10" HorizontalContentAlignment="Center"/>
         <Button x:Name="btn_Follow" Click="btn_Follow_Click" Content="" FontFamily="{StaticResource FA}" Grid.Column="1" Margin="0,0,0,20" Grid.Row="2"/>

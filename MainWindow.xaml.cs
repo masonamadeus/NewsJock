@@ -65,6 +65,8 @@ namespace NewsBuddy
         public NJAudioPlayer ClipsPlayerNA;
         public NJAsioMixer asioMixer;
         public ListenerLogger logger;
+        public APReader apReader;
+
 
         private Cursor nbDropCur = null;
         private NamedPipeManager pipeManager;
@@ -72,6 +74,7 @@ namespace NewsBuddy
         private List<NBfile> sounders = new List<NBfile>();
         private List<NBfile> clips = new List<NBfile>();
         private List<ScriptFile> scripts = new List<ScriptFile>();
+
 
 
         public MainWindow(bool fromFile = false)
@@ -87,9 +90,10 @@ namespace NewsBuddy
                 Settings.Default.Save();
 
                 UpdateRegistryKeys();
-                
+
                 Trace.WriteLine("Upgrading Settings");
-            } else
+            }
+            else
             {
                 Trace.WriteLine("Settings Upgrade not called");
             }
@@ -107,13 +111,14 @@ namespace NewsBuddy
                     ExceptionCatcher(args.Exception, false);
                 Dispatcher.UnhandledException += (sender, args) =>
                     ExceptionCatcher(args.Exception, true);
-                
-            } else if (Debugger.IsAttached)
+
+            }
+            else if (Debugger.IsAttached)
             {
                 DFB.Visibility = Visibility.Visible;
             }
 
-            
+
 
             this.Height = Settings.Default.WindowHeight;
             this.Width = Settings.Default.WindowWidth;
@@ -136,7 +141,7 @@ namespace NewsBuddy
             _tabAdd.Content = addTab;
             _tabItems.Add(_tabAdd);
             if (!fromFile)
-            { 
+            {
                 this.AddTabItem(true);
             }
 
@@ -159,6 +164,7 @@ namespace NewsBuddy
             cVolSlider.Value = Settings.Default.ClipsVolLevel;
             Trace.WriteLine("Started Running");
             Trace.WriteLine(System.Reflection.Assembly.GetExecutingAssembly().Location);
+
 
 
         }
@@ -296,6 +302,15 @@ namespace NewsBuddy
 
         }
 
+        private void Window_ContentRendered(object sender, EventArgs e)
+        {
+
+            if (Settings.Default.APAutoStart)
+            {
+                this.Dispatcher.Invoke(() => { btnAP_Click(new object(), new RoutedEventArgs()); });
+            }
+        }
+
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             if (this.WindowState != WindowState.Maximized | this.WindowState != WindowState.Minimized)
@@ -359,7 +374,7 @@ namespace NewsBuddy
                 !Directory.Exists(dirSoundersPath) || !Directory.Exists(dirTemplatesPath)
                 || !Directory.Exists(dirSharePath))
             {
-                
+
                 DirConfig dlg = new DirConfig();
                 //dlg.Owner = this;
                 if ((bool)dlg.ShowDialog())
@@ -408,76 +423,83 @@ namespace NewsBuddy
             dirSharePath = Settings.Default.SharedDirectory;
             dirTemplatesPath = Settings.Default.TemplatesDirectory;
 
-            if (Directory.Exists(dirClipsPath) && Directory.Exists(dirSoundersPath) && Directory.Exists(dirScriptsPath) && Directory.Exists(dirTemplatesPath))
+            try
             {
-
-                object[] AllClips = new DirectoryInfo(dirClipsPath).GetFiles()
-                .Where(cf => audioExtensions.Contains(cf.Extension.ToLower())).OrderByDescending(cf2 => cf2.CreationTime)
-                .ToArray();
-
-                object[] AllSounders = new DirectoryInfo(dirSoundersPath).GetFiles()
-                .Where(sf => audioExtensions.Contains(sf.Extension.ToLower()))
-                .ToArray();
-
-                object[] ShareSounders = new DirectoryInfo(dirSharePath).GetFiles()
-                .Where(ssf => audioExtensions.Contains(ssf.Extension.ToLower()))
-                .ToArray();
-
-                object[] AllScripts = new DirectoryInfo(dirScriptsPath).GetFiles()
-                .Where(sf => scriptExtensions.Contains(sf.Extension.ToLower())).OrderByDescending(sf2 => sf2.CreationTime)
-                .ToArray();
-
-                foreach (object c in AllClips)
+                if (Directory.Exists(dirClipsPath) && Directory.Exists(dirSoundersPath) && Directory.Exists(dirScriptsPath) && Directory.Exists(dirTemplatesPath))
                 {
-                    NBfile newFile = new NBfile
-                    {
-                        NBPath = c.ToString(),
-                        NBName = System.IO.Path.GetFileNameWithoutExtension(c.ToString())
-                    };
 
-                    clips.Add(newFile);
+                    object[] AllClips = new DirectoryInfo(dirClipsPath).GetFiles()
+                    .Where(cf => audioExtensions.Contains(cf.Extension.ToLower())).OrderByDescending(cf2 => cf2.CreationTime)
+                    .ToArray();
+
+                    object[] AllSounders = new DirectoryInfo(dirSoundersPath).GetFiles()
+                    .Where(sf => audioExtensions.Contains(sf.Extension.ToLower()))
+                    .ToArray();
+
+                    object[] ShareSounders = new DirectoryInfo(dirSharePath).GetFiles()
+                    .Where(ssf => audioExtensions.Contains(ssf.Extension.ToLower()))
+                    .ToArray();
+
+                    object[] AllScripts = new DirectoryInfo(dirScriptsPath).GetFiles()
+                    .Where(sf => scriptExtensions.Contains(sf.Extension.ToLower())).OrderByDescending(sf2 => sf2.CreationTime)
+                    .ToArray();
+
+                    foreach (object c in AllClips)
+                    {
+                        NBfile newFile = new NBfile
+                        {
+                            NBPath = c.ToString(),
+                            NBName = System.IO.Path.GetFileNameWithoutExtension(c.ToString())
+                        };
+
+                        clips.Add(newFile);
+                    }
+                    foreach (object s in AllSounders)
+                    {
+                        NBfile newFile = new NBfile
+                        {
+                            NBPath = s.ToString(),
+                            NBName = System.IO.Path.GetFileNameWithoutExtension(s.ToString()),
+                            NBisSounder = true
+                        };
+
+                        sounders.Add(newFile);
+                    }
+                    foreach (object Ss in ShareSounders)
+                    {
+                        NBfile newFile = new NBfile
+                        {
+                            NBPath = Ss.ToString(),
+                            NBName = System.IO.Path.GetFileNameWithoutExtension(Ss.ToString()),
+                            NBisSounder = true
+                        };
+
+                        sounders.Add(newFile);
+                    }
+                    foreach (object sc in AllScripts)
+                    {
+                        ScriptFile newScript = new ScriptFile
+                        {
+                            SCpath = sc.ToString(),
+                            SCname = System.IO.Path.GetFileNameWithoutExtension(sc.ToString()),
+
+                        };
+                        Trace.WriteLine("Added Script: " + sc.ToString());
+                        scripts.Add(newScript);
+                    }
+
+                    listSounders.ItemsSource = sounders;
+                    listClips.ItemsSource = clips;
+                    listScripts.ItemsSource = scripts;
                 }
-                foreach (object s in AllSounders)
+                else
                 {
-                    NBfile newFile = new NBfile
-                    {
-                        NBPath = s.ToString(),
-                        NBName = System.IO.Path.GetFileNameWithoutExtension(s.ToString()),
-                        NBisSounder = true
-                    };
-
-                    sounders.Add(newFile);
+                    MessageBox.Show("Whoops. Something ain't right. Click the gear on the top right of the main window, and check the paths to your files!", "Directories Don't Exist", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
-                foreach (object Ss in ShareSounders)
-                {
-                    NBfile newFile = new NBfile
-                    {
-                        NBPath = Ss.ToString(),
-                        NBName = System.IO.Path.GetFileNameWithoutExtension(Ss.ToString()),
-                        NBisSounder = true
-                    };
-
-                    sounders.Add(newFile);
-                }
-                foreach (object sc in AllScripts)
-                {
-                    ScriptFile newScript = new ScriptFile
-                    {
-                        SCpath = sc.ToString(),
-                        SCname = System.IO.Path.GetFileNameWithoutExtension(sc.ToString()),
-
-                    };
-                    Trace.WriteLine("Added Script: " + sc.ToString());
-                    scripts.Add(newScript);
-                }
-
-                listSounders.ItemsSource = sounders;
-                listClips.ItemsSource = clips;
-                listScripts.ItemsSource = scripts;
             }
-            else
+            catch
             {
-                MessageBox.Show("Whoops. Something ain't right. Click the gear on the top right of the main window, and check the paths to your files!", "Directories Don't Exist", MessageBoxButton.OK, MessageBoxImage.Error);
+                Trace.WriteLine("Something went wrong scanning directories.");
             }
         }
 
@@ -495,7 +517,12 @@ namespace NewsBuddy
             fs_var.IncludeSubdirectories = true;
 
             fs_var.Changed += new FileSystemEventHandler(ReloadDir);
-            fs_var.Renamed += new RenamedEventHandler(ReloadDir);
+
+
+            // MAYBE UNCOMMENT THIS
+            //fs_var.Renamed += new RenamedEventHandler(ReloadDir);
+
+
         }
 
         void ReloadDir(Object sender, FileSystemEventArgs e)
@@ -526,33 +553,36 @@ namespace NewsBuddy
         {
             GhostWindow gw;
 
-            FileInfo[] allScripts = new DirectoryInfo(dirScriptsPath).GetFiles(
-            "*.xaml", SearchOption.AllDirectories);
+            FileInfo[] allScripts = new DirectoryInfo(dirScriptsPath).GetFiles("*.*", SearchOption.AllDirectories)
+                .Where(aScr => scriptExtensions.Contains(aScr.Extension.ToLower())).ToArray();
             FileInfo[] allClips = new DirectoryInfo(dirClipsPath).GetFiles()
                 .Where(cf => audioExtensions.Contains(cf.Extension.ToLower()))
                 .ToArray();
             List<FileInfo> veryOldClips = new List<FileInfo>();
             List<FileInfo> veryOldScripts = new List<FileInfo>();
-
-            foreach (var af in allScripts)
+            if (Settings.Default.VeryOldWarn)
             {
-                if ((DateTime.Today - af.LastAccessTime).TotalDays > 730)
+                foreach (var af in allScripts)
                 {
-                    veryOldScripts.Add(af);
+                    if ((DateTime.Today - af.LastAccessTime).TotalDays > 730)
+                    {
+                        veryOldScripts.Add(af);
+                    }
+                }
+                foreach (var ac in allClips)
+                {
+                    if ((DateTime.Today - ac.LastAccessTime).TotalDays > 730)
+                    {
+                        veryOldClips.Add(ac);
+                    }
                 }
             }
-            foreach (var ac in allClips)
-            {
-                if ((DateTime.Today - ac.LastAccessTime).TotalDays > 730)
-                {
-                    veryOldClips.Add(ac);
-                }
-            }
+            
             if (Settings.Default.WarnDirSize)
             {
                 gw = new GhostWindow();
                 gw.Show();
-                if (GetDirectorySize(dirClipsPath) > (Settings.Default.FolderGB*1000000000))
+                if (GetDirectorySize(dirClipsPath) > (Settings.Default.FolderGB * 1000000000))
                 {
                     MessageBox.Show(this, "You have more than a gigabyte of clips in your Clips directory.\n" +
                        "To avoid taking up too much space, it may be wise to go delete old clips now.",
@@ -605,13 +635,13 @@ namespace NewsBuddy
                                 Trace.WriteLine("failed to remove old script " + vosc.Name);
                             }
                         }
-                        
+
                         break;
                     case MessageBoxResult.No:
-                        
+
                         break;
                     case MessageBoxResult.None:
-                        
+
                         break;
                 }
 
@@ -677,7 +707,7 @@ namespace NewsBuddy
 
                         FileInfo oc = oldClips[iy];
                         string newPath = System.IO.Path.Combine(destPath, oc.Name);
-                        
+
                         try
                         {
                             File.Move(oc.FullName, newPath);
@@ -696,7 +726,7 @@ namespace NewsBuddy
             {
                 Trace.WriteLine("cleaning up scripts");
                 FileInfo[] allTLScripts = new DirectoryInfo(dirScriptsPath).GetFiles(
-                    "*.xaml", SearchOption.TopDirectoryOnly);
+                    "*.*", SearchOption.TopDirectoryOnly).Where(alTLs => scriptExtensions.Contains(alTLs.Extension.ToLower())).ToArray();
                 List<FileInfo> oldScripts = new List<FileInfo>();
 
 
@@ -719,7 +749,7 @@ namespace NewsBuddy
 
                         FileInfo sc = oldScripts[i];
                         string newPath = System.IO.Path.Combine(destPath, sc.Name);
-                        
+
                         try
                         {
                             File.Move(sc.FullName, newPath);
@@ -736,7 +766,7 @@ namespace NewsBuddy
                 }
 
             }
-           
+
         }
 
         #endregion
@@ -792,11 +822,11 @@ namespace NewsBuddy
 
             if (File.Exists(uri) && !isDefault)
             {
-                newContent.NavigationService.Navigate(new Page1(true, uri));
+                newContent.NavigationService.Navigate(new Page1(true, uri) { isChanged = false });
             }
             else
             {
-                newContent.NavigationService.Navigate(new Page1(false));
+                newContent.NavigationService.Navigate(new Page1(false) { isChanged = false });
             }
 
             tab.Content = newContent;
@@ -827,7 +857,7 @@ namespace NewsBuddy
             Frame newContent = new Frame();
 
             newContent.NavigationService.Navigate(new Page1(chunks));
-            
+
             tab.Content = newContent;
 
             _tabItems.Insert(count - 1, tab);
@@ -989,7 +1019,7 @@ namespace NewsBuddy
             dlf.ShowDialog();
             Settings.Default.Reload();
             DisplayDirectories();
-          
+
         }
 
         private void lblSounders_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -1069,7 +1099,7 @@ namespace NewsBuddy
         private void mnRefresh_Click(object sender, RoutedEventArgs e)
         {
             CleanUpScripts();
-            CheckDirectories();           
+            CheckDirectories();
         }
 
         private void mnAudioSettings_Click(object sender, RoutedEventArgs e)
@@ -1107,10 +1137,31 @@ namespace NewsBuddy
 
         private void btnAP_Click(object sender, RoutedEventArgs e)
         {
-            APReader aPReader = new APReader();
-            aPReader.Owner = this;
-            aPReader.Show();
-            aPReader.Owner = null;
+            if (apReader != null)
+            {
+                apReader.Activate();
+                return;
+            }
+            else
+            {
+                try
+                {
+                    apReader = new APReader();
+                    apReader.Owner = this;
+                    apReader.Show();
+                    apReader.Owner = null;
+                    apReader.Activate();
+                }
+                catch
+                {
+                    apReader = new APReader(true);
+                    apReader.Show();
+                    apReader.Activate();
+                }
+            }
+
+
+
         }
 
         #endregion  
@@ -1147,12 +1198,12 @@ namespace NewsBuddy
 
         public void PlayAsioMixer(NJFileReader NJF)
         {
-            
+
             if (NJF.isSounder)
             {
                 asioMixer.Play(NJF, (float)sVolSlider.Value);
                 AsioSounderTimer();
-            } 
+            }
             else if (!NJF.isSounder)
             {
                 asioMixer.Play(NJF, (float)cVolSlider.Value);
@@ -1244,7 +1295,8 @@ namespace NewsBuddy
                 {
                     SoundersPlayerNA = null;
                     return;
-                } else
+                }
+                else
                 {
                     SoundersPlayerNA = player;
                     SoundersPlayerNA.PlaybackStarted += TimerSounders;
@@ -1338,12 +1390,12 @@ namespace NewsBuddy
                 SoundersPlayerNA = null;
                 Trace.WriteLine("Sounders Player Display Failed.");
             }
-           
+
 
         }
 
         private void TimerClips()
-        { 
+        {
             if (ClipsPlayerNA != null && ClipsPlayerNA.IsPlaying())
             {
                 clipTimer = new DispatcherTimer();
@@ -1386,11 +1438,24 @@ namespace NewsBuddy
                 ClipsPlayerNA = null;
                 Trace.WriteLine("Clips Timer Display Failed");
             }
-           
+
         }
 
         #endregion
 
+        public void KillAllPlayers()
+        {
+            foreach (TabItem tab in DynamicTabs.Items)
+            {
+                if (tab.Content is Frame)
+                {
+                    if (((Frame)tab.Content).Content is Page1)
+                    {
+                        ((Page1)((Frame)tab.Content).Content).KillNBPlayers();
+                    }
+                }
+            }
+        }
     }
 
 }

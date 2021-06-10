@@ -2,7 +2,9 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:NewsBuddy"
-             Startup="Application_Startup">
+             Startup="Application_Startup"
+             Activated="Application_Activated"
+             Deactivated="Application_Deactivated">
     <Application.Resources>
         
         <FontFamily x:Key="OpenSans">pack://application:,,,/resources/fonts/#Open Sans</FontFamily>

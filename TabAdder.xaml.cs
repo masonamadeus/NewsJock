@@ -31,6 +31,7 @@ namespace NewsBuddy
         }
 
         public string chosenFile;
+
         FileSystemWatcher fs1;
 
         private void MonitorDirectory()
@@ -54,6 +55,7 @@ namespace NewsBuddy
                 PopulateList();
             });
         }
+
         private void PopulateList()
         {
             TemplatesList.Items.Clear();
@@ -104,6 +106,7 @@ namespace NewsBuddy
                     OpenFileDialog opn = new OpenFileDialog();
                     opn.InitialDirectory = Settings.Default.ScriptsDirectory;
                     opn.RestoreDirectory = true;
+                    opn.Filter = "NewsJock Scripts |*.njs;*.xaml";
                     if ((bool)opn.ShowDialog())
                     {
                         if (opn.CheckFileExists)

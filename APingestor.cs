@@ -178,11 +178,19 @@ namespace NewsBuddy
             if (activeTopics.Contains(topic) && isAuto)
             {
                 HttpResponseMessage response = client.GetAsync("/" + topic.nextPageLink + "&apikey=" + apiKey).Result;
-                if (response.IsSuccessStatusCode)
+                if (response.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    Trace.WriteLine("Bad Request " + topic.topicName);
+                    return new APObject(new object(), this)
+                    {
+                        isTopic = true,
+                        isBadRequest = true
+                    };
+                }
+                else if (response.IsSuccessStatusCode)
                 {
                     topic.APIresponse = response.Content.ReadAsStringAsync().Result;
 
-                    Trace.WriteLine(topic.APIresponse);
                     return WorkerProcessTopicFeed(topic);
                 }
                 else if (response.ReasonPhrase.Contains("qt is expired"))
@@ -203,11 +211,19 @@ namespace NewsBuddy
             else
             {
                 HttpResponseMessage response = client.GetAsync(String.Format("feed?q=followedtopicid:{0}&apikey={1}&in_my_plan=true&versions=latest&text_links=plain", topic.topicID, apiKey)).Result;
-                if (response.IsSuccessStatusCode)
+                if (response.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    Trace.WriteLine("Bad Request " + topic.topicName);
+                    return new APObject(new object(), this)
+                    {
+                        isTopic = true,
+                        isBadRequest = true
+                    };
+                }
+                else if (response.IsSuccessStatusCode)
                 {
                     topic.APIresponse = response.Content.ReadAsStringAsync().Result;
                     
-                    Trace.WriteLine(topic.APIresponse);
                     if (isAuto && !activeTopics.Contains(topic))
                     {
                         activeTopics.Add(topic);
@@ -362,9 +378,7 @@ namespace NewsBuddy
 
             if (response.IsSuccessStatusCode)
             {
-
                 apFeedItems.Clear();
-
 
                 isAuthorized = true;
 
@@ -372,21 +386,19 @@ namespace NewsBuddy
 
                 ProcessFeed(reply);
 
+                Trace.WriteLine(reply);
 
                 SortList();
-
-
-
 
                 // ETag Stuff, Don't worry about it.
                 if (nextETag != null & response.Headers.ETag != null)
                 {
                     previousETag = new EntityTagHeaderValue(nextETag.ToString());
                 }
+
                 if (response.Headers.ETag != null)
                 {
                     nextETag = new EntityTagHeaderValue(response.Headers.ETag.ToString());
-
                 }
 
                 if (Debugger.IsAttached)
@@ -485,13 +497,14 @@ namespace NewsBuddy
 
         private APObject NewAPObject(dynamic _item, APingestor _ingestor, bool isParent = false)
         {
+             
+
             APObject newObject = new APObject(_item, _ingestor, isParent)
             {
                 headline = _item.headline != null ? _item.headline.ToString() : "",
                 uri = _item.uri != null ? _item.uri.ToString() : "",
                 altID = _item.altids.itemid != null ? _item.altids.itemid.ToString() : "",
-                version = _item.version != null ? Int32.Parse(_item.version.ToString()) : null,
-                updateDate = _item.versioncreated != null ? _item.versioncreated.ToString() : ""
+                version = _item.version != null ? Int32.Parse(_item.version.ToString()) : null
             };
 
             return newObject;

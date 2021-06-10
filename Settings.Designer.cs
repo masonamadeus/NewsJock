@@ -473,5 +473,29 @@ namespace NewsBuddy {
                 this["APautoFeed"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool APAutoStart {
+            get {
+                return ((bool)(this["APAutoStart"]));
+            }
+            set {
+                this["APAutoStart"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool VeryOldWarn {
+            get {
+                return ((bool)(this["VeryOldWarn"]));
+            }
+            set {
+                this["VeryOldWarn"] = value;
+            }
+        }
     }
 }

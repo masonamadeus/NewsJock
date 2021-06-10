@@ -30,7 +30,7 @@ namespace NewsBuddy
         public string scriptUri { get; set; }
         public bool isChanged { get; set; }
 
-        private string fileFilter = "NewsJock Scripts (*.njs)|*.njs | XAML Files (*.xaml)|*.xaml";
+        private string fileFilter = "NewsJock Scripts |*.njs;*.xaml";
 
 
         public Page1(bool fromTemplate, string uri = "")
@@ -42,6 +42,9 @@ namespace NewsBuddy
             rtbScript.IsDocumentEnabled = true;
             selFontSize.ItemsSource = new List<Double>() { 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 50, 60, 72 };
             selFontSize.Focusable = false;
+
+            
+            
 
             if (fromTemplate)
             {
@@ -83,7 +86,8 @@ namespace NewsBuddy
             SaveFileDialog svD = new SaveFileDialog
             {
                 Filter = fileFilter,
-                DefaultExt = "xaml",
+                FileName = "Untitled Template",
+                DefaultExt = "njs",
                 InitialDirectory = Settings.Default.TemplatesDirectory,
                 RestoreDirectory = true,
                 Title = "Save Template"
@@ -116,7 +120,8 @@ namespace NewsBuddy
             SaveFileDialog svD = new SaveFileDialog
             {
                 Filter = fileFilter,
-                DefaultExt = "xaml",
+                DefaultExt = "njs",
+                FileName = "Untitled Script",
                 InitialDirectory = Settings.Default.ScriptsDirectory,
                 RestoreDirectory = true,
                 Title = "Save Script"
@@ -171,6 +176,7 @@ namespace NewsBuddy
                 {
                     Filter = fileFilter,
                     DefaultExt = "njs",
+                    FileName = "Untitled Script",
                     InitialDirectory = Settings.Default.ScriptsDirectory,
                     RestoreDirectory = true,
                     Title = "Save Script"
@@ -213,11 +219,20 @@ namespace NewsBuddy
                 {
                     if (opn.CheckFileExists)
                     {
-                        //StartNewWorker(new NJSaveFile(rtbScript.Document, opn.FileName), false);
-
                         FileStream fs;
                         fs = new FileStream(opn.FileName, FileMode.Open);
-                        FlowDocument loaded = XamlReader.Load(fs) as FlowDocument;
+                        FlowDocument loaded;
+                        try
+                        {
+                            loaded = XamlReader.Load(fs) as FlowDocument;
+                        }
+                        catch
+                        {
+                            MessageBox.Show("The selected file could not be opened.", "Error Opening File", MessageBoxButton.OK, MessageBoxImage.Error);
+                            ToggleLoading(false);
+                            return;
+                        }
+
                         fs.Close();
                         scriptUri = opn.FileName;
                         rtbScript.Document = loaded;
@@ -244,7 +259,17 @@ namespace NewsBuddy
                 {
                     ToggleLoading(true);
                     FileStream fs = new FileStream(uri, FileMode.Open);
-                    FlowDocument loaded = XamlReader.Load(fs) as FlowDocument;
+                    FlowDocument loaded;
+                    try
+                    {
+                        loaded = XamlReader.Load(fs) as FlowDocument;
+                    }
+                    catch
+                    {
+                        MessageBox.Show("The selected file could not be opened.", "Error Opening File", MessageBoxButton.OK, MessageBoxImage.Error);
+                        ToggleLoading(false);
+                        return;
+                    }
                     fs.Close();
                     rtbScript.Document = loaded;
                     scriptUri = uri;
@@ -540,6 +565,7 @@ namespace NewsBuddy
         /// </summary>
         public void RestoreNBXaml()
         {
+            bool hadBeenChanged = isChanged;
             List<Inline> nbInlines = DetectNBs(rtbScript.Document.Blocks);
 
             for (int i = 0; i < nbInlines.Count; i++)
@@ -548,6 +574,10 @@ namespace NewsBuddy
                 InlineUIContainer nbi = inl as InlineUIContainer;
                 NBfile nb = inl.Tag as NBfile;
                 nbi.Child = nb.NBbutton();
+            }
+            if (!hadBeenChanged)
+            {
+                isChanged = false;
             }
             Trace.WriteLine("Restoring NBs");
         }
@@ -571,6 +601,7 @@ namespace NewsBuddy
                 Mouse.OverrideCursor = null;
                 progBar.Visibility = Visibility.Collapsed;
                 topMenu.Visibility = Visibility.Visible;
+                isChanged = false;
             }
         }
 
@@ -706,6 +737,19 @@ namespace NewsBuddy
             return inlines;
         }
 
+        public void KillNBPlayers()
+        {
+            List<Inline> foundNBs = DetectNBs(rtbScript.Document.Blocks);
+            for (int c = 0; c < foundNBs.Count; c++)
+            {
+                Inline found = foundNBs[c];
+                if (found.Tag is NBfile)
+                {
+                    ((NBfile)found.Tag).KillPlayer();
+                    Trace.WriteLine("Killed Player for " + ((NBfile)found.Tag).NBName);
+                }
+            }
+        }
 
         #endregion
 
@@ -724,18 +768,27 @@ namespace NewsBuddy
             }
         }
 
+
+
+
+
+
+
+
+
+
+
         #endregion
 
+        private void Page_LostFocus(object sender, RoutedEventArgs e)
+        {
 
+        }
 
-
-
-
-
-
-
-
-
+        private void Page_GotFocus(object sender, RoutedEventArgs e)
+        {
+            //this.Dispatcher.Invoke(() => { RestoreNBXaml(); });
+        }
     }
 
 }

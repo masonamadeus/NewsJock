@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:NewsBuddy"
         mc:Ignorable="d"
-        Title="NewsJock v0.1"
+        Title="NewsJock"
         
         Height="{Binding}" 
         Width="{Binding}" 
@@ -18,6 +18,7 @@
         ShowInTaskbar="True"
         AllowsTransparency="False"
         WindowStartupLocation="CenterScreen"
+        ContentRendered="Window_ContentRendered"
         >
 
 
