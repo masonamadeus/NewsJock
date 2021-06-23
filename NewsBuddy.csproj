@@ -27,6 +27,11 @@
     <OutputPath>C:\Users\Mason\Desktop\NewsJock\DebugBuild\</OutputPath>
   </PropertyGroup>
 
+	<PropertyGroup>
+		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+		<GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+	</PropertyGroup>
+
   <ItemGroup>
     <Compile Remove="resources\fonts\fontawesome-free-5.15.2-desktop\**" />
     <EmbeddedResource Remove="resources\fonts\fontawesome-free-5.15.2-desktop\**" />
@@ -52,6 +57,7 @@
     <None Remove="resources\fonts\OpenSans-SemiBold.ttf" />
     <None Remove="resources\fonts\OpenSans-SemiBoldItalic.ttf" />
     <None Remove="resources\NewsJockSplashv2.png" />
+    <None Remove="resources\tabdrag.cur" />
   </ItemGroup>
 
   <ItemGroup>
@@ -110,6 +116,7 @@
     <Resource Include="resources\NewsJockSplashv2.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
+    <Resource Include="resources\tabdrag.cur" />
   </ItemGroup>
 
   <ItemGroup>

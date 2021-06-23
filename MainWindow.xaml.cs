@@ -36,10 +36,6 @@ namespace NewsBuddy
                 )
             );
 
-            Trace.WriteLine(Process.GetCurrentProcess().MainModule.FileName);
-
-            UpdateRegistryKeys();
-
         }
 
         // YOU ARE NOW LEAVING THE DFB
@@ -69,6 +65,7 @@ namespace NewsBuddy
 
 
         private Cursor nbDropCur = null;
+        private Cursor nbDragCur = null;
         private NamedPipeManager pipeManager;
         private FileAssociation[] fileAssociations;
         private List<NBfile> sounders = new List<NBfile>();
@@ -135,6 +132,7 @@ namespace NewsBuddy
             _tabAdd = new TabItem();
             _tabAdd.FontFamily = Application.Current.FindResource("FA") as FontFamily;
             _tabAdd.Header = "";
+            _tabAdd.Tag = "Adder";
 
             Frame addTab = new Frame();
             addTab.Source = new Uri("/TabAdder.xaml", UriKind.Relative);
@@ -506,11 +504,13 @@ namespace NewsBuddy
         void MonitorDirectory(string dirPath, FileSystemWatcher fs_var)
         {
             Trace.WriteLine("Monitoring Started for " + dirPath);
+
             if (fs_var != null)
             {
                 fs_var.Dispose();
                 Trace.WriteLine("Disposed of FileSystemWatcher - Main Window");
             }
+
             fs_var = new FileSystemWatcher(dirPath, "*.*");
 
             fs_var.EnableRaisingEvents = true;
@@ -1441,8 +1441,6 @@ namespace NewsBuddy
 
         }
 
-        #endregion
-
         public void KillAllPlayers()
         {
             foreach (TabItem tab in DynamicTabs.Items)
@@ -1455,6 +1453,84 @@ namespace NewsBuddy
                     }
                 }
             }
+        }
+
+
+        #endregion
+
+        private Point _startMouse;
+        private void TabItem_PreviewMouseMove(object sender, MouseEventArgs e)
+        {
+            if (!(e.Source is TabItem tabItem))
+            {
+                e.Handled = true;
+                return;
+            }
+            if (tabItem == null)
+            {
+                e.Handled = true;
+                return;
+            }
+            if (Mouse.PrimaryDevice.LeftButton == MouseButtonState.Pressed)
+            {
+                if (((TabItem)e.Source).Tag != null && ((TabItem)e.Source).Tag.ToString() == "Adder")
+                {
+                    return;
+                }
+
+                Point position = e.GetPosition(null);
+
+                if (Math.Abs(position.X - _startMouse.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                    Math.Abs(position.Y - _startMouse.Y) > SystemParameters.MinimumVerticalDragDistance)
+                {
+                    DragDrop.DoDragDrop(tabItem, tabItem, DragDropEffects.All);
+                    Trace.WriteLine("Dragging Tab Item");
+                }
+
+                
+            }
+        }
+        private void TabItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            _startMouse = e.GetPosition(null);
+        }
+
+        private void TabItem_Drop(object sender, DragEventArgs e)
+        {
+            if (
+                    e.Source is TabItem tabItemTarget
+                    && e.Data.GetData(typeof(TabItem)) is TabItem tabItemSource
+                    && !tabItemTarget.Equals(tabItemSource)
+                    && (tabItemTarget.Tag == null || tabItemTarget.Tag.ToString() != "Adder")
+               )
+            {
+                DynamicTabs.DataContext = null;
+                int targetIndex = _tabItems.IndexOf(tabItemTarget);
+
+                _tabItems.Remove(tabItemSource);
+                _tabItems.Insert(targetIndex, tabItemSource);
+                DynamicTabs.SelectedItem = tabItemSource;
+                DynamicTabs.DataContext = _tabItems;
+                Trace.WriteLine("Dropping Tab Item");
+            }
+            else
+            {
+                Trace.WriteLine("Could Not Drop Tab Item");
+            }
+        }
+
+        private void TabItem_GiveFeedback(object sender, GiveFeedbackEventArgs e)
+        {
+            if (nbDragCur == null)
+            {
+                Stream cursor = Application.GetResourceStream(new Uri("pack://application:,,,/resources/tabdrag.cur")).Stream;
+                nbDragCur = new Cursor(cursor);
+
+            }
+            Mouse.SetCursor(nbDragCur);
+            e.UseDefaultCursors = false;
+            e.Handled = true;
+
         }
     }
 

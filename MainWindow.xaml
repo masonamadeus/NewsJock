@@ -161,6 +161,13 @@
 
         <TabControl Name="DynamicTabs" ItemsSource="{Binding}" Margin="1,0,5,5" Selector.SelectionChanged="DynamicTabs_SelectionChanged">
             <TabControl.Resources>
+                    <Style TargetType="TabItem">
+                        <Setter Property="AllowDrop" Value="True"/>
+                        <EventSetter Event="PreviewMouseMove" Handler="TabItem_PreviewMouseMove"/>
+                        <EventSetter Event="PreviewMouseLeftButtonDown" Handler="TabItem_PreviewMouseLeftButtonDown"/>
+                        <EventSetter Event="GiveFeedback" Handler="TabItem_GiveFeedback"/>
+                        <EventSetter Event="Drop" Handler="TabItem_Drop"/>
+                    </Style>
                 <DataTemplate x:Key="TabHeader" DataType="TabItem">
                     <DockPanel>
                         <Button Name="btnDelTab" DockPanel.Dock="Right" Margin="8,0,0,0"
